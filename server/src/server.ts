@@ -6,7 +6,10 @@ import errorhandler from "errorhandler";
 
 const app = express();
 const server = new http.Server(app);
-const io = socketio(server);
+// TODO: Followup on https://github.com/socketio/socket.io/issues/3259
+const io = socketio(server, {
+  pingTimeout: 60000,
+});
 
 const templatesRoot = path.resolve(__dirname, "..", "templates");
 const bundleRoot = path.resolve(__dirname, "..", "..", "frontend", "build");
