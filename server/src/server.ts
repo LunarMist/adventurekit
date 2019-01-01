@@ -41,6 +41,10 @@ app.set('view engine', 'pug');
 
 io.on('connection', function (socket) {
   console.log(`User connected: ${socket.id}`);
+
+  socket.on("ChatMessage", function (message: string) {
+    io.emit("ChatMessage", message);
+  });
 });
 
 server.listen(config.web.port, () => {
