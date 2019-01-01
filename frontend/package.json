@@ -1,0 +1,29 @@
+{
+  "name": "rpgcore-fontend",
+  "version": "1.0.0",
+  "description": "rpgcore frontend module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config webpack.config.js --mode production  --devtool source-map",
+    "watch": "webpack --config webpack.config.js --mode development --devtool eval-source-map --watch --info-verbosity verbose --display-error-details"
+  },
+  "author": "Jeremy Simpson",
+  "license": "MIT",
+  "devDependencies": {
+    "clean-webpack-plugin": "^0.1.19",
+    "file-loader": "^2.0.0",
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.2.2",
+    "webpack": "^4.28.2",
+    "webpack-cli": "^3.1.2"
+  },
+  "dependencies": {
+    "@types/emscripten": "0.0.31",
+    "@types/node": "^10.12.18",
+    "@types/socket.io-client": "^1.4.32",
+    "axios": "^0.18.0",
+    "localforage": "^1.7.3",
+    "socket.io": "^2.2.0"
+  }
+}

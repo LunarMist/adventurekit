@@ -1,0 +1,29 @@
+{
+  "name": "rpgcore-server",
+  "version": "1.0.0",
+  "description": "rpgcore server module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "serve": "node build/server.js",
+    "serve-dev": "nodemon --watch build/ --inspect build/server.js"
+  },
+  "author": "Jeremy Simpson",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^1.18.9",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "@types/errorhandler": "0.0.32",
+    "@types/express": "^4.16.0",
+    "@types/node": "^10.12.18",
+    "@types/socket.io": "^2.1.2",
+    "errorhandler": "^1.5.0",
+    "express": "^4.16.4",
+    "pug": "^2.0.3",
+    "socket.io": "^2.2.0"
+  }
+}

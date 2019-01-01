@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "module": "es6",
+    "target": "es2017",
+    "esModuleInterop": true,
+    "strict": true,
+    "sourceMap": true,
+    "outDir": "build",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "ImGui/*": [
+        "src/imgui/*"
+      ],
+      "GL/*": [
+        "src/gl/*"
+      ],
+      "IO/*": [
+        "src/io/*"
+      ],
+      "Net/*": [
+        "src/net/*"
+      ],
+      "Store/*": [
+        "src/store/*"
+      ],
+      "Fonts/*": [
+        "fonts/*"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "src/**/*"
+  ]
+}

@@ -1,0 +1,43 @@
+doctype html
+head
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+
+    title Adventure Kit
+
+    link(rel='preload' href='/static/bundle/rpgcore.js' as='script')
+    link(rel='preload' href='https://code.jquery.com/pep/0.4.3/pep.min.js' as='script')
+
+    style.
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        canvas {
+            display: block;
+            touch-action: none;
+            cursor: inherit;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+noscript
+    p Javascript must be enabled!
+
+canvas#tabletop(tabindex='0' touch-action='none')
+
+script(src='/static/bundle/rpgcore.js')
+script(src='https://code.jquery.com/pep/0.4.3/pep.min.js')
+
+script.
+  window.onload = function () {
+    const canvas = document.getElementById("tabletop");
+    canvas.focus();
+    rpgcore.default(canvas);
+  };
