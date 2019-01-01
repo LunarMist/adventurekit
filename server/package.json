@@ -8,7 +8,7 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "serve": "node build/server.js",
-    "serve-dev": "nodemon --watch build/ --inspect build/server.js"
+    "serve-dev": "nodemon --watch build/ --watch ../frontend/build/ --inspect build/server.js"
   },
   "author": "Jeremy Simpson",
   "license": "MIT",

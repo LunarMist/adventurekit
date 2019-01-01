@@ -9,22 +9,28 @@ const server = new http.Server(app);
 const io = socketio(server);
 
 const templatesRoot = path.resolve(__dirname, "..", "templates");
-const staticRoot = path.resolve(__dirname, "..", "..", "frontend", "build");
+const bundleRoot = path.resolve(__dirname, "..", "..", "frontend", "build");
 
 const configPath = process.env.CONFIG_PATH || "./config/dev.js";
 const config = require(configPath);
 
+const bundleManifest = require(path.resolve(bundleRoot, "manifest.json"));
+
+// Only in development mode
 if (config.mode === 'development') {
-  // only use in development
-  app.use(errorhandler())
+  app.locals.pretty = true;
+  app.use(errorhandler());
+  console.log("Running in development mode!");
 }
 
-app.get('/', (req, res) => {
-  return res.render('index');
+app.get("/", (req, res) => {
+  res.render("index", {
+    bundlePath: bundleManifest['main.js']
+  });
 });
 
 // Serve bundle files
-app.use('/static/bundle/', express.static(staticRoot));
+app.use('/static/bundle/', express.static(bundleRoot));
 
 // View engine setup
 app.set('views', templatesRoot);

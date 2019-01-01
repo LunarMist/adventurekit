@@ -1,20 +1,8 @@
 const path = require('path');
 
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const ManifestPlugin = require('webpack-manifest-plugin');
 
-const rootPath = __dirname;
-const outputPath = path.resolve(rootPath, 'build');
-
-const pathsToClean = [
-  'build/*',
-];
-
-const cleanOptions = {
-  root: rootPath,
-  verbose: true,
-  watch: true,
-};
-
+const outputPath = path.resolve(__dirname, 'build');
 
 module.exports = {
   entry: './src/main.ts',
@@ -50,7 +38,7 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js']
   },
   output: {
-    filename: "rpgcore.js",
+    filename: "rpgcore.[contenthash].js",
     library: "rpgcore",
     libraryTarget: 'umd',
     path: outputPath,
@@ -63,6 +51,6 @@ module.exports = {
     fs: 'empty'
   },
   plugins: [
-    new CleanWebpackPlugin(pathsToClean, cleanOptions),
+    new ManifestPlugin(),
   ]
 };

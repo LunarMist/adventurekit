@@ -11,12 +11,12 @@
   "author": "Jeremy Simpson",
   "license": "MIT",
   "devDependencies": {
-    "clean-webpack-plugin": "^0.1.19",
     "file-loader": "^2.0.0",
     "ts-loader": "^4.5.0",
     "typescript": "^3.2.2",
     "webpack": "^4.28.2",
-    "webpack-cli": "^3.1.2"
+    "webpack-cli": "^3.1.2",
+    "webpack-manifest-plugin": "^2.0.4"
   },
   "dependencies": {
     "@types/emscripten": "0.0.31",

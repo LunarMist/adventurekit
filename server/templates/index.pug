@@ -5,7 +5,7 @@ head
 
   title Adventure Kit
 
-  link(rel='preload' href='/static/bundle/rpgcore.js' as='script')
+  link(rel='preload' href=bundlePath as='script')
   link(rel='preload' href='https://code.jquery.com/pep/0.4.3/pep.min.js' as='script')
 
   style.
@@ -32,7 +32,7 @@ noscript
 
 canvas#tabletop(tabindex='0' touch-action='none')
 
-script(src='/static/bundle/rpgcore.js')
+script(src=bundlePath)
 script(src='https://code.jquery.com/pep/0.4.3/pep.min.js')
 
 script.
