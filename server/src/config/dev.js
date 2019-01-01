@@ -12,4 +12,13 @@ config.web = {
   port: 9000,
 };
 
+config.redis = {
+  host: 'localhost',
+  port: 6379,
+};
+
+config.socketIO = {
+  redisKey: "rpgcore-socket.io-dev"
+};
+
 module.exports = config;

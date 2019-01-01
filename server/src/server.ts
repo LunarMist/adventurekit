@@ -1,6 +1,7 @@
 import express from "express";
 import http from "http";
 import socketio from "socket.io";
+import socketio_redis from "socket.io-redis";
 import path from "path";
 import errorhandler from "errorhandler";
 
@@ -39,6 +40,13 @@ app.use('/static/bundle/', express.static(bundleRoot));
 app.set('views', templatesRoot);
 app.set('view engine', 'pug');
 
+// Configure socketio redis adapter
+io.adapter(socketio_redis({
+  host: config.redis.host,
+  port: config.redis.port,
+  key: config.socketIO.redisKey,
+}));
+
 io.on('connection', function (socket) {
   console.log(`User connected: ${socket.id}`);
 
@@ -47,6 +55,7 @@ io.on('connection', function (socket) {
   });
 });
 
-server.listen(config.web.port, () => {
-  return console.log(`Running on port: ${config.web.port}!`);
+// serve
+server.listen(config.web.port, config.web.host, () => {
+  return console.log(`Running on http://${config.web.host}:${config.web.port}/`);
 });
