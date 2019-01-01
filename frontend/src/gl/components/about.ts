@@ -13,7 +13,7 @@ export class AboutComponent extends SimpleRenderComponent {
     ImGui.Begin("About", null, ImGuiWindowFlags.AlwaysAutoResize);
 
     if (ImGui.Button("View on github! (must allow popups)")) {
-      window.open('https://github.com/LunarMist/rpgcore', '_blank');
+      window.open('https://github.com/LunarMist/adventurekit', '_blank');
     }
 
     if (ImGui.Button("View licenses")) {
@@ -21,7 +21,7 @@ export class AboutComponent extends SimpleRenderComponent {
     }
 
     ImGui.Text("Email: jeremy@adventurekit.app");
-    ImGui.Text("Copyright (c) Jeremy Simpson 2018");
+    ImGui.Text("Copyright (c) Jeremy Simpson 2019");
     ImGui.End();
 
     /**
