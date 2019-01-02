@@ -1,7 +1,9 @@
-const configPath = process.env.CONFIG_PATH || "./dev.js";
+import AppSettings from "./settings";
+
+const configPath = process.env.CONFIG_PATH || "./dev";
 
 console.log(`Loading config from: ${configPath}`);
 
-const config = require(configPath);
+const settings: AppSettings = require(configPath);
 
-export default config;
+export default settings;
