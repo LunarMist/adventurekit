@@ -1,15 +1,13 @@
 import http from "http";
-// Required for typeorm
-import "reflect-metadata";
-
+import "reflect-metadata"; // Required for typeorm
 import {app} from "./app";
-import {GameRoomHandler} from "./sockets";
+import GameRoomSocketHandler from "./sockets/game_room";
 import config from "./config/config";
 
 const server = new http.Server(app);
 
 // socket server
-new GameRoomHandler(
+new GameRoomSocketHandler(
   server,
   config.redis.host,
   config.redis.port,

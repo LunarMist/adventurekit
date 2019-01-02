@@ -2,11 +2,13 @@ import http from "http";
 import socketio from "socket.io";
 import socketio_redis from "socket.io-redis";
 
+
 /**
- *
+ * Base class with socket.io skeleton code.
+ * TODO: Refactor into more generic handler class?
  */
-export class GameRoomHandler {
-  private io: SocketIO.Server;
+export default abstract class SocketHandler {
+  protected readonly io: SocketIO.Server;
 
   constructor(
     readonly bindServer: http.Server,
@@ -28,14 +30,8 @@ export class GameRoomHandler {
   }
 
   serve(): void {
-    const self = this;
-
-    this.io.on('connection', function (socket) {
-      console.log(`User connected: ${socket.id}`);
-
-      socket.on("ChatMessage", function (message: string) {
-        self.io.emit("ChatMessage", message);
-      });
-    });
+    this.io.on('connection', s => this.onNewUserConnected(s));
   }
+
+  abstract onNewUserConnected(socket: SocketIO.Socket): void;
 }
