@@ -10,7 +10,9 @@
     "sourceMap": true,
     "outDir": "build",
     "moduleResolution": "node",
-    "allowJs": true
+    "allowJs": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "exclude": [
     "node_modules"
