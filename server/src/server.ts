@@ -1,10 +1,10 @@
-import "reflect-metadata"; // Required for typeorm
-import http from "http";
-import {ConnectionOptions, createConnection} from "typeorm";
+import 'reflect-metadata'; // Required for typeorm
+import http from 'http';
+import {ConnectionOptions, createConnection} from 'typeorm';
 
-import {app} from "./app";
-import GameRoomSocketHandler from "./sockets/game_room";
-import config from "./config/config";
+import app from './app';
+import GameRoomSocketHandler from './sockets/game_room';
+import config from './config/config';
 
 function startServer(): void {
   const server = new http.Server(app);
@@ -24,20 +24,20 @@ function startServer(): void {
 }
 
 const connectionOptions: ConnectionOptions = {
-  type: "postgres",
+  type: 'postgres',
   host: config.postgres.host,
   port: config.postgres.port,
   username: config.postgres.username,
   password: config.postgres.password,
   database: config.postgres.database,
   entities: [
-    __dirname + "/entities/*.js"
+    __dirname + '/entities/*.js'
   ],
   migrations: [
-    __dirname + "/migration/*.js"
+    __dirname + '/migration/*.js'
   ],
   synchronize: true,
-  logging: true,
+  logging: config.mode === 'development',
 };
 
 // Database connection

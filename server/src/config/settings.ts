@@ -2,7 +2,7 @@
  * Application settings model
  */
 export default interface AppSettings {
-  mode: string,
+  mode: 'development' | 'production',
   web: {
     host: string,
     port: number,
@@ -20,5 +20,15 @@ export default interface AppSettings {
   },
   socketIO: {
     redisKey: string,
+  },
+  session: {
+    cookie: {
+      maxAge: string, // ISO 8601 duration
+      secure: boolean,
+    },
+    name: string,
+    secret: string,
+    redisDB: number,
+    redisPrefix: string,
   },
 }

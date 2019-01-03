@@ -1,6 +1,6 @@
-import AppSettings from "./settings";
+import AppSettings from './settings';
 
-const configPath = process.env.CONFIG_PATH || "./dev";
+const configPath = process.env.CONFIG_PATH || './dev';
 
 console.log(`Loading config from: ${configPath}`);
 

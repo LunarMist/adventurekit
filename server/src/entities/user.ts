@@ -7,8 +7,8 @@ import {
   Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn
-} from "typeorm";
-import bcrypt from "bcrypt";
+} from 'typeorm';
+import bcrypt from 'bcrypt';
 
 @Entity()
 export default class User {
@@ -66,16 +66,16 @@ export default class User {
   static async getByUsername(username: string): Promise<User | undefined> {
     const usernameLower = username.toLowerCase();
     return getRepository(User)
-      .createQueryBuilder("user")
-      .where("LOWER(user.username) = :usernameLower", {usernameLower: usernameLower})
+      .createQueryBuilder('user')
+      .where('LOWER(user.username) = :usernameLower', {usernameLower: usernameLower})
       .getOne();
   }
 
   static async getByEmail(email: string): Promise<User | undefined> {
     const emailLower = email.toLowerCase();
     return getRepository(User)
-      .createQueryBuilder("user")
-      .where("LOWER(user.email) = :emailLower", {emailLower: emailLower})
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = :emailLower', {emailLower: emailLower})
       .getOne();
   }
 
