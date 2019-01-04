@@ -11,16 +11,16 @@ import {
 import bcrypt from 'bcrypt';
 
 @Entity()
+@Index("idx_case_insensitive_username", {synchronize: false})
+@Index("idx_case_insensitive_email", {synchronize: false})
 export default class User {
 
   @PrimaryGeneratedColumn()
   id?: number;
 
-  @Index({unique: true})
   @Column({length: 25, nullable: false})
   username: string;
 
-  @Index({unique: true})
   @Column({length: 120, nullable: false})
   email: string;
 
@@ -64,18 +64,16 @@ export default class User {
   }
 
   static async getByUsername(username: string): Promise<User | undefined> {
-    const usernameLower = username.toLowerCase();
     return getRepository(User)
       .createQueryBuilder('user')
-      .where('LOWER(user.username) = :usernameLower', {usernameLower: usernameLower})
+      .where('user.username = LOWER(:username)', {username: username})
       .getOne();
   }
 
   static async getByEmail(email: string): Promise<User | undefined> {
-    const emailLower = email.toLowerCase();
     return getRepository(User)
       .createQueryBuilder('user')
-      .where('LOWER(user.email) = :emailLower', {emailLower: emailLower})
+      .where('user.email = LOWER(:email)', {email: email})
       .getOne();
   }
 
