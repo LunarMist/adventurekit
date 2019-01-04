@@ -342,8 +342,7 @@ export class RenderLoop {
 
     io.ConfigMacOSXBehaviors = navigator.platform.match(/Mac/) !== null;
     io.SetClipboardTextFn = (user_data: any, text: string): void => {
-      // @ts-ignore
-      this.ioLifeCycle.getIOState().clipboardText = text;
+      this.ioLifeCycle.ioState.clipboardText = text;
       // console.log(`set clipboard_text: "${text}"`);
       if (typeof navigator !== "undefined" && typeof (navigator as any).clipboard !== "undefined") {
         // console.log(`clipboard.writeText: "${text}"`);

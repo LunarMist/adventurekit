@@ -1,6 +1,6 @@
 import {SimpleRenderComponent} from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import {ImVec2, ImGuiWindowFlags} from "ImGui/imgui";
+import {ImGuiWindowFlags, ImVec2} from "ImGui/imgui";
 import * as IOEvent from "IO/event"
 import {KeyCodes} from "IO/codes";
 
@@ -32,10 +32,15 @@ export class LostContextComponent extends SimpleRenderComponent {
 
     if (ImGui.Button("Lose context")) {
       if (!this.gl.isContextLost()) {
-        console.log("Initiating lost context");
-        // @ts-ignore
-        this.ext = this.gl.getExtension('WEBGL_lose_context');
-        this.ext.loseContext();
+        const ext = this.gl.getExtension('WEBGL_lose_context');
+        if (ext !== null) {
+          console.log("Initiating lost context");
+          console.log("Press [Space] to regain context");
+          this.ext = ext;
+          this.ext.loseContext();
+        } else {
+          console.log("Ext is null; unable to force lose context");
+        }
       }
     }
 
