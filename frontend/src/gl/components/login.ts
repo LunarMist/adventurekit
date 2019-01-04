@@ -3,16 +3,13 @@ import {EMAIL_MAX_LEN, PASSWORD_MAX_LEN} from "GL/components/register";
 import * as ImGui from "ImGui/imgui";
 import {ImGuiInputTextFlags, ImGuiWindowFlags, ImStringBuffer, ImVec4} from "ImGui/imgui";
 import Axios, {AxiosError, AxiosResponse} from "axios";
-
-
-// Since email is longer, we use that
-const USERNAME_OR_EMAIL_MAX_LEN = EMAIL_MAX_LEN;
+import qs from 'qs';
 
 
 // TODO: Client-sided validation
 // TODO: Better error messages
 export class LoginComponent extends SimpleRenderComponent {
-  private readonly usernameOrEmailBuffer = new ImStringBuffer(USERNAME_OR_EMAIL_MAX_LEN, "");
+  private readonly emailBuffer = new ImStringBuffer(EMAIL_MAX_LEN, "");
   private readonly passwordBuffer = new ImStringBuffer(PASSWORD_MAX_LEN, "");
 
   private readonly TextSuccessColor: ImVec4 = new ImVec4(34 / 255, 139 / 255, 34 / 255, 1.0);
@@ -27,7 +24,7 @@ export class LoginComponent extends SimpleRenderComponent {
       return;
     }
 
-    ImGui.InputText("Username/Email", this.usernameOrEmailBuffer, USERNAME_OR_EMAIL_MAX_LEN);
+    ImGui.InputText("Email", this.emailBuffer, EMAIL_MAX_LEN);
     ImGui.InputText("Password", this.passwordBuffer, PASSWORD_MAX_LEN, ImGuiInputTextFlags.Password);
 
     if (ImGui.Button("Login")) {
@@ -35,12 +32,13 @@ export class LoginComponent extends SimpleRenderComponent {
       this.errorString = "";
       this.successString = "";
 
-      const formData = new FormData();
-      formData.set('username_or_email', this.usernameOrEmailBuffer.buffer);
-      formData.set('password', this.passwordBuffer.buffer);
+      const formData = {
+        email: this.emailBuffer.buffer,
+        password: this.passwordBuffer.buffer,
+      };
 
       // Perform api call
-      Axios.post('/api/login/', formData)
+      Axios.post('/api/login/', qs.stringify(formData))
         .then((response: AxiosResponse) => {
           this.successString = response.data.message;
         })

@@ -21,9 +21,11 @@
   "dependencies": {
     "@types/emscripten": "0.0.31",
     "@types/node": "^10.12.18",
+    "@types/qs": "^6.5.1",
     "@types/socket.io-client": "^1.4.32",
     "axios": "^0.18.0",
     "localforage": "^1.7.3",
+    "qs": "^6.6.0",
     "socket.io": "^2.2.0"
   }
 }

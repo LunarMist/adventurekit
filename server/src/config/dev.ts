@@ -29,13 +29,13 @@ const dev: AppSettings = {
   },
   session: {
     cookie: {
-      maxAge: 'P30D', // 30 days
       secure: false,
     },
     name: 'rpgcore.dev.sid',
     secret: 'rpgcore-session-dev-secret-goes-here-123',
     redisDB: 1,
-    redisPrefix: 'rc.dev::',
+    redisPrefix: 'rpgcore.dev.session::',
+    ttl: 'P30D', // 30 days
   },
 };
 

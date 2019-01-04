@@ -2,6 +2,7 @@ import {SimpleRenderComponent} from "GL/render";
 import * as ImGui from "ImGui/imgui";
 import {ImGuiInputTextFlags, ImGuiWindowFlags, ImStringBuffer, ImVec4} from "ImGui/imgui";
 import Axios, {AxiosError, AxiosResponse} from "axios";
+import qs from "qs";
 
 
 // the + 1 is for the null terminator
@@ -50,13 +51,14 @@ export class RegisterUserComponent extends SimpleRenderComponent {
         // console.log(`Email: ${this.emailBuffer.buffer}`);
         // console.log(`Password: *****`);
 
-        const formData = new FormData();
-        formData.set('username', this.usernameBuffer.buffer);
-        formData.set('email', this.emailBuffer.buffer);
-        formData.set('password', this.passwordBuffer.buffer);
+        const formData = {
+          username: this.usernameBuffer.buffer,
+          email: this.emailBuffer.buffer,
+          password: this.passwordBuffer.buffer
+        };
 
         // Perform api call
-        Axios.post('/api/register/', formData)
+        Axios.post('/api/register/', qs.stringify(formData))
           .then((response: AxiosResponse) => {
             // console.log(response);
             this.successString = response.data.message;

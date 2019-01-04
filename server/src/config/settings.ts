@@ -23,12 +23,12 @@ export default interface AppSettings {
   },
   session: {
     cookie: {
-      maxAge: string, // ISO 8601 duration
       secure: boolean,
     },
     name: string,
     secret: string,
     redisDB: number,
     redisPrefix: string,
+    ttl: string, // ISO 8601 duration
   },
 }
