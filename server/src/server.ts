@@ -2,16 +2,19 @@ import 'reflect-metadata'; // Required for typeorm
 import http from 'http';
 import {ConnectionOptions, createConnection} from 'typeorm';
 
-import app from './app';
-import GameRoomSocketHandler from './sockets/game_room';
+import {app, sessionMiddleware} from './app';
+import {SocketServer} from "./sockets/sockets";
 import config from './config/config';
+import {GameRoomSocketHandlerFactory} from "./sockets/game_room";
 
 function startServer(): void {
   const server = new http.Server(app);
 
   // socket server
-  new GameRoomSocketHandler(
+  new SocketServer(
+    new GameRoomSocketHandlerFactory(),
     server,
+    sessionMiddleware,
     config.redis.host,
     config.redis.port,
     config.socketIO.redisKey
@@ -34,9 +37,9 @@ const connectionOptions: ConnectionOptions = {
     __dirname + '/entities/*.js'
   ],
   migrations: [
-    __dirname + '/migration/*.js'
+    __dirname + '/migrations/*.js'
   ],
-  synchronize: true,
+  synchronize: false,
   logging: config.mode === 'development',
 };
 

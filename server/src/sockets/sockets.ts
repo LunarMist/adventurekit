@@ -1,17 +1,34 @@
 import http from 'http';
 import socketio from 'socket.io';
 import socketio_redis from 'socket.io-redis';
+import {RequestHandler} from 'express';
 
+export abstract class SocketHandler {
+  constructor(
+    readonly io: SocketIO.Server,
+    readonly socket: SocketIO.Socket,
+  ) {
+
+  }
+
+  abstract onConnection(): void;
+}
+
+export interface SocketHandlerFactory {
+  create(io: SocketIO.Server, socket: SocketIO.Socket): SocketHandler;
+}
 
 /**
  * Base class with socket.io skeleton code.
  * TODO: Refactor into more generic handler class?
  */
-export default abstract class SocketHandler {
+export class SocketServer {
   protected readonly io: SocketIO.Server;
 
   constructor(
+    readonly handlerFactory: SocketHandlerFactory,
     readonly bindServer: http.Server,
+    readonly expressSessionMiddleware: RequestHandler,
     readonly redisAdapterHost: string,
     readonly redisAdapterPort: number,
     readonly redisAdapterKey: string
@@ -30,8 +47,14 @@ export default abstract class SocketHandler {
   }
 
   serve(): void {
-    this.io.on('connection', s => this.onNewUserConnected(s));
-  }
+    this.io.use((socket, next) => {
+      // @ts-ignore
+      // https://stackoverflow.com/questions/25532692/how-to-share-sessions-with-socket-io-1-x-and-express-4-x
+      this.expressSessionMiddleware(socket.request, {}, next);
+    });
 
-  abstract onNewUserConnected(socket: SocketIO.Socket): void;
+    this.io.on('connection', s => {
+      this.handlerFactory.create(this.io, s).onConnection();
+    });
+  }
 }
