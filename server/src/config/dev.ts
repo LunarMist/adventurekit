@@ -1,10 +1,16 @@
-import AppSettings from './settings';
+import AppSettings, {AppSettingsSecret} from './settings';
 
 // Safety check
 if (process.env.NODE_ENV !== 'development') {
   throw new Error(`process.env.NODE_ENV !== 'development'. Found: ${process.env.NODE_ENV}`);
 } else {
   console.log('Loading dev config!');
+}
+
+// Load secret configs
+const secret: AppSettingsSecret = require('./dev-secret');
+if (!secret) {
+  throw new Error("Missing dev-secret module!");
 }
 
 const dev: AppSettings = {
@@ -37,6 +43,7 @@ const dev: AppSettings = {
     redisPrefix: 'rpgcore.dev.session::',
     ttl: 'P30D', // 30 days
   },
+  secret: secret,
 };
 
 export = dev; // Has to be commonjs style

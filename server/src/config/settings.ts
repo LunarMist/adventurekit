@@ -1,4 +1,13 @@
 /**
+ * Secret application settings model
+ */
+export interface AppSettingsSecret {
+  sendgrid: {
+    api_key: string,
+  },
+}
+
+/**
  * Application settings model
  */
 export default interface AppSettings {
@@ -31,4 +40,5 @@ export default interface AppSettings {
     redisPrefix: string,
     ttl: string, // ISO 8601 duration
   },
+  secret: AppSettingsSecret,
 }
