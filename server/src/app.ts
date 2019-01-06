@@ -36,6 +36,9 @@ if (config.mode === 'development') {
 
 
 /*** Configure passport ***/
+function createSessionStoredUser(user: User) {
+  return {id: user.id, username: user.username, email: user.email};
+}
 
 passport.use(new LocalStrategy(
   {usernameField: 'email', passwordField: 'password'},
@@ -47,7 +50,7 @@ passport.use(new LocalStrategy(
         if (user === undefined) {
           return done(null, false);
         }
-        return done(null, {id: user.id, username: user.username, email: user.email});
+        return done(null, createSessionStoredUser(user));
       })
       .catch(err => {
         console.log('ERROR: ${err}');
@@ -133,7 +136,12 @@ app.post('/api/register/', (req, res) => {
       if (user === undefined) {
         return res.json({message: 'Unable to create user'});
       }
-      return res.json({message: 'Success!'});
+      req.login(createSessionStoredUser(user), function (err) {
+        if (err) {
+          return res.json({message: 'Unable to login user'});
+        }
+        return res.json({message: 'Success!'});
+      });
     })
     .catch(err => {
       // @ts-ignore
