@@ -1,4 +1,4 @@
-import {MigrationInterface, QueryRunner} from "typeorm";
+import {MigrationInterface, QueryRunner} from 'typeorm';
 
 /**
  * typeorm does not support expression-based unique indexes it seems, so we need to create them via migrations

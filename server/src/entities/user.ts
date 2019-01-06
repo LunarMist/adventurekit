@@ -11,8 +11,8 @@ import {
 import bcrypt from 'bcrypt';
 
 @Entity()
-@Index("idx_case_insensitive_username", {synchronize: false})
-@Index("idx_case_insensitive_email", {synchronize: false})
+@Index('idx_case_insensitive_username', {synchronize: false})
+@Index('idx_case_insensitive_email', {synchronize: false})
 export default class User {
 
   @PrimaryGeneratedColumn()

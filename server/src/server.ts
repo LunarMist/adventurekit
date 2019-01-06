@@ -3,9 +3,9 @@ import http from 'http';
 import {ConnectionOptions, createConnection} from 'typeorm';
 
 import {app, sessionMiddleware} from './app';
-import {SocketServer} from "./sockets/sockets";
+import {SocketServer} from './sockets/sockets';
 import config from './config/config';
-import {GameRoomSocketHandlerFactory} from "./sockets/game_room";
+import {GameRoomSocketHandlerFactory} from './sockets/game_room';
 
 function startServer(): void {
   const server = new http.Server(app);
