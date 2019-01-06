@@ -11,6 +11,7 @@ import {Strategy as LocalStrategy} from 'passport-local';
 
 import config from './config/config';
 import User from './entities/user';
+import * as LoginUtils from './utils/login_utils';
 
 const RedisStore = connect_redis(express_session);
 
@@ -36,6 +37,7 @@ if (config.mode === 'development') {
 
 
 /*** Configure passport ***/
+
 function createSessionStoredUser(user: User) {
   return {id: user.id, username: user.username, email: user.email};
 }
@@ -129,13 +131,24 @@ app.post('/api/logout/', (req, res) => {
   res.json({message: 'Success!'});
 });
 
-// TODO: Username/password/email validations
 app.post('/api/register/', (req, res) => {
+  if (!LoginUtils.validateUsername(req.body.username)) {
+    res.status(400);
+    return res.json({message: 'Invalid username'});
+  }
+
+  if (!LoginUtils.validateEmail(req.body.email)) {
+    res.status(400);
+    return res.json({message: 'Invalid email'});
+  }
+
+  if (!LoginUtils.validatePassword(req.body.password)) {
+    res.status(400);
+    return res.json({message: 'Invalid password'});
+  }
+
   User.create(req.body.username, req.body.email, req.body.password)
-    .then((user: User | undefined) => {
-      if (user === undefined) {
-        return res.json({message: 'Unable to create user'});
-      }
+    .then((user: User) => {
       req.login(createSessionStoredUser(user), function (err) {
         if (err) {
           return res.json({message: 'Unable to login user'});
@@ -144,14 +157,14 @@ app.post('/api/register/', (req, res) => {
       });
     })
     .catch(err => {
-      // @ts-ignore
-      return res.json(400, {message: 'Unable to create user'});
+      res.status(400);
+      return res.json({message: 'Unable to register; Duplicate username or email'});
     });
 });
 
 app.get('/test/', (req, res) => {
   if (req.isAuthenticated()) {
-    res.json({message: 'Authenticated'});
+    res.json({message: `Authenticated as: ${req.user.username}`});
   } else {
     res.json({message: 'Anonymous'});
   }
