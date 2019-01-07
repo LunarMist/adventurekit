@@ -1,5 +1,5 @@
 export const MinUsernameLength = 3;
-export const MaxUsernameLength = 15;
+export const MaxUsernameLength = 15; // Sync with user model column length if changed
 export const MaxEmailLength = 120; // Sync with user model column length if changed
 export const MinPasswordLength = 8;
 
@@ -11,7 +11,7 @@ const ValidEmailRegEx: RegExp = /^[^@]+@[^@]+\.[^@]+$/;
 
 // Minimum eight characters, at least one letter, one number and one special character:
 // https://stackoverflow.com/questions/19605150/regex-for-password-must-contain-at-least-eight-characters-at-least-one-number-a
-// TODO: User a library
+// TODO: Use a library
 const ValidPasswordRegEx: RegExp = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
 export function validateUsername(username: string): boolean {

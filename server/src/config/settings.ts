@@ -3,7 +3,7 @@
  */
 export interface AppSettingsSecret {
   sendgrid: {
-    api_key: string,
+    apiKey: string,
   },
 }
 

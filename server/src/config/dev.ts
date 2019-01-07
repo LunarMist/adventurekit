@@ -4,13 +4,13 @@ import AppSettings, {AppSettingsSecret} from './settings';
 if (process.env.NODE_ENV !== 'development') {
   throw new Error(`process.env.NODE_ENV !== 'development'. Found: ${process.env.NODE_ENV}`);
 } else {
-  console.log('Loading dev config!');
+  console.log('Loading development config!');
 }
 
 // Load secret configs
 const secret: AppSettingsSecret = require('./dev-secret');
 if (!secret) {
-  throw new Error("Missing dev-secret module!");
+  throw new Error('Missing dev-secret module!');
 }
 
 const dev: AppSettings = {

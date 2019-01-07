@@ -18,7 +18,7 @@ export default class User {
   @PrimaryGeneratedColumn()
   id?: number;
 
-  @Column({length: 25, nullable: false})
+  @Column({length: 15, nullable: false})
   username: string;
 
   @Column({length: 120, nullable: false})
@@ -36,7 +36,7 @@ export default class User {
   @Column({default: false})
   verified_email?: boolean;
 
-  constructor(username: string, email: string, passwordHash: string) {
+  private constructor(username: string, email: string, passwordHash: string) {
     this.username = username;
     this.email = email;
     this.password_hash = passwordHash;
