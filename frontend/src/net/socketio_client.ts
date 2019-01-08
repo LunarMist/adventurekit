@@ -19,7 +19,11 @@ export class SocketIONetClient implements NetClient {
     });
 
     this.socket.on('connect', () => {
-      this.socket && console.log(`SocketIO Connected! Id: ${this.socket.id}`);
+      this.socket && console.log(`SocketIO connected! Id: ${this.socket.id}`);
+    });
+
+    this.socket.on('disconnect', () => {
+      this.socket && console.log('SocketIO disconnected!');
     });
   }
 
