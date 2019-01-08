@@ -8,6 +8,8 @@ export class GameRoomSocketHandler extends SocketHandler {
     console.log(`User connected: ${this.socket.id}`);
 
     if (!this.isAuthenticated()) {
+      // TODO: Relay back some type of message/alert?
+      console.log(`User not authenticated: ${this.socket.id}. Disconnecting...`);
       this.disconnect();
       return;
     }
@@ -17,12 +19,16 @@ export class GameRoomSocketHandler extends SocketHandler {
     });
   }
 
-  get session() {
-    return this.socket.request.session;
-  }
-
   get request() {
     return this.socket.request;
+  }
+
+  get session() {
+    return this.request.session;
+  }
+
+  get sessionStore() {
+    return this.request.sessionStore;
   }
 
   isAuthenticated(): boolean {
@@ -30,7 +36,10 @@ export class GameRoomSocketHandler extends SocketHandler {
   }
 
   touchSession(): void {
-    // TODO: Implement
+    // TODO: Implement better other than reaching in and doing this manually
+    const key = this.sessionStore.prefix + this.session.id;
+    const ttl = this.sessionStore.ttl;
+    this.sessionStore.client.expire(key, ttl);
   }
 
   disconnect(): void {
@@ -46,6 +55,7 @@ export class GameRoomSocketHandler extends SocketHandler {
           return;
         }
         if (!this.isAuthenticated()) {
+          console.log(`User not authenticated: ${this.socket.id}. Disconnecting...`);
           this.disconnect();
           return;
         }
