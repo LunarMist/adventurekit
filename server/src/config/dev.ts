@@ -43,6 +43,10 @@ const dev: AppSettings = {
     redisPrefix: 'rpgcore.dev.session::',
     ttl: 'P30D', // 30 days
   },
+  registration: {
+    urlBase: 'http://localhost:9000',
+    jwtSecret: 'rpgcore-registration-dev-secret-goes-here-123',
+  },
   secret: secret,
 };
 

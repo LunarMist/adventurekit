@@ -40,5 +40,9 @@ export default interface AppSettings {
     redisPrefix: string,
     ttl: string, // ISO 8601 duration
   },
+  registration: {
+    urlBase: string,
+    jwtSecret: string,
+  },
   secret: AppSettingsSecret,
 }
