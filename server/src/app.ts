@@ -51,19 +51,17 @@ function createSessionStoredUser(user: User) {
 
 passport.use(new LocalStrategy(
   {usernameField: 'email', passwordField: 'password'},
-  (email, password, done) => {
-    User.validate(email, password)
-      .then((user: User | undefined) => {
-        // User does not exist, or incorrect credentials
-        if (user === undefined) {
-          return done(null, false);
-        }
-        return done(null, createSessionStoredUser(user));
-      })
-      .catch(err => {
-        console.error(err);
-        done(err);
-      });
+  async (email, password, done) => {
+    try {
+      const user: User | undefined = await User.validate(email, password);
+      // User does not exist, or incorrect credentials
+      if (user === undefined) {
+        return done(null, false);
+      }
+      return done(null, createSessionStoredUser(user));
+    } catch (e) {
+      return done(e);
+    }
   }
 ));
 
@@ -121,7 +119,7 @@ app.set('view engine', 'pug');
 /*** Routes ***/
 
 app.get('/', (req, res) => {
-  res.render('index', {
+  return res.render('index', {
     bundlePath: bundleManifest['main.js']
   });
 });
@@ -129,12 +127,12 @@ app.get('/', (req, res) => {
 app.post('/api/login/',
   passport.authenticate('local'),
   (req, res) => {
-    res.json({message: 'Success!'});
+    return res.json({message: 'Success!'});
   });
 
 app.post('/api/logout/', (req, res) => {
   req.logout();
-  res.json({message: 'Success!'});
+  return res.json({message: 'Success!'});
 });
 
 app.post('/api/register/', async (req, res) => {
@@ -165,7 +163,7 @@ app.post('/api/register/', async (req, res) => {
   });
 
   // Sign the token, then send it off in an email
-  jwt.sign({id: user.id}, config.registration.jwtSecret, {expiresIn: "1 day"}, async (err, regToken) => {
+  jwt.sign({id: user.id}, config.registration.jwtSecret, {expiresIn: '1 day'}, async (err, regToken) => {
     // JWT sign error
     if (err) {
       console.error(err);
@@ -198,11 +196,11 @@ app.get('/verify/', (req, res) => {
   });
 });
 
-app.get('/test/', (req, res) => {
+app.get('/authorized/', (req, res) => {
   if (req.isAuthenticated()) {
-    res.json({message: `Authenticated as: ${req.user.username}`});
+    return res.send(`Authenticated as: ${req.user.username}`);
   } else {
-    res.json({message: 'Anonymous'});
+    return res.send('Anonymous');
   }
 });
 

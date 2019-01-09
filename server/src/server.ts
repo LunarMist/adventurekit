@@ -7,12 +7,31 @@ import {SocketServer} from './sockets/sockets';
 import config from './config/config';
 import {GameRoomSocketHandlerFactory} from './sockets/game_room';
 
-function startServer(): void {
+async function run() {
+  const connectionOptions: ConnectionOptions = {
+    type: 'postgres',
+    host: config.postgres.host,
+    port: config.postgres.port,
+    username: config.postgres.username,
+    password: config.postgres.password,
+    database: config.postgres.database,
+    entities: [
+      __dirname + '/entities/*.js'
+    ],
+    migrations: [
+      __dirname + '/migrations/*.js'
+    ],
+    synchronize: false,
+    logging: config.mode === 'development',
+  };
+
+  const conn = await createConnection(connectionOptions);
   const server = new http.Server(app);
+  const socketHandlerFactory = new GameRoomSocketHandlerFactory();
 
   // socket server
   new SocketServer(
-    new GameRoomSocketHandlerFactory(),
+    socketHandlerFactory,
     server,
     sessionMiddleware,
     config.redis.host,
@@ -26,25 +45,4 @@ function startServer(): void {
   });
 }
 
-const connectionOptions: ConnectionOptions = {
-  type: 'postgres',
-  host: config.postgres.host,
-  port: config.postgres.port,
-  username: config.postgres.username,
-  password: config.postgres.password,
-  database: config.postgres.database,
-  entities: [
-    __dirname + '/entities/*.js'
-  ],
-  migrations: [
-    __dirname + '/migrations/*.js'
-  ],
-  synchronize: false,
-  logging: config.mode === 'development',
-};
-
-// Database connection
-createConnection(connectionOptions)
-  .then(connection => {
-    startServer();
-  });
+run();
