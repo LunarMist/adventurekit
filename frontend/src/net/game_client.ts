@@ -1,10 +1,10 @@
-import {AckCallback, ListenCallback, NetClient} from "Net/net_client";
+import {ListenCallback, NetClient} from 'Net/net_client';
 
 /**
  * Enum representing 'events' for network messages
  */
 enum EventType {
-  ChatMessage = "ChatMessage"
+  ChatMessage = 'ChatMessage'
 }
 
 /**
@@ -16,11 +16,11 @@ export class GameNetClient {
 
   }
 
-  sendChatMessage(message: string, ack: AckCallback = null): boolean {
-    return this.client.sendMessage(EventType.ChatMessage, message, ack);
+  sendChatMessage(message: string): void {
+    this.client.sendMessage(EventType.ChatMessage, message);
   }
 
-  listenChatMessage(cb: ListenCallback): boolean {
-    return this.client.listen(EventType.ChatMessage, cb);
+  listenChatMessage(cb: ListenCallback): void {
+    this.client.listen(EventType.ChatMessage, cb);
   }
 }

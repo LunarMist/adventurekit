@@ -1,5 +1,5 @@
-export type AckCallback = ((data: any) => void) | null;
-export type ListenCallback = (data: any) => void;
+export type AckCallback = (...data: any[]) => void;
+export type ListenCallback = (...data: any[]) => void;
 
 /**
  * A {@link NetClient} allows for simple event-based messages to be sent/received between the client and server.
@@ -17,13 +17,13 @@ export interface NetClient {
   close(): void;
 
   /**
-   * Send a single message to the server
+   * Send a single message to the server. If the last parameter is a callable, then it will use it as an ack callback.
+   * See {@link AckCallback}.
    *
    * @param event The event name (identifier)
    * @param data The data to send. In general, implementations should be able to handle any serializable type given.
-   * @param ack (optional) A callback indicating that the server received the message sent
    */
-  sendMessage(event: number | string, data: any, ack: AckCallback): boolean;
+  sendMessage(event: string, ...data: any[]): void;
 
   /**
    * Listen to the specified event
@@ -31,5 +31,5 @@ export interface NetClient {
    * @param event The event name (identifier)
    * @param cb The callback
    */
-  listen(event: number | string, cb: ListenCallback): boolean;
+  listen(event: string, cb: ListenCallback): void;
 }

@@ -1,20 +1,26 @@
-import * as io from "socket.io-client"
-import {AckCallback, ListenCallback, NetClient} from "Net/net_client";
-import Socket = SocketIOClient.Socket;
+import socketio from 'socket.io-client';
+import {ListenCallback, NetClient} from 'Net/net_client';
 
 /**
  * A socket.io implementation for {@link NetClient}.
  */
 export class SocketIONetClient implements NetClient {
-  private socket: Socket | null = null;
+  private socket: SocketIOClient.Socket | null = null;
 
-  constructor(readonly namespace: string = "") {
+  constructor(readonly namespace: string = '') {
 
   }
 
   open(): void {
+    if (this.socket !== null) {
+      if (!this.socket.connected) {
+        this.socket.open();
+      }
+      return;
+    }
+
     const uri = `//${document.domain}:${location.port}/${this.namespace}`;
-    this.socket = io.connect(uri, {
+    this.socket = socketio(uri, {
       transports: ['websocket', 'polling'] // Prefer websocket to long polling
     });
 
@@ -23,7 +29,7 @@ export class SocketIONetClient implements NetClient {
     });
 
     this.socket.on('disconnect', () => {
-      this.socket && console.log('SocketIO disconnected!');
+      console.log('SocketIO disconnected!');
     });
   }
 
@@ -31,29 +37,16 @@ export class SocketIONetClient implements NetClient {
     if (this.socket !== null && this.socket.connected) {
       this.socket.close();
     }
+    this.socket = null;
   }
 
-  sendMessage(event: number | string, data: any, ack: AckCallback): boolean {
-    this.ensureOpen();
-    this.socket && this.socket.emit(event.toString(), data, (d: any) => {
-      if (ack !== null) {
-        ack(d);
-      }
-    });
-    return true;
+  sendMessage(event: string, ...data: any[]): void {
+    this.open();
+    this.socket && this.socket.emit(event, ...data);
   }
 
-  listen(event: number | string, cb: ListenCallback): boolean {
-    this.ensureOpen();
-    this.socket && this.socket.on(event.toString(), cb);
-    return true;
-  }
-
-  private ensureOpen() {
-    if (this.socket === null) {
-      this.open();
-    } else if (!this.socket.connected) {
-      this.socket.connect();
-    }
+  listen(event: string, cb: ListenCallback): void {
+    this.open();
+    this.socket && this.socket.on(event, cb);
   }
 }
