@@ -124,7 +124,7 @@ export class RenderLoop {
   }
 
   run(): void {
-    if (typeof(window) === "undefined") {
+    if (typeof (window) === "undefined") {
       throw new Error("window must be defined");
     }
 
@@ -143,6 +143,9 @@ export class RenderLoop {
 
     // Init net
     this.netClient.open();
+    this.gameNetClient.listenUserProfile((user: string) => {
+      console.log(user);
+    });
 
     this.resizeCanvas();
 

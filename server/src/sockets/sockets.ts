@@ -25,8 +25,12 @@ export abstract class SocketHandler {
     return this.request.sessionStore;
   }
 
+  get passport() {
+    return this.session.passport;
+  }
+
   isAuthenticated(): boolean {
-    return this.session.passport.user !== undefined;
+    return this.passport.user !== undefined;
   }
 
   touchSession(): void {

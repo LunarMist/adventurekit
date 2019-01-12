@@ -1,17 +1,3 @@
-export function add(a: number, b: number) {
-  return a + b;
-}
+import {NetEventType} from './enums/net_event';
 
-export enum TestEnum {
-  ZERO = 0,
-  ONE,
-  TWO,
-  THREE,
-  FOUR,
-  FIVE,
-  SIX,
-  SEVEN,
-  EIGHT,
-  NINE,
-  TEN,
-}
+export {NetEventType};

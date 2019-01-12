@@ -1,11 +1,6 @@
-import {ListenCallback, NetClient} from 'Net/net_client';
+import {NetClient} from 'Net/net_client';
+import {NetEventType} from 'rpgcore-common';
 
-/**
- * Enum representing 'events' for network messages
- */
-enum EventType {
-  ChatMessage = 'ChatMessage'
-}
 
 /**
  * Used for sending all game-relevant messages between the client <--> server.
@@ -17,10 +12,14 @@ export class GameNetClient {
   }
 
   sendChatMessage(message: string): void {
-    this.client.sendMessage(EventType.ChatMessage, message);
+    this.client.sendMessage(NetEventType.ChatMessage, message);
   }
 
-  listenChatMessage(cb: ListenCallback): void {
-    this.client.listen(EventType.ChatMessage, cb);
+  listenChatMessage(cb: (message: string) => void): void {
+    this.client.listen(NetEventType.ChatMessage, cb);
+  }
+
+  listenUserProfile(cb: (username: string) => void): void {
+    this.client.listen(NetEventType.UserProfile, cb);
   }
 }
