@@ -135,64 +135,76 @@ app.post('/api/logout/', (req, res) => {
   return res.json({message: 'Success!'});
 });
 
-app.post('/api/register/', async (req, res) => {
-  if (!LoginUtils.validateUsername(req.body.username)) {
-    res.status(400);
-    return res.json({message: 'Invalid username'});
-  }
-
-  if (!LoginUtils.validateEmail(req.body.email)) {
-    res.status(400);
-    return res.json({message: 'Invalid email'});
-  }
-
-  if (!LoginUtils.validatePassword(req.body.password)) {
-    res.status(400);
-    return res.json({message: 'Invalid password'});
-  }
-
-  const user: User = await User.create(req.body.username, req.body.email, req.body.password);
-
-  // Login the user
-  req.login(createSessionStoredUser(user), err => {
-    if (err) {
-      console.error(err);
-      return res.json({message: 'Unable to login user'});
-    }
-    return res.json({message: 'Success!'});
-  });
-
-  // Sign the token, then send it off in an email
-  jwt.sign({id: user.id}, config.registration.jwtSecret, {expiresIn: '1 day'}, async (err, regToken) => {
-    // JWT sign error
-    if (err) {
-      console.error(err);
-      return;
+app.post('/api/register/', async (req, res, next) => {
+  try {
+    if (!LoginUtils.validateUsername(req.body.username)) {
+      res.status(400);
+      return res.json({message: 'Invalid username'});
     }
 
-    // Registration mail
-    await SGMail.send({
-      to: user.email,
-      from: 'no-reply@adventurekit.app',
-      subject: 'Please verify your email address',
-      text: `Verification link: ${config.registration.urlBase}/verify/?token=${regToken}`,
+    if (!LoginUtils.validateEmail(req.body.email)) {
+      res.status(400);
+      return res.json({message: 'Invalid email'});
+    }
+
+    if (!LoginUtils.validatePassword(req.body.password)) {
+      res.status(400);
+      return res.json({message: 'Invalid password'});
+    }
+
+    const user: User = await User.create(req.body.username, req.body.email, req.body.password);
+
+    // Login the user
+    req.login(createSessionStoredUser(user), err => {
+      if (err) {
+        console.error(err);
+        return res.json({message: 'Unable to login user'});
+      }
+      return res.json({message: 'Success!'});
     });
-  });
+
+    // Sign the token, then send it off in an email
+    jwt.sign({id: user.id}, config.registration.jwtSecret, {expiresIn: '1 day'}, async (err, regToken) => {
+      try {
+        // JWT sign error
+        if (err) {
+          console.error(err);
+          return;
+        }
+
+        // Registration mail
+        await SGMail.send({
+          to: user.email,
+          from: 'no-reply@adventurekit.app',
+          subject: 'Please verify your email address',
+          text: `Verification link: ${config.registration.urlBase}/verify/?token=${regToken}`,
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  } catch (e) {
+    next(e);
+  }
 });
 
-app.get('/verify/', (req, res) => {
+app.get('/verify/', (req, res, next) => {
   jwt.verify(req.query.token || '', config.registration.jwtSecret, async (err: VerifyErrors, decoded: any) => {
-    if (err) {
-      res.status(400);
-      return res.send('Invalid or expired token');
-    }
+    try {
+      if (err) {
+        res.status(400);
+        return res.send('Invalid or expired token');
+      }
 
-    // Set email verified
-    const user: User | undefined = await User.getById(decoded.id);
-    if (user !== undefined) {
-      await user.setEmailVerified(true);
+      // Set email verified
+      const user: User | undefined = await User.getById(decoded.id);
+      if (user !== undefined) {
+        await user.setEmailVerified(true);
+      }
+      return res.send('Success!');
+    } catch (e) {
+      next(e);
     }
-    return res.send('Success!');
   });
 });
 

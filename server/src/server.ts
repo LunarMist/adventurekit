@@ -25,7 +25,9 @@ async function run() {
     logging: config.mode === 'development',
   };
 
-  const conn = await createConnection(connectionOptions);
+  // Init typeorm connection
+  await createConnection(connectionOptions);
+
   const server = new http.Server(app);
   const socketHandlerFactory = new GameRoomSocketHandlerFactory();
 
@@ -45,4 +47,6 @@ async function run() {
   });
 }
 
-run();
+run().catch(err => {
+  throw new Error(err);
+});
