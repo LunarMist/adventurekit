@@ -143,8 +143,8 @@ export class RenderLoop {
 
     // Init net
     this.netClient.open();
-    this.gameNetClient.listenUserProfile((user: string) => {
-      console.log(user);
+    this.gameNetClient.listenUserProfile((username: string) => {
+      this.gameSettings.setUserProfile({username: username});
     });
 
     this.resizeCanvas();
