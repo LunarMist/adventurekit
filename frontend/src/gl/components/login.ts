@@ -62,7 +62,7 @@ export class LoginComponent extends SimpleRenderComponent {
         .then((response: AxiosResponse) => {
           this.successString = response.data.message;
           this.context.net.disconnect();
-          return this.context.settings.clearUserProfile();
+          return this.context.settings.onLogout();
         })
         .catch((error: AxiosError) => {
           if (error.response) {

@@ -24,31 +24,35 @@ export class GameSettings {
     });
   }
 
-  getActiveFont(): Promise<FontData | null> {
-    return this.store.getItem(SettingsKey.ActiveFont);
+  async getActiveFont() {
+    return this.store.getItem<FontData>(SettingsKey.ActiveFont);
   }
 
-  setActiveFont(data: FontData): Promise<FontData> {
-    return this.store.setItem(SettingsKey.ActiveFont, data);
+  async setActiveFont(data: FontData) {
+    return this.store.setItem<FontData>(SettingsKey.ActiveFont, data);
   }
 
-  getRegisteredFonts(): Promise<FontData[] | null> {
-    return this.store.getItem(SettingsKey.RegisteredFonts);
+  async getRegisteredFonts() {
+    return this.store.getItem<FontData[]>(SettingsKey.RegisteredFonts);
   }
 
-  setRegisteredFonts(data: FontData[]): Promise<FontData[]> {
-    return this.store.setItem(SettingsKey.RegisteredFonts, data);
+  async setRegisteredFonts(data: FontData[]) {
+    return this.store.setItem<FontData[]>(SettingsKey.RegisteredFonts, data);
   }
 
-  getUserProfile(): Promise<UserProfile | null> {
-    return this.store.getItem(SettingsKey.UserProfile);
+  async getUserProfile() {
+    return this.store.getItem<UserProfile>(SettingsKey.UserProfile);
   }
 
-  setUserProfile(profile: UserProfile): Promise<UserProfile> {
-    return this.store.setItem(SettingsKey.UserProfile, profile);
+  async setUserProfile(profile: UserProfile) {
+    return this.store.setItem<UserProfile>(SettingsKey.UserProfile, profile);
   }
 
-  clearUserProfile(): Promise<void> {
+  async clearUserProfile() {
     return this.store.removeItem(SettingsKey.UserProfile);
+  }
+
+  async onLogout() {
+    await this.clearUserProfile();
   }
 }
