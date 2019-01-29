@@ -5,10 +5,13 @@ import {
   getManager,
   getRepository,
   Index,
+  ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
 import bcrypt from 'bcrypt';
+import GameRoom from './room';
 
 @Entity()
 @Index('idx_case_insensitive_username', {synchronize: false})
@@ -35,6 +38,12 @@ export default class User {
 
   @Column({default: false})
   verified_email?: boolean;
+
+  @ManyToMany(type => GameRoom, game_room => game_room.members)
+  game_rooms?: GameRoom[];
+
+  @OneToMany(type => GameRoom, game_room => game_room.owner)
+  rooms_owned?: GameRoom[];
 
   private constructor(username: string, email: string, passwordHash: string) {
     this.username = username;
