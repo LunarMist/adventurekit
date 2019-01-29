@@ -16,11 +16,23 @@ export class GameRoomSocketHandler extends SocketHandler {
     }
 
     // Send user data on socket connection
-    this.socket.emit(NetEventType.UserProfile, this.passport.user.username);
+    this.sendUserProfile(this.passport.user.username);
 
-    this.listenAuthenticated(NetEventType.ChatMessage, (message: string) => {
-      this.io.emit(NetEventType.ChatMessage, message);
+    this.listenChatMessage((message: string) => {
+      this.sendChatMessage(message);
     });
+  }
+
+  listenChatMessage(cb: (message: string) => void) {
+    this.listenAuthenticated(NetEventType.ChatMessage, cb);
+  }
+
+  sendChatMessage(message: string) {
+    this.io.emit(NetEventType.ChatMessage, message);
+  }
+
+  sendUserProfile(username: string) {
+    this.socket.emit(NetEventType.UserProfile, username);
   }
 }
 

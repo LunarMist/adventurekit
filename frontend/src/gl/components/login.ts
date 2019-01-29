@@ -41,6 +41,7 @@ export class LoginComponent extends SimpleRenderComponent {
       Axios.post('/api/login/', qs.stringify(formData))
         .then((response: AxiosResponse) => {
           this.successString = response.data.message;
+          this.context.net.connect();
         })
         .catch((error: AxiosError) => {
           if (error.response) {
@@ -60,6 +61,8 @@ export class LoginComponent extends SimpleRenderComponent {
       Axios.post('/api/logout/')
         .then((response: AxiosResponse) => {
           this.successString = response.data.message;
+          this.context.net.disconnect();
+          return this.context.settings.clearUserProfile();
         })
         .catch((error: AxiosError) => {
           if (error.response) {

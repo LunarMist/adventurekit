@@ -37,7 +37,6 @@ export class SocketIONetClient implements NetClient {
     if (this.socket !== null && this.socket.connected) {
       this.socket.close();
     }
-    this.socket = null;
   }
 
   sendMessage(event: string, ...data: any[]): void {

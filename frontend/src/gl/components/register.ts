@@ -62,6 +62,7 @@ export class RegisterUserComponent extends SimpleRenderComponent {
           .then((response: AxiosResponse) => {
             // console.log(response);
             this.successString = response.data.message;
+            this.context.net.connect();
           })
           .catch((error: AxiosError) => {
             if (error.response) {

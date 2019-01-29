@@ -7,8 +7,16 @@ import {NetEventType} from 'rpgcore-common';
  * Uses an underlying {@link NetClient} for message transport.
  */
 export class GameNetClient {
-  constructor(readonly client: NetClient) {
+  constructor(private readonly client: NetClient) {
 
+  }
+
+  connect(): void {
+    this.client.open();
+  }
+
+  disconnect(): void {
+    this.client.close();
   }
 
   sendChatMessage(message: string): void {

@@ -47,4 +47,8 @@ export class GameSettings {
   setUserProfile(profile: UserProfile): Promise<UserProfile> {
     return this.store.setItem(SettingsKey.UserProfile, profile);
   }
+
+  clearUserProfile(): Promise<void> {
+    return this.store.removeItem(SettingsKey.UserProfile);
+  }
 }
