@@ -19,7 +19,7 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.sendUserProfile(this.passport.user.username);
 
     this.listenChatMessage((message: string) => {
-      this.sendChatMessage(message);
+      this.sendChatMessage(this.passport.user.username, message);
     });
   }
 
@@ -27,8 +27,8 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.listenAuthenticated(NetEventType.ChatMessage, cb);
   }
 
-  sendChatMessage(message: string) {
-    this.io.emit(NetEventType.ChatMessage, message);
+  sendChatMessage(speaker: string, message: string) {
+    this.io.emit(NetEventType.ChatMessage, speaker, message);
   }
 
   sendUserProfile(username: string) {

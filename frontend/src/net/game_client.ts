@@ -23,7 +23,7 @@ export class GameNetClient {
     this.client.sendMessage(NetEventType.ChatMessage, message);
   }
 
-  listenChatMessage(cb: (message: string) => void): void {
+  listenChatMessage(cb: (speaker: string, message: string) => void): void {
     this.client.listen(NetEventType.ChatMessage, cb);
   }
 

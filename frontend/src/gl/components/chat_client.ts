@@ -7,7 +7,7 @@ export class ChatWindowComponent extends SimpleRenderComponent {
   private chatLogs: string[] = [];
 
   init(): void {
-    this.net.listenChatMessage(message => this.chatLogs.push(message));
+    this.net.listenChatMessage((speaker, message) => this.chatLogs.push(`${speaker}: ${message}`));
   }
 
   render(): void {
