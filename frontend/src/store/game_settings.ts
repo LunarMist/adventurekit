@@ -1,4 +1,5 @@
 import localforage from 'localforage';
+import {FontData, UserProfile} from 'rpgcore-common';
 
 enum SettingsKey {
   ActiveFont = 'ActiveFont',
@@ -6,8 +7,6 @@ enum SettingsKey {
   UserProfile = 'UserProfile',
 }
 
-export type FontData = { name: string, url: string, pixelSize: number, glyphRange: number };
-export type UserProfile = { username: string };
 
 /**
  * Game settings
@@ -24,35 +23,35 @@ export class GameSettings {
     });
   }
 
-  async getActiveFont() {
+  async getActiveFont(): Promise<FontData | null> {
     return this.store.getItem<FontData>(SettingsKey.ActiveFont);
   }
 
-  async setActiveFont(data: FontData) {
+  async setActiveFont(data: FontData): Promise<FontData> {
     return this.store.setItem<FontData>(SettingsKey.ActiveFont, data);
   }
 
-  async getRegisteredFonts() {
+  async getRegisteredFonts(): Promise<FontData[] | null> {
     return this.store.getItem<FontData[]>(SettingsKey.RegisteredFonts);
   }
 
-  async setRegisteredFonts(data: FontData[]) {
+  async setRegisteredFonts(data: FontData[]): Promise<FontData[]> {
     return this.store.setItem<FontData[]>(SettingsKey.RegisteredFonts, data);
   }
 
-  async getUserProfile() {
+  async getUserProfile(): Promise<UserProfile | null> {
     return this.store.getItem<UserProfile>(SettingsKey.UserProfile);
   }
 
-  async setUserProfile(profile: UserProfile) {
+  async setUserProfile(profile: UserProfile): Promise<UserProfile> {
     return this.store.setItem<UserProfile>(SettingsKey.UserProfile, profile);
   }
 
-  async clearUserProfile() {
+  async clearUserProfile(): Promise<void> {
     return this.store.removeItem(SettingsKey.UserProfile);
   }
 
-  async onLogout() {
+  async onLogout(): Promise<void> {
     await this.clearUserProfile();
   }
 }

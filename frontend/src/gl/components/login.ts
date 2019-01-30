@@ -4,6 +4,7 @@ import * as ImGui from "ImGui/imgui";
 import {ImGuiInputTextFlags, ImGuiWindowFlags, ImStringBuffer, ImVec4} from "ImGui/imgui";
 import Axios, {AxiosError, AxiosResponse} from "axios";
 import qs from 'qs';
+import {UserProfile} from "rpgcore-common";
 
 
 // TODO: Client-sided validation
@@ -42,6 +43,11 @@ export class LoginComponent extends SimpleRenderComponent {
         .then((response: AxiosResponse) => {
           this.successString = response.data.message;
           this.context.net.connect();
+          this.context.net.sendUserProfileRequest()
+            .then((profile: UserProfile) => {
+              console.log(`Setting user profile: ${profile.username}`);
+              return this.context.settings.setUserProfile(profile);
+            });
         })
         .catch((error: AxiosError) => {
           if (error.response) {

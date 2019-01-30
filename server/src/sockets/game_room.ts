@@ -1,5 +1,5 @@
 import {SocketHandler, SocketHandlerFactory} from './sockets'
-import {NetEventType} from 'rpgcore-common';
+import {NetEventType, UserProfile} from 'rpgcore-common';
 
 /**
  * Game room socket.io handler.
@@ -15,11 +15,12 @@ export class GameRoomSocketHandler extends SocketHandler {
       return;
     }
 
-    // Send user data on socket connection
-    this.sendUserProfile(this.passport.user.username);
-
     this.listenChatMessage((message: string) => {
       this.sendChatMessage(this.passport.user.username, message);
+    });
+
+    this.listenUserProfileRequest(ack => {
+      ack({username: this.passport.user.username});
     });
   }
 
@@ -31,8 +32,8 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.io.emit(NetEventType.ChatMessage, speaker, message);
   }
 
-  sendUserProfile(username: string) {
-    this.socket.emit(NetEventType.UserProfile, username);
+  listenUserProfileRequest(cb: (ack: (profile: UserProfile) => void) => void) {
+    this.listenAuthenticated(NetEventType.UserProfile, cb);
   }
 }
 

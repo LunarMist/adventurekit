@@ -3,6 +3,7 @@ import * as ImGui from "ImGui/imgui";
 import {ImGuiInputTextFlags, ImGuiWindowFlags, ImStringBuffer, ImVec4} from "ImGui/imgui";
 import Axios, {AxiosError, AxiosResponse} from "axios";
 import qs from "qs";
+import {UserProfile} from "rpgcore-common";
 
 
 // the + 1 is for the null terminator
@@ -63,6 +64,11 @@ export class RegisterUserComponent extends SimpleRenderComponent {
             // console.log(response);
             this.successString = response.data.message;
             this.context.net.connect();
+            this.context.net.sendUserProfileRequest()
+              .then((profile: UserProfile) => {
+                console.log(`Setting user profile: ${profile.username}`);
+                return this.context.settings.setUserProfile(profile);
+              });
           })
           .catch((error: AxiosError) => {
             if (error.response) {

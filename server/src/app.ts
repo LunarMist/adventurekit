@@ -14,6 +14,7 @@ import jwt, {VerifyErrors} from 'jsonwebtoken';
 import config from './config/config';
 import User from './entities/user';
 import * as LoginUtils from './utils/login_utils';
+import {NextFunction, Request, Response} from 'express-serve-static-core';
 
 const RedisStore = connect_redis(express_session);
 
@@ -125,10 +126,17 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/login/',
-  passport.authenticate('local'),
-  (req, res) => {
+  passport.authenticate('local', {failWithError: true}),
+  (req: Request, res: Response, next: NextFunction) => {
     return res.json({message: 'Success!'});
-  });
+  }, (err: any, req: Request, res: Response, next: NextFunction) => {
+    if (err.status == 400 || err.status == 401) {
+      return res.json({message: 'Invalid username/password combination'});
+    } else {
+      return next(err);
+    }
+  }
+);
 
 app.post('/api/logout/', (req, res) => {
   req.logout();
@@ -184,6 +192,13 @@ app.post('/api/register/', async (req, res, next) => {
       }
     });
   } catch (e) {
+    if (e.message.includes('idx_case_insensitive_username')) {
+      res.status(400);
+      return res.json({message: 'Username already in use'});
+    } else if (e.message.includes('idx_case_insensitive_email')) {
+      res.status(400);
+      return res.json({message: 'Email already in use'});
+    }
     next(e);
   }
 });

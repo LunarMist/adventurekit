@@ -1,4 +1,3 @@
-export type AckCallback = (...data: any[]) => void;
 export type ListenCallback = (...data: any[]) => void;
 
 /**
@@ -17,13 +16,13 @@ export interface NetClient {
   close(): void;
 
   /**
-   * Send a single message to the server. If the last parameter is a callable, then it will use it as an ack callback.
-   * See {@link AckCallback}.
+   * Send a single message to the server.
    *
    * @param event The event name (identifier)
    * @param data The data to send. In general, implementations should be able to handle any serializable type given.
+   * @return A promise for a possible response
    */
-  sendMessage(event: string, ...data: any[]): void;
+  sendMessage<T>(event: string, ...data: any[]): Promise<T>;
 
   /**
    * Listen to the specified event

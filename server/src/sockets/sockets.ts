@@ -30,7 +30,7 @@ export abstract class SocketHandler {
   }
 
   isAuthenticated(): boolean {
-    return this.passport.user !== undefined;
+    return this.passport && this.passport.user !== undefined;
   }
 
   touchSession(): void {

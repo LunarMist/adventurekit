@@ -9,7 +9,8 @@ import {ImGuiImplWebGl} from "GL/imgui_impl_webgl";
 import {GameNetClient} from "Net/game_client";
 import {SocketIONetClient} from "Net/socketio_client";
 import {NetClient} from "Net/net_client";
-import {FontData, GameSettings} from "Store/game_settings";
+import {GameSettings} from "Store/game_settings";
+import {FontData, UserProfile} from "rpgcore-common";
 
 export class GameContext {
   dispatcher: EventDispatcher;
@@ -143,9 +144,11 @@ export class RenderLoop {
 
     // Init net
     this.netClient.open();
-    this.gameNetClient.listenUserProfile((username: string) => {
-      this.gameSettings.setUserProfile({username: username});
-    });
+    this.gameNetClient.sendUserProfileRequest()
+      .then((profile: UserProfile) => {
+        console.log(`Setting user profile: ${profile.username}`);
+        return this.gameSettings.setUserProfile(profile);
+      });
 
     this.resizeCanvas();
 

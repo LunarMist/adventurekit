@@ -39,9 +39,13 @@ export class SocketIONetClient implements NetClient {
     }
   }
 
-  sendMessage(event: string, ...data: any[]): void {
-    this.open();
-    this.socket && this.socket.emit(event, ...data);
+  async sendMessage<T>(event: string, ...data: any[]): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      this.open();
+      this.socket && this.socket.emit(event, ...data, (...ackData: any[]) => {
+        resolve(...ackData);
+      });
+    });
   }
 
   listen(event: string, cb: ListenCallback): void {
