@@ -19,7 +19,6 @@ export function validateUsername(username: string): boolean {
   if (!username || !ValidUsernameRegEx.test(username)) {
     return false;
   }
-  // TODO: Check for duplicates and return better error message
   return true;
 }
 
@@ -33,7 +32,6 @@ export function validateEmail(email: string): boolean {
   if (email.length > MaxEmailLength) {
     return false;
   }
-  // TODO: Check for duplicates and return better error message
   return true;
 }
 

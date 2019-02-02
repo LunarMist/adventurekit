@@ -70,7 +70,6 @@ export interface SocketHandlerFactory {
 
 /**
  * Base class with socket.io skeleton code.
- * TODO: Refactor into more generic handler class?
  */
 export class SocketServer {
   protected readonly io: SocketIO.Server;

@@ -48,6 +48,11 @@ export class SocketIONetClient implements NetClient {
     });
   }
 
+  sendSimpleMessage(event: string, ...data: any[]): void {
+    this.open();
+    this.socket && this.socket.emit(event, ...data);
+  }
+
   listen(event: string, cb: ListenCallback): void {
     this.open();
     this.socket && this.socket.on(event, cb);

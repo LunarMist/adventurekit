@@ -18,8 +18,8 @@ export class GameNetClient {
     this.client.close();
   }
 
-  async sendChatMessage(message: string): Promise<void> {
-    return this.client.sendMessage<void>(NetEventType.ChatMessage, message);
+  sendChatMessage(message: string): void {
+    this.client.sendSimpleMessage(NetEventType.ChatMessage, message);
   }
 
   listenChatMessage(cb: (speaker: string, message: string) => void): void {

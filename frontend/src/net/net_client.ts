@@ -24,6 +24,8 @@ export interface NetClient {
    */
   sendMessage<T>(event: string, ...data: any[]): Promise<T>;
 
+  sendSimpleMessage(event: string, ...data: any[]): void;
+
   /**
    * Listen to the specified event
    *
