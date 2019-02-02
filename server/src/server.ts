@@ -3,9 +3,9 @@ import http from 'http';
 import {ConnectionOptions, createConnection} from 'typeorm';
 
 import {app, sessionMiddleware} from './app';
-import {SocketServer} from './sockets/sockets';
-import config from './config/config';
-import {GameRoomSocketHandlerFactory} from './sockets/game_room';
+import {SocketServer} from 'Sockets/sockets';
+import config from 'Config/config';
+import {GameRoomSocketHandlerFactory} from 'Sockets/game_room';
 
 async function run() {
   const connectionOptions: ConnectionOptions = {

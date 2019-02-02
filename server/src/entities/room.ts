@@ -10,8 +10,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
-import User from './user';
 import bcrypt from 'bcrypt';
+
+import User from 'Entities/user';
 
 @Entity()
 export default class GameRoom {

@@ -2,19 +2,19 @@ import errorhandler from 'errorhandler';
 import path from 'path';
 import express from 'express';
 import express_session from 'express-session';
-import uuid from 'uuid/v4'
-import connect_redis from 'connect-redis'
+import uuid from 'uuid/v4';
+import connect_redis from 'connect-redis';
 import bodyParser from 'body-parser';
 import moment from 'moment';
 import passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
 import SGMail from '@sendgrid/mail';
 import jwt, {VerifyErrors} from 'jsonwebtoken';
-
-import config from './config/config';
-import User from './entities/user';
-import * as LoginUtils from './utils/login_utils';
 import {NextFunction, Request, Response} from 'express-serve-static-core';
+
+import config from 'Config/config';
+import User from 'Entities/user';
+import * as LoginUtils from 'Utils/login_utils';
 
 const RedisStore = connect_redis(express_session);
 

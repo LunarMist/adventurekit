@@ -1,7 +1,8 @@
-import {SocketHandler, SocketHandlerFactory} from './sockets'
 import {NetEventType, UserProfile} from 'rpgcore-common';
-import GameRoom from "../entities/room";
-import User from "../entities/user";
+
+import {SocketHandler, SocketHandlerFactory} from 'Sockets/sockets';
+import GameRoom from 'Entities/room';
+import User from 'Entities/user';
 
 /**
  * Game room socket.io handler.

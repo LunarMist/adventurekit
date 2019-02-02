@@ -11,7 +11,8 @@ import {
   UpdateDateColumn
 } from 'typeorm';
 import bcrypt from 'bcrypt';
-import GameRoom from './room';
+
+import GameRoom from 'Entities/room';
 
 @Entity()
 @Index('idx_case_insensitive_username', {synchronize: false})

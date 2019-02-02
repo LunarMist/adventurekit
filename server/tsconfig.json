@@ -12,7 +12,22 @@
     "moduleResolution": "node",
     "allowJs": true,
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "baseUrl": ".",
+    "paths": {
+      "Entities/*": [
+        "src/entities/*"
+      ],
+      "Utils/*": [
+        "src/utils/*"
+      ],
+      "Config/*": [
+        "src/config/*"
+      ],
+      "Sockets/*": [
+        "src/sockets/*"
+      ]
+    }
   },
   "exclude": [
     "node_modules"
