@@ -1,7 +1,9 @@
 import {
+  Column,
   CreateDateColumn,
   Entity,
   getManager,
+  getRepository,
   JoinTable,
   ManyToMany,
   ManyToOne,
@@ -9,6 +11,7 @@ import {
   UpdateDateColumn
 } from 'typeorm';
 import User from './user';
+import bcrypt from 'bcrypt';
 
 @Entity()
 export default class GameRoom {
@@ -18,6 +21,9 @@ export default class GameRoom {
 
   @ManyToOne(type => User, owner => owner.rooms_owned)
   owner: User;
+
+  @Column({length: 80, nullable: true})
+  password_hash: string;
 
   @ManyToMany(type => User, member => member.game_rooms)
   @JoinTable()
@@ -29,12 +35,39 @@ export default class GameRoom {
   @UpdateDateColumn()
   updated?: Date;
 
-  private constructor(owner: User) {
+  private constructor(owner: User, passwordHash: string | null) {
     this.owner = owner;
+    // @ts-ignore
+    // typeorm does not support string | null
+    // see https://github.com/typeorm/typeorm/issues/2567
+    this.password_hash = passwordHash;
   }
 
-  static async create(owner: User) {
-    const newRoom = new GameRoom(owner);
+  static async create(owner: User, password: string): Promise<GameRoom> {
+    let passwordHash = null;
+    if (password !== null && password.length > 1) {
+      passwordHash = await bcrypt.hash(password, 10);
+    }
+    const newRoom = new GameRoom(owner, passwordHash);
     return getManager().save(newRoom);
+  }
+
+  static async validate(id: number, password: string): Promise<GameRoom | undefined> {
+    const room: GameRoom | undefined = await GameRoom.getById(id);
+
+    if (room === undefined) {
+      return undefined;
+    }
+
+    if (room.password_hash === null) {
+      return room;
+    }
+
+    const verified: boolean = await bcrypt.compare(password, room.password_hash);
+    return verified ? room : undefined;
+  }
+
+  static async getById(id: number): Promise<GameRoom | undefined> {
+    return getRepository(GameRoom).findOne(id);
   }
 }
