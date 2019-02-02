@@ -17,7 +17,7 @@ import bcrypt from 'bcrypt';
 export default class GameRoom {
 
   @PrimaryGeneratedColumn()
-  id?: number;
+  id!: number;
 
   @ManyToOne(type => User, owner => owner.rooms_owned)
   owner: User;
@@ -30,10 +30,10 @@ export default class GameRoom {
   members?: User[];
 
   @CreateDateColumn()
-  created?: Date;
+  created!: Date;
 
   @UpdateDateColumn()
-  updated?: Date;
+  updated!: Date;
 
   private constructor(owner: User, passwordHash: string | null) {
     this.owner = owner;
@@ -45,7 +45,7 @@ export default class GameRoom {
 
   static async create(owner: User, password: string): Promise<GameRoom> {
     let passwordHash = null;
-    if (password !== null && password.length > 1) {
+    if (password !== null && password.length > 0) {
       passwordHash = await bcrypt.hash(password, 10);
     }
     const newRoom = new GameRoom(owner, passwordHash);

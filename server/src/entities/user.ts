@@ -19,7 +19,7 @@ import GameRoom from './room';
 export default class User {
 
   @PrimaryGeneratedColumn()
-  id?: number;
+  id!: number;
 
   @Column({length: 15, nullable: false})
   username: string;
@@ -31,13 +31,13 @@ export default class User {
   password_hash: string;
 
   @CreateDateColumn()
-  created?: Date;
+  created!: Date;
 
   @UpdateDateColumn()
-  updated?: Date;
+  updated!: Date;
 
   @Column({default: false})
-  verified_email?: boolean;
+  verified_email!: boolean;
 
   @ManyToMany(type => GameRoom, game_room => game_room.members)
   game_rooms?: GameRoom[];

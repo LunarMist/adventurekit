@@ -29,4 +29,12 @@ export class GameNetClient {
   async sendUserProfileRequest(): Promise<UserProfile> {
     return this.client.sendMessage<UserProfile>(NetEventType.UserProfile);
   }
+
+  async sendJoinRoomRequest(roomId: number, password: string): Promise<boolean> {
+    return this.client.sendMessage<boolean>(NetEventType.JoinRoom, roomId, password);
+  }
+
+  async sendCreateRoomRequest(password: string): Promise<number> {
+    return this.client.sendMessage<number>(NetEventType.CreateRoom, password);
+  }
 }

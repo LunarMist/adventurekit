@@ -7,10 +7,12 @@ import {AboutComponent} from "GL/components/about";
 import {RegisterUserComponent} from "GL/components/register";
 import {LoginComponent} from "GL/components/login";
 import {RenderLoop} from "GL/render";
+import {RoomComponent} from "GL/components/room";
 import * as ImGuiExport from "ImGui/imgui"
 
 export default function main(canvas: HTMLCanvasElement) {
   const components = [
+    new RoomComponent(),
     new DemoUIComponent(),
     new IOStateUIComponent(),
     new LostContextComponent(),
