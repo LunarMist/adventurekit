@@ -11,7 +11,7 @@ import {SocketIONetClient} from "Net/socketio_client";
 import {NetClient} from "Net/net_client";
 import PersistentGameSettings from "Store/persistent_game_settings";
 import InMemoryGameSettings from "Store/mem_game_settings";
-import {FontData, UserProfile} from "rpgcore-common";
+import {FontData, InitState} from "rpgcore-common";
 
 export class GameContext {
   dispatcher: EventDispatcher;
@@ -149,10 +149,10 @@ export class RenderLoop {
 
     // Init net
     this.netClient.open();
-    this.gameNetClient.sendUserProfileRequest()
-      .then((profile: UserProfile) => {
-        console.log(`Setting user profile: ${profile.username}`);
-        this.inMemoryGameSettings.userProfile = profile;
+    this.gameNetClient.sendInitStateRequest()
+      .then((initState: InitState) => {
+        this.inMemoryGameSettings.userProfile = initState.userProfile;
+        this.inMemoryGameSettings.roomId = initState.roomId;
       });
 
     this.resizeCanvas();

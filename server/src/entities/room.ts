@@ -8,6 +8,7 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
@@ -36,6 +37,9 @@ export default class GameRoom {
 
   @UpdateDateColumn()
   updated!: Date;
+
+  @OneToMany(type => User, user => user.default_room)
+  defaulted_rooms?: User[];
 
   private constructor(owner: User, passwordHash: string | null) {
     this.owner = owner;

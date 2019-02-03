@@ -11,7 +11,7 @@ export abstract class SocketHandler {
 
   }
 
-  abstract onConnection(): void;
+  abstract async onConnection(): Promise<void>;
 
   get request() {
     return this.socket.request;
@@ -103,7 +103,12 @@ export class SocketServer {
     });
 
     this.io.on('connection', s => {
-      this.handlerFactory.create(this.io, s).onConnection();
+      this.handlerFactory.create(this.io, s)
+        .onConnection()
+        .catch(err => {
+          console.log(err);
+          // TODO: How to actually handle error?
+        })
     });
   }
 }

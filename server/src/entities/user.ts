@@ -6,6 +6,7 @@ import {
   getRepository,
   Index,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
@@ -46,10 +47,24 @@ export default class User {
   @OneToMany(type => GameRoom, game_room => game_room.owner)
   rooms_owned?: GameRoom[];
 
+  @Column({default: null})
+  @ManyToOne(type => GameRoom, room => room.defaulted_rooms)
+  default_room!: GameRoom;
+
   private constructor(username: string, email: string, passwordHash: string) {
     this.username = username;
     this.email = email;
     this.password_hash = passwordHash;
+  }
+
+  async setEmailVerified(status: boolean = true): Promise<User> {
+    this.verified_email = status;
+    return getManager().save(this);
+  }
+
+  async setDefaultRoom(room: GameRoom): Promise<User> {
+    this.default_room = room;
+    return getManager().save(this);
   }
 
   static async create(username: string, email: string, password: string): Promise<User> {
@@ -85,10 +100,5 @@ export default class User {
       .createQueryBuilder('user')
       .where('user.email = LOWER(:email)', {email: email})
       .getOne();
-  }
-
-  async setEmailVerified(status: boolean = true): Promise<User> {
-    this.verified_email = status;
-    return getManager().save(this);
   }
 }
