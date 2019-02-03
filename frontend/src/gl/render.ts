@@ -11,7 +11,7 @@ import {SocketIONetClient} from "Net/socketio_client";
 import {NetClient} from "Net/net_client";
 import PersistentGameSettings from "Store/persistent_game_settings";
 import InMemoryGameSettings from "Store/mem_game_settings";
-import {FontData, InitState} from "rpgcore-common";
+import {FontData} from "rpgcore-common";
 
 export class GameContext {
   dispatcher: EventDispatcher;
@@ -149,11 +149,11 @@ export class RenderLoop {
 
     // Init net
     this.netClient.open();
-    this.gameNetClient.sendInitStateRequest()
-      .then((initState: InitState) => {
-        this.inMemoryGameSettings.userProfile = initState.userProfile;
-        this.inMemoryGameSettings.roomId = initState.roomId;
-      });
+    this.gameNetClient.listenInitState(initState => {
+      console.log("Setting initial state");
+      this.inMemoryGameSettings.userProfile = initState.userProfile;
+      this.inMemoryGameSettings.roomId = initState.roomId;
+    });
 
     this.resizeCanvas();
 

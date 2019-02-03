@@ -1,5 +1,5 @@
 import {NetClient} from 'Net/net_client';
-import {NetEventType, UserProfile, InitState} from 'rpgcore-common';
+import {InitState, NetEventType} from 'rpgcore-common';
 
 /**
  * Used for sending all game-relevant messages between the client <--> server.
@@ -26,8 +26,8 @@ export class GameNetClient {
     this.client.listen(NetEventType.ChatMessage, cb);
   }
 
-  async sendUserProfileRequest(): Promise<UserProfile> {
-    return this.client.sendMessage<UserProfile>(NetEventType.UserProfile);
+  listenInitState(cb: (initState: InitState) => void): void {
+    this.client.listen(NetEventType.InitState, cb);
   }
 
   async sendJoinRoomRequest(roomId: number, password: string): Promise<boolean> {
@@ -36,9 +36,5 @@ export class GameNetClient {
 
   async sendCreateRoomRequest(password: string): Promise<number> {
     return this.client.sendMessage<number>(NetEventType.CreateRoom, password);
-  }
-
-  async sendInitStateRequest(): Promise<InitState> {
-    return this.client.sendMessage<InitState>(NetEventType.InitState);
   }
 }

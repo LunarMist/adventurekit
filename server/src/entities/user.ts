@@ -47,7 +47,6 @@ export default class User {
   @OneToMany(type => GameRoom, game_room => game_room.owner)
   rooms_owned?: GameRoom[];
 
-  @Column({default: null})
   @ManyToOne(type => GameRoom, room => room.defaulted_rooms)
   default_room!: GameRoom;
 
@@ -85,7 +84,7 @@ export default class User {
   }
 
   static async getById(id: number): Promise<User | undefined> {
-    return getRepository(User).findOne(id);
+    return getRepository(User).findOne(id, {relations: ["default_room"]});
   }
 
   static async getByUsername(username: string): Promise<User | undefined> {

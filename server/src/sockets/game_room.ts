@@ -13,6 +13,10 @@ export class GameRoomSocketHandler extends SocketHandler {
   async onConnection(): Promise<void> {
     console.log(`User connected: ${this.socket.id}`);
 
+    this.socket.on('error', error => {
+      console.error(error);
+    });
+
     if (!this.isAuthenticated()) {
       // TODO: Relay back some type of message/alert?
       console.log(`User not authenticated: ${this.socket.id}. Disconnecting...`);
@@ -26,10 +30,6 @@ export class GameRoomSocketHandler extends SocketHandler {
       if (this.currentGameRoomId !== -1) {
         this.sendChatMessage(this.passport.user.username, message, this.formatRoomName(this.currentGameRoomId));
       }
-    });
-
-    this.listenUserProfileRequest(ack => {
-      ack({username: this.passport.user.username});
     });
 
     this.listenJoinRoomRequest(async (roomId, password, ack) => {
@@ -85,9 +85,7 @@ export class GameRoomSocketHandler extends SocketHandler {
       }
     });
 
-    this.listenInitStateRequest(async ack => {
-      ack({userProfile: {username: this.passport.user.username}, roomId: this.currentGameRoomId});
-    });
+    this.sendInitState({userProfile: {username: this.passport.user.username}, roomId: this.currentGameRoomId});
   }
 
   /*** Socket functions ***/
@@ -100,10 +98,6 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.io.to(room).emit(NetEventType.ChatMessage, speaker, message);
   }
 
-  listenUserProfileRequest(cb: (ack: (profile: UserProfile) => void) => void) {
-    this.listenAuthenticated(NetEventType.UserProfile, cb);
-  }
-
   listenJoinRoomRequest(cb: (roomId: number, password: string, ack: (status: boolean) => void) => void) {
     this.listenAuthenticated(NetEventType.JoinRoom, cb);
   }
@@ -112,8 +106,8 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.listenAuthenticated(NetEventType.CreateRoom, cb);
   }
 
-  listenInitStateRequest(cb: (ack: (initState: InitState) => void) => void) {
-    this.listenAuthenticated(NetEventType.InitState, cb);
+  sendInitState(initState: InitState) {
+    this.socket.emit(NetEventType.InitState, initState);
   }
 
   /*** Helper functions ***/
@@ -143,7 +137,9 @@ export class GameRoomSocketHandler extends SocketHandler {
             reject(err);
             return;
           }
-          this.currentGameRoomId = user.default_room.id;
+          if (user.default_room !== null) {
+            this.currentGameRoomId = user.default_room.id;
+          }
           resolve();
         });
       }
