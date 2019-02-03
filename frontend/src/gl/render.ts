@@ -276,6 +276,8 @@ export class RenderLoop {
 
     const avgFrameTime = this.prevFrameTimes.reduce((a, b) => a + b) / this.prevFrameTimes.length;
 
+    ImGui.Text(`Logged in as: ${this.inMemoryGameSettings.userProfile.username}`);
+    ImGui.Text(`Joined room: ${this.inMemoryGameSettings.roomId}`);
     ImGui.Text(`Frame perf: ${avgFrameTime.toFixed(3)} ms`);
     ImGui.Text(`Application average ${(1000.0 / ImGui.GetIO().Framerate).toFixed(3)} ms/frame (${ImGui.GetIO().Framerate.toFixed(1)} FPS)`);
 
