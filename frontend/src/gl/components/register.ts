@@ -63,11 +63,11 @@ export class RegisterUserComponent extends SimpleRenderComponent {
           .then((response: AxiosResponse) => {
             // console.log(response);
             this.successString = response.data.message;
-            this.context.net.connect();
-            this.context.net.sendUserProfileRequest()
+            this.net.connect();
+            this.net.sendUserProfileRequest()
               .then((profile: UserProfile) => {
                 console.log(`Setting user profile: ${profile.username}`);
-                return this.context.settings.setUserProfile(profile);
+                this.store.mem.userProfile = profile;
               });
           })
           .catch((error: AxiosError) => {

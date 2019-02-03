@@ -1,17 +1,15 @@
 import localforage from 'localforage';
-import {FontData, UserProfile} from 'rpgcore-common';
+import {FontData} from 'rpgcore-common';
 
 enum SettingsKey {
   ActiveFont = 'ActiveFont',
   RegisteredFonts = 'RegisteredFonts',
-  UserProfile = 'UserProfile',
 }
 
-
 /**
- * Game settings
+ * Persistent Game settings
  */
-export class GameSettings {
+export default class PersistentGameSettings {
   private readonly store: LocalForage;
 
   constructor() {
@@ -39,19 +37,7 @@ export class GameSettings {
     return this.store.setItem<FontData[]>(SettingsKey.RegisteredFonts, data);
   }
 
-  async getUserProfile(): Promise<UserProfile | null> {
-    return this.store.getItem<UserProfile>(SettingsKey.UserProfile);
-  }
-
-  async setUserProfile(profile: UserProfile): Promise<UserProfile> {
-    return this.store.setItem<UserProfile>(SettingsKey.UserProfile, profile);
-  }
-
-  async clearUserProfile(): Promise<void> {
-    return this.store.removeItem(SettingsKey.UserProfile);
-  }
-
   async onLogout(): Promise<void> {
-    await this.clearUserProfile();
+    // Nothing, for now
   }
 }

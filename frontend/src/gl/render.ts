@@ -9,21 +9,23 @@ import {ImGuiImplWebGl} from "GL/imgui_impl_webgl";
 import {GameNetClient} from "Net/game_client";
 import {SocketIONetClient} from "Net/socketio_client";
 import {NetClient} from "Net/net_client";
-import {GameSettings} from "Store/game_settings";
+import PersistentGameSettings from "Store/persistent_game_settings";
+import InMemoryGameSettings from "Store/mem_game_settings";
 import {FontData, UserProfile} from "rpgcore-common";
 
 export class GameContext {
   dispatcher: EventDispatcher;
   io: State;
   net: GameNetClient;
-  settings: GameSettings;
+  store: { p: PersistentGameSettings, mem: InMemoryGameSettings };
   gl: WebGLRenderingContext;
 
-  constructor(dispatcher: EventDispatcher, io: State, net: GameNetClient, settings: GameSettings, gl: WebGLRenderingContext) {
+  constructor(dispatcher: EventDispatcher, io: State, net: GameNetClient,
+              p: PersistentGameSettings, mem: InMemoryGameSettings, gl: WebGLRenderingContext) {
     this.dispatcher = dispatcher;
     this.io = io;
     this.net = net;
-    this.settings = settings;
+    this.store = {p, mem};
     this.gl = gl;
   }
 }
@@ -59,8 +61,8 @@ export abstract class SimpleRenderComponent implements RenderComponent {
     return this.context.net;
   }
 
-  get settings(): GameSettings {
-    return this.context.settings;
+  get store() {
+    return this.context.store;
   }
 
   get gl(): WebGLRenderingContext {
@@ -95,7 +97,8 @@ export class RenderLoop {
 
   private readonly netClient: NetClient;
   private readonly gameNetClient: GameNetClient;
-  private readonly gameSettings: GameSettings;
+  private readonly persistentGameSettings: PersistentGameSettings;
+  private readonly inMemoryGameSettings: InMemoryGameSettings;
 
   private prevTime: number = 0;
   private prevFrameTimes: number[] = [];
@@ -108,14 +111,16 @@ export class RenderLoop {
 
     this.netClient = new SocketIONetClient();
     this.gameNetClient = new GameNetClient(this.netClient);
-    this.gameSettings = new GameSettings();
+    this.persistentGameSettings = new PersistentGameSettings();
+    this.inMemoryGameSettings = new InMemoryGameSettings();
 
     const newGl = canvas.getContext("webgl");
     if (newGl === null) {
       throw Error("Gl context cannot be null");
     }
 
-    this.gameContext = new GameContext(this.ioLifeCycle.dispatcher, this.ioLifeCycle.ioState, this.gameNetClient, this.gameSettings, newGl);
+    this.gameContext = new GameContext(this.ioLifeCycle.dispatcher, this.ioLifeCycle.ioState,
+      this.gameNetClient, this.persistentGameSettings, this.inMemoryGameSettings, newGl);
 
     this.imGuiWebGlHelper = new ImGuiImplWebGl(this.gameContext);
 
@@ -147,7 +152,7 @@ export class RenderLoop {
     this.gameNetClient.sendUserProfileRequest()
       .then((profile: UserProfile) => {
         console.log(`Setting user profile: ${profile.username}`);
-        return this.gameSettings.setUserProfile(profile);
+        this.inMemoryGameSettings.userProfile = profile;
       });
 
     this.resizeCanvas();
@@ -308,7 +313,7 @@ export class RenderLoop {
 
     const DefaultFontName = "Fonts/NotoSans-Regular.ttf";
 
-    const activeFont: FontData | null = await this.gameSettings.getActiveFont();
+    const activeFont: FontData | null = await this.persistentGameSettings.getActiveFont();
     if (activeFont === null) {
       console.log(`No active font defined. Using: ${DefaultFontName}`);
 

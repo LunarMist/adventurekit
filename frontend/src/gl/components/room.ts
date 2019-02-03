@@ -31,7 +31,7 @@ export class RoomComponent extends SimpleRenderComponent {
       if (!isNumber) {
         this.errorString = "Room Id must be a number";
       } else {
-        this.context.net.sendJoinRoomRequest(Number(this.roomIdBuffer.buffer), this.passwordBuffer.buffer)
+        this.net.sendJoinRoomRequest(Number(this.roomIdBuffer.buffer), this.passwordBuffer.buffer)
           .then((status: boolean) => {
             if (status) {
               this.successString = "Successfully joined the room";
@@ -49,7 +49,7 @@ export class RoomComponent extends SimpleRenderComponent {
       this.errorString = "";
       this.successString = "";
 
-      this.context.net.sendCreateRoomRequest(this.passwordBuffer.buffer)
+      this.net.sendCreateRoomRequest(this.passwordBuffer.buffer)
         .then((roomId: number) => {
           if (roomId != -1) {
             this.successString = "Successfully created the room";
