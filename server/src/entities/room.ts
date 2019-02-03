@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  getConnection,
   getManager,
   getRepository,
   JoinTable,
@@ -42,6 +43,14 @@ export default class GameRoom {
     // typeorm does not support string | null
     // see https://github.com/typeorm/typeorm/issues/2567
     this.password_hash = passwordHash;
+  }
+
+  async addMember(userId: number): Promise<void> {
+    return getConnection()
+      .createQueryBuilder()
+      .relation(GameRoom, "members")
+      .of(this)
+      .add(userId);
   }
 
   static async create(owner: User, password: string): Promise<GameRoom> {

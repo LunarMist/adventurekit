@@ -31,10 +31,12 @@ export class RoomComponent extends SimpleRenderComponent {
       if (!isNumber) {
         this.errorString = "Room Id must be a number";
       } else {
-        this.net.sendJoinRoomRequest(Number(this.roomIdBuffer.buffer), this.passwordBuffer.buffer)
+        const roomIdNum = Number(this.roomIdBuffer.buffer);
+        this.net.sendJoinRoomRequest(roomIdNum, this.passwordBuffer.buffer)
           .then((status: boolean) => {
             if (status) {
               this.successString = "Successfully joined the room";
+              this.store.mem.roomId = roomIdNum;
             } else {
               this.errorString = "Please check roomId/password combination";
             }

@@ -8,6 +8,8 @@ import User from '../entities/user';
  * Game room socket.io handler.
  */
 export class GameRoomSocketHandler extends SocketHandler {
+  private currentGameRoom: string | null = null;
+
   onConnection(): void {
     console.log(`User connected: ${this.socket.id}`);
 
@@ -19,7 +21,9 @@ export class GameRoomSocketHandler extends SocketHandler {
     }
 
     this.listenChatMessage((message: string) => {
-      this.sendChatMessage(this.passport.user.username, message);
+      if (this.currentGameRoom !== null) {
+        this.sendChatMessage(this.passport.user.username, message, this.currentGameRoom);
+      }
     });
 
     this.listenUserProfileRequest(ack => {
@@ -33,7 +37,20 @@ export class GameRoomSocketHandler extends SocketHandler {
           ack(false);
           return;
         }
-        // TODO: Actually join the room
+        // Leave old rooms
+        Object.keys(this.socket.rooms)
+          .filter(r => r !== this.socket.id)
+          .forEach(r => this.socket.leave(r));
+
+        // Join new room
+        const roomName = this.formatRoomName(room.id);
+        this.socket.join(roomName, () => {
+          this.currentGameRoom = roomName;
+        });
+
+        // Add to db
+        await room.addMember(this.passport.user.id);
+
         ack(true);
       } catch (e) {
         console.error(e);
@@ -61,8 +78,8 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.listenAuthenticated(NetEventType.ChatMessage, cb);
   }
 
-  sendChatMessage(speaker: string, message: string) {
-    this.io.emit(NetEventType.ChatMessage, speaker, message);
+  sendChatMessage(speaker: string, message: string, room: string) {
+    this.io.to(room).emit(NetEventType.ChatMessage, speaker, message);
   }
 
   listenUserProfileRequest(cb: (ack: (profile: UserProfile) => void) => void) {
@@ -75,6 +92,10 @@ export class GameRoomSocketHandler extends SocketHandler {
 
   listenCreateRoomRequest(cb: (password: string, ack: (roomId: number) => void) => void) {
     this.listenAuthenticated(NetEventType.CreateRoom, cb);
+  }
+
+  formatRoomName(roomId: number): string {
+    return `gr-${roomId}`;
   }
 }
 
