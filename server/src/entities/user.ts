@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import bcrypt from 'bcrypt';
 
-import GameRoom from 'Entities/room';
+import GameRoom from './room';
 
 @Entity()
 @Index('idx_case_insensitive_username', {synchronize: false})

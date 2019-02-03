@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import bcrypt from 'bcrypt';
 
-import User from 'Entities/user';
+import User from './user';
 
 @Entity()
 export default class GameRoom {

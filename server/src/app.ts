@@ -12,9 +12,9 @@ import SGMail from '@sendgrid/mail';
 import jwt, {VerifyErrors} from 'jsonwebtoken';
 import {NextFunction, Request, Response} from 'express-serve-static-core';
 
-import config from 'Config/config';
-import User from 'Entities/user';
-import * as LoginUtils from 'Utils/login_utils';
+import config from './config/config';
+import User from './entities/user';
+import * as LoginUtils from './utils/login_utils';
 
 const RedisStore = connect_redis(express_session);
 
