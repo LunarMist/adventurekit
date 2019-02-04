@@ -38,11 +38,20 @@ export class GameRoomSocketHandler extends SocketHandler {
 
     this.listenJoinRoomRequest(async (roomId, password, ack) => {
       try {
-        const room: GameRoom | undefined = await GameRoom.validate(roomId, password);
+        const room = await GameRoom.validate(roomId, password);
         if (room === undefined) {
           ack(false);
           return;
         }
+        const user = await this.getCurrentUser();
+        if (user === undefined) {
+          ack(false);
+          return;
+        }
+
+        // Modify db
+        await user.setDefaultRoom(room);
+        await room.addMember(this.passport.user.id);
 
         // Leave old rooms
         const promises = Object.keys(this.socket.rooms)
@@ -69,12 +78,6 @@ export class GameRoomSocketHandler extends SocketHandler {
               ack(false);
               return;
             }
-            const user = await this.getCurrentUser();
-            if (user === undefined) {
-              ack(false);
-              return;
-            }
-            await user.setDefaultRoom(room);
             this.currentGameRoomId = room.id;
             ack(true);
           } catch (e) {
@@ -82,9 +85,6 @@ export class GameRoomSocketHandler extends SocketHandler {
             ack(false);
           }
         });
-
-        // Add to db
-        await room.addMember(this.passport.user.id);
       } catch (e) {
         console.error(e);
         ack(false);
