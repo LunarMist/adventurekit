@@ -27,7 +27,6 @@ export function validateEmail(email: string): boolean {
   if (!email || !ValidEmailRegEx.test(email)) {
     return false;
   }
-
   // Check length
   if (email.length > MaxEmailLength) {
     return false;

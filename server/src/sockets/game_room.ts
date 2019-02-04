@@ -1,4 +1,4 @@
-import {InitState, NetEventType, UserProfile} from 'rpgcore-common';
+import {InitState, NetEventType} from 'rpgcore-common';
 
 import {SocketHandler, SocketHandlerFactory} from './sockets';
 import GameRoom from '../entities/room';
@@ -13,10 +13,12 @@ export class GameRoomSocketHandler extends SocketHandler {
   async onConnection(): Promise<void> {
     console.log(`User connected: ${this.socket.id}`);
 
+    // First thing: Register error handler
     this.socket.on('error', error => {
       console.error(error);
     });
 
+    // Important: Ensure we are authenticated!
     if (!this.isAuthenticated()) {
       // TODO: Relay back some type of message/alert?
       console.log(`User not authenticated: ${this.socket.id}. Disconnecting...`);
@@ -24,11 +26,13 @@ export class GameRoomSocketHandler extends SocketHandler {
       return;
     }
 
+    // Join the default room
+    // This should be one of the first things done
     await this.joinDefaultRoom();
 
     this.listenChatMessage((message: string) => {
       if (this.currentGameRoomId !== -1) {
-        this.sendChatMessage(this.passport.user.username, message, this.formatRoomName(this.currentGameRoomId));
+        this.sendChatMessage(this.passport.user.username, message, GameRoomSocketHandler.formatRoomName(this.currentGameRoomId));
       }
     });
 
@@ -39,27 +43,44 @@ export class GameRoomSocketHandler extends SocketHandler {
           ack(false);
           return;
         }
+
         // Leave old rooms
-        Object.keys(this.socket.rooms)
+        const promises = Object.keys(this.socket.rooms)
           .filter(r => r !== this.socket.id)
-          .forEach(r => this.socket.leave(r));
+          .map(r => new Promise<void>((resolve, reject) => {
+            this.socket.leave(r, (err: any) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve();
+            });
+          }));
+
+        // Wait to leave all the rooms
+        await Promise.all(promises);
 
         // Join new room
-        const roomName = this.formatRoomName(room.id);
+        const roomName = GameRoomSocketHandler.formatRoomName(room.id);
         this.socket.join(roomName, async err => {
-          if (err) {
-            console.log(err);
+          try {
+            if (err) {
+              console.error(err);
+              ack(false);
+              return;
+            }
+            const user = await this.getCurrentUser();
+            if (user === undefined) {
+              ack(false);
+              return;
+            }
+            await user.setDefaultRoom(room);
+            this.currentGameRoomId = room.id;
+            ack(true);
+          } catch (e) {
+            console.error(e);
             ack(false);
-            return;
           }
-          const user = await this.getCurrentUser();
-          if (user === undefined) {
-            ack(false);
-            return;
-          }
-          await user.setDefaultRoom(room);
-          this.currentGameRoomId = room.id;
-          ack(true);
         });
 
         // Add to db
@@ -77,7 +98,7 @@ export class GameRoomSocketHandler extends SocketHandler {
           ack(-1);
           return;
         }
-        const newRoom: GameRoom = await GameRoom.create(user, password);
+        const newRoom: GameRoom = await GameRoom.create(user, password || '');
         ack(newRoom.id);
       } catch (e) {
         console.error(e);
@@ -112,7 +133,7 @@ export class GameRoomSocketHandler extends SocketHandler {
 
   /*** Helper functions ***/
 
-  formatRoomName(roomId: number): string {
+  static formatRoomName(roomId: number): string {
     return `gr-${roomId}`;
   }
 
@@ -122,31 +143,38 @@ export class GameRoomSocketHandler extends SocketHandler {
 
   joinDefaultRoom(): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
-      const user = await this.getCurrentUser();
-      if (user === undefined) {
-        reject("Could not fetch current user");
-        return;
-      }
+      try {
+        const user = await this.getCurrentUser();
+        if (user === undefined) {
+          reject('Could not fetch current user');
+          return;
+        }
 
-      if (user.default_room === null) {
-        resolve();
-      } else {
-        const roomName = this.formatRoomName(user.default_room.id);
-        this.socket.join(roomName, err => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          if (user.default_room !== null) {
-            this.currentGameRoomId = user.default_room.id;
-          }
+        if (user.default_room === null) {
           resolve();
-        });
+        } else {
+          const roomName = GameRoomSocketHandler.formatRoomName(user.default_room.id);
+          this.socket.join(roomName, err => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            if (user.default_room !== null) {
+              this.currentGameRoomId = user.default_room.id;
+            }
+            resolve();
+          });
+        }
+      } catch (e) {
+        reject(e);
       }
     });
   }
 }
 
+/**
+ * {@link GameRoomSocketHandler} factory class
+ */
 export class GameRoomSocketHandlerFactory implements SocketHandlerFactory {
   create(io: SocketIO.Server, socket: SocketIO.Socket): SocketHandler {
     return new GameRoomSocketHandler(io, socket);

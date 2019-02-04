@@ -3,7 +3,6 @@
  */
 export enum NetEventType {
   ChatMessage = 'ChatMessage',
-  UserProfile = 'UserProfile',
   JoinRoom = 'JoinRoom',
   CreateRoom = 'CreateRoom',
   InitState = 'InitState',

@@ -10,7 +10,7 @@ export class UserUniqIndex1546637395257 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(`DROP INDEX "idx_case_insensitive_username"`);
     await queryRunner.query(`DROP INDEX "idx_case_insensitive_email"`);
+    await queryRunner.query(`DROP INDEX "idx_case_insensitive_username"`);
   }
 }

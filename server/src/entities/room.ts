@@ -25,7 +25,7 @@ export default class GameRoom {
   @ManyToOne(type => User, owner => owner.rooms_owned)
   owner: User;
 
-  @Column({length: 80, nullable: true})
+  @Column({length: 80, nullable: false})
   password_hash: string;
 
   @ManyToMany(type => User, member => member.game_rooms)
@@ -41,47 +41,42 @@ export default class GameRoom {
   @OneToMany(type => User, user => user.default_room)
   defaulted_rooms?: User[];
 
-  private constructor(owner: User, passwordHash: string | null) {
+  private constructor(owner: User, passwordHash: string) {
     this.owner = owner;
-    // @ts-ignore
-    // typeorm does not support string | null
-    // see https://github.com/typeorm/typeorm/issues/2567
     this.password_hash = passwordHash;
   }
 
   async addMember(userId: number): Promise<void> {
     return getConnection()
       .createQueryBuilder()
-      .relation(GameRoom, "members")
+      .relation(GameRoom, 'members')
       .of(this)
-      .add(userId);
+      .add(userId)
+      .catch(e => {
+        if (e.message.includes('duplicate key value')) {
+          return;
+        } else {
+          throw e;
+        }
+      });
   }
 
   static async create(owner: User, password: string): Promise<GameRoom> {
-    let passwordHash = null;
-    if (password !== null && password.length > 0) {
-      passwordHash = await bcrypt.hash(password, 10);
-    }
+    const passwordHash = await bcrypt.hash(password || '', 10);
     const newRoom = new GameRoom(owner, passwordHash);
     return getManager().save(newRoom);
   }
 
   static async validate(id: number, password: string): Promise<GameRoom | undefined> {
     const room: GameRoom | undefined = await GameRoom.getById(id);
-
     if (room === undefined) {
       return undefined;
     }
-
-    if (room.password_hash === null) {
-      return room;
-    }
-
     const verified: boolean = await bcrypt.compare(password, room.password_hash);
     return verified ? room : undefined;
   }
 
   static async getById(id: number): Promise<GameRoom | undefined> {
-    return getRepository(GameRoom).findOne(id);
+    return getRepository(GameRoom).findOne(id, {relations: ['owner']});
   }
 }

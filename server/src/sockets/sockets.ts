@@ -3,6 +3,9 @@ import socketio from 'socket.io';
 import socketio_redis from 'socket.io-redis';
 import {RequestHandler} from 'express';
 
+/**
+ * A {@link SocketHandler} implementation handles serving requests for a single socket
+ */
 export abstract class SocketHandler {
   constructor(
     readonly io: SocketIO.Server,
@@ -30,14 +33,18 @@ export abstract class SocketHandler {
   }
 
   isAuthenticated(): boolean {
-    return this.passport && this.passport.user !== undefined;
+    return this.passport && this.passport.user !== undefined && this.passport.user !== null;
   }
 
   touchSession(): void {
     // TODO: Implement better other than reaching in and doing this manually
     const key = this.sessionStore.prefix + this.session.id;
     const ttl = this.sessionStore.ttl;
-    this.sessionStore.client.expire(key, ttl);
+    this.sessionStore.client.expire(key, ttl, (err: Error | null, reply: number) => {
+      if (err) {
+        console.error(err);
+      }
+    });
   }
 
   disconnect(): void {
@@ -48,7 +55,6 @@ export abstract class SocketHandler {
     this.socket.on(event, (...captureArgs: any[]) => {
       this.session.reload((err: any) => {
         if (err) {
-          // TODO: Something better
           console.error(err);
           return;
         }
@@ -64,12 +70,15 @@ export abstract class SocketHandler {
   }
 }
 
+/**
+ * {@link SocketHandler} factory class
+ */
 export interface SocketHandlerFactory {
   create(io: SocketIO.Server, socket: SocketIO.Socket): SocketHandler;
 }
 
 /**
- * Base class with socket.io skeleton code.
+ * Handles creation of socket handlers
  */
 export class SocketServer {
   protected readonly io: SocketIO.Server;
@@ -106,9 +115,8 @@ export class SocketServer {
       this.handlerFactory.create(this.io, s)
         .onConnection()
         .catch(err => {
-          console.log(err);
-          // TODO: How to actually handle error?
-        })
+          console.error(err);
+        });
     });
   }
 }
