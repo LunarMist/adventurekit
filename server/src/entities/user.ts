@@ -90,7 +90,7 @@ export default class User {
   static async getByUsername(username: string): Promise<User | undefined> {
     return getRepository(User)
       .createQueryBuilder('user')
-      .where('user.username = LOWER(:username)', {username: username})
+      .where('LOWER(user.username) = LOWER(:username)', {username: username})
       .leftJoinAndSelect('user.default_room', 'default_room')
       .getOne();
   }
@@ -98,7 +98,7 @@ export default class User {
   static async getByEmail(email: string): Promise<User | undefined> {
     return getRepository(User)
       .createQueryBuilder('user')
-      .where('user.email = LOWER(:email)', {email: email})
+      .where('LOWER(user.email) = LOWER(:email)', {email: email})
       .leftJoinAndSelect('user.default_room', 'default_room')
       .getOne();
   }

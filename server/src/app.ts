@@ -15,8 +15,9 @@ import {NextFunction, Request, Response} from 'express-serve-static-core';
 import config from './config/config';
 import User from './entities/user';
 import * as LoginUtils from './utils/login_utils';
+import * as util from 'util';
 
-const RedisStore = connect_redis(express_session);
+const SessionRedisStore = connect_redis(express_session);
 
 const templatesRoot = path.resolve(__dirname, '..', 'templates');
 const bundleRoot = path.resolve(__dirname, '..', '..', 'frontend', 'build');
@@ -57,11 +58,12 @@ passport.use(new LocalStrategy(
       const user: User | undefined = await User.validate(email, password);
       // User does not exist, or incorrect credentials
       if (user === undefined) {
-        return done(null, false);
+        done(null, false);
+      } else {
+        done(null, createSessionStoredUser(user));
       }
-      return done(null, createSessionStoredUser(user));
     } catch (e) {
-      return done(e);
+      done(e);
     }
   }
 ));
@@ -95,7 +97,7 @@ const sessionMiddleware = express_session({
   resave: false,
   saveUninitialized: true,
   secret: config.session.secret,
-  store: new RedisStore({
+  store: new SessionRedisStore({
     host: config.redis.host,
     port: config.redis.port,
     ttl: moment.duration(config.session.ttl).asSeconds(),
@@ -120,86 +122,79 @@ app.set('view engine', 'pug');
 /*** Routes ***/
 
 app.get('/', (req, res) => {
-  return res.render('index', {
+  res.render('index', {
     bundlePath: bundleManifest['main.js']
   });
 });
 
 app.post('/api/login/',
   passport.authenticate('local', {failWithError: true}),
-  (req: Request, res: Response, next: NextFunction) => {
-    return res.json({message: 'Success!'});
-  }, (err: any, req: Request, res: Response, next: NextFunction) => {
-    if (err.status == 400 || err.status == 401) {
-      return res.json({message: 'Invalid username/password combination'});
+  (req: Request, res: Response, next: NextFunction) => res.json({message: 'Success!'}),
+  (err: any, req: Request, res: Response, next: NextFunction) => {
+    if (err.status === 400 || err.status === 401) {
+      res.json({message: 'Invalid username/password combination'});
     } else {
-      return next(err);
+      next(err);
     }
   }
 );
 
 app.post('/api/logout/', (req, res) => {
   req.logout();
-  return res.json({message: 'Success!'});
+  res.json({message: 'Success!'});
 });
 
 app.post('/api/register/', async (req, res, next) => {
   try {
     if (!LoginUtils.validateUsername(req.body.username)) {
       res.status(400);
-      return res.json({message: 'Invalid username'});
+      res.json({message: 'Invalid username'});
+      return;
     }
 
     if (!LoginUtils.validateEmail(req.body.email)) {
       res.status(400);
-      return res.json({message: 'Invalid email'});
+      res.json({message: 'Invalid email'});
+      return;
     }
 
     if (!LoginUtils.validatePassword(req.body.password)) {
       res.status(400);
-      return res.json({message: 'Invalid password'});
+      res.json({message: 'Invalid password'});
+      return;
     }
 
+    // Create the user
     const user: User = await User.create(req.body.username, req.body.email, req.body.password);
 
     // Login the user
-    req.login(createSessionStoredUser(user), err => {
-      if (err) {
-        console.error(err);
-        return res.json({message: 'Unable to login user'});
-      }
-      return res.json({message: 'Success!'});
+    const loginFunc = util.promisify<any>(req.login.bind(req));
+    await loginFunc(createSessionStoredUser(user));
+
+    // Sign the token with jwt
+    const jwtSignFunc = util.promisify<any, any, any, any>(jwt.sign.bind(jwt));
+    const regToken = await jwtSignFunc({id: user.id}, config.registration.jwtSecret, {expiresIn: '1 day'});
+
+    // Send a registration mail
+    await SGMail.send({
+      to: user.email,
+      from: 'no-reply@adventurekit.app',
+      subject: 'Please verify your email address',
+      text: `Verification link: ${config.registration.urlBase}/verify/?token=${regToken}`,
     });
 
-    // Sign the token, then send it off in an email
-    jwt.sign({id: user.id}, config.registration.jwtSecret, {expiresIn: '1 day'}, async (err, regToken) => {
-      try {
-        // JWT sign error
-        if (err) {
-          console.error(err);
-          return;
-        }
-
-        // Registration mail
-        await SGMail.send({
-          to: user.email,
-          from: 'no-reply@adventurekit.app',
-          subject: 'Please verify your email address',
-          text: `Verification link: ${config.registration.urlBase}/verify/?token=${regToken}`,
-        });
-      } catch (e) {
-        console.error(e);
-      }
-    });
+    // Report success
+    res.json({message: 'Success!'});
   } catch (e) {
     if (e.message.includes('idx_case_insensitive_username')) {
       res.status(400);
-      return res.json({message: 'Username already in use'});
+      res.json({message: 'Username already in use'});
     } else if (e.message.includes('idx_case_insensitive_email')) {
       res.status(400);
-      return res.json({message: 'Email already in use'});
+      res.json({message: 'Email already in use'});
+    } else {
+      next(e);
     }
-    next(e);
   }
 });
 
@@ -208,7 +203,8 @@ app.get('/verify/', (req, res, next) => {
     try {
       if (err) {
         res.status(400);
-        return res.send('Invalid or expired token');
+        res.send('Invalid or expired token');
+        return;
       }
 
       // Set email verified
@@ -216,7 +212,7 @@ app.get('/verify/', (req, res, next) => {
       if (user !== undefined) {
         await user.setEmailVerified(true);
       }
-      return res.send('Success!');
+      res.send('Success!');
     } catch (e) {
       next(e);
     }
@@ -225,9 +221,9 @@ app.get('/verify/', (req, res, next) => {
 
 app.get('/authorized/', (req, res) => {
   if (req.isAuthenticated()) {
-    return res.send(`Authenticated as: ${req.user.username}`);
+    res.send(`Authenticated as: ${req.user.username}`);
   } else {
-    return res.send('Anonymous');
+    res.send('Anonymous');
   }
 });
 

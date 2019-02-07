@@ -3,6 +3,7 @@ import {InitState, NetEventType} from 'rpgcore-common';
 import {SocketHandler, SocketHandlerFactory} from './sockets';
 import GameRoom from '../entities/room';
 import User from '../entities/user';
+import * as util from 'util';
 
 /**
  * Game room socket.io handler.
@@ -56,35 +57,17 @@ export class GameRoomSocketHandler extends SocketHandler {
         // Leave old rooms
         const promises = Object.keys(this.socket.rooms)
           .filter(r => r !== this.socket.id)
-          .map(r => new Promise<void>((resolve, reject) => {
-            this.socket.leave(r, (err: any) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve();
-            });
-          }));
+          .map(r => this.leaveRoom(r));
 
         // Wait to leave all the rooms
+        // TODO: Do I really need/want to wait?
         await Promise.all(promises);
 
         // Join new room
-        const roomName = GameRoomSocketHandler.formatRoomName(room.id);
-        this.socket.join(roomName, async err => {
-          try {
-            if (err) {
-              console.error(err);
-              ack(false);
-              return;
-            }
-            this.currentGameRoomId = room.id;
-            ack(true);
-          } catch (e) {
-            console.error(e);
-            ack(false);
-          }
-        });
+        await this.joinRoom(GameRoomSocketHandler.formatRoomName(room.id));
+        // Update
+        this.currentGameRoomId = room.id;
+        ack(true);
       } catch (e) {
         console.error(e);
         ack(false);
@@ -106,7 +89,8 @@ export class GameRoomSocketHandler extends SocketHandler {
       }
     });
 
-    this.sendInitState({userProfile: {username: this.passport.user.username}, roomId: this.currentGameRoomId});
+    // Last thing: Send over init state data
+    this.sendInitState(this.getInitState());
   }
 
   /*** Socket functions ***/
@@ -133,6 +117,10 @@ export class GameRoomSocketHandler extends SocketHandler {
 
   /*** Helper functions ***/
 
+  leaveRoom: (roomName: string) => Promise<void> = util.promisify<any>(this.socket.leave.bind(this.socket));
+
+  joinRoom: (roomName: string | string[]) => Promise<void> = util.promisify<any>(this.socket.join.bind(this.socket));
+
   static formatRoomName(roomId: number): string {
     return `gr-${roomId}`;
   }
@@ -141,34 +129,28 @@ export class GameRoomSocketHandler extends SocketHandler {
     return User.getById(this.passport.user.id);
   }
 
-  joinDefaultRoom(): Promise<void> {
-    return new Promise<void>(async (resolve, reject) => {
-      try {
-        const user = await this.getCurrentUser();
-        if (user === undefined) {
-          reject('Could not fetch current user');
-          return;
-        }
+  getInitState(): InitState {
+    return {
+      userProfile: {
+        username: this.passport.user.username
+      },
+      roomId: this.currentGameRoomId,
+    };
+  }
 
-        if (user.default_room === null) {
-          resolve();
-        } else {
-          const roomName = GameRoomSocketHandler.formatRoomName(user.default_room.id);
-          this.socket.join(roomName, err => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            if (user.default_room !== null) {
-              this.currentGameRoomId = user.default_room.id;
-            }
-            resolve();
-          });
-        }
-      } catch (e) {
-        reject(e);
-      }
-    });
+  async joinDefaultRoom(): Promise<void> {
+    const user = await this.getCurrentUser();
+    if (user === undefined) {
+      return;
+    }
+    // No default room is specified
+    if (!user.default_room) {
+      return;
+    }
+    // Join the room
+    await this.joinRoom(GameRoomSocketHandler.formatRoomName(user.default_room.id));
+    // Update current room
+    this.currentGameRoomId = user.default_room.id;
   }
 }
 

@@ -7,6 +7,14 @@ import {SocketServer} from './sockets/sockets';
 import {GameRoomSocketHandlerFactory} from './sockets/game_room';
 import config from './config/config';
 
+
+// Only process unhandled promises in development mode
+if (config.mode === 'development') {
+  process.on('unhandledRejection', (reason, p) => {
+    console.error('Unhandled Rejection at:', p, '\nreason:', reason);
+  });
+}
+
 async function run() {
   const connectionOptions: ConnectionOptions = {
     type: 'postgres',
@@ -48,5 +56,8 @@ async function run() {
 }
 
 run().catch(err => {
-  throw new Error(err);
+  // Ensure we crash/terminate the process
+  setTimeout(() => {
+    throw new Error(err);
+  }, 0);
 });
