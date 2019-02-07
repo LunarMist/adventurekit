@@ -14,8 +14,8 @@
     "file-loader": "^2.0.0",
     "ts-loader": "^4.5.0",
     "typescript": "^3.3.1",
-    "webpack": "^4.29.0",
-    "webpack-cli": "^3.2.1",
+    "webpack": "^4.29.2",
+    "webpack-cli": "^3.2.3",
     "webpack-manifest-plugin": "^2.0.4"
   },
   "dependencies": {
