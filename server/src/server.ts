@@ -4,7 +4,7 @@ import {ConnectionOptions, createConnection} from 'typeorm';
 
 import {app, sessionMiddleware} from './app';
 import {SocketServer} from './sockets/sockets';
-import {GameRoomSocketHandlerFactory} from './sockets/game_room';
+import {GameRoomSocketHandlerFactory} from './sockets/game-room';
 import config from './config/config';
 
 

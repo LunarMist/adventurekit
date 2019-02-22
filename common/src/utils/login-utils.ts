@@ -14,6 +14,9 @@ const ValidEmailRegEx: RegExp = /^[^@]+@[^@]+\.[^@]+$/;
 // TODO: Use a library
 const ValidPasswordRegEx: RegExp = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
+export const UsernameRequirementMessage = 'Username must be between 3-15 characters, and may only contains letters, numbers, dashes(-) and underscores(_)';
+export const PasswordRequirementMessage = 'Passwords must at least 8 characters, with at least one letter, number and special character';
+
 export function validateUsername(username: string): boolean {
   // Check if RE matches
   if (!username || !ValidUsernameRegEx.test(username)) {

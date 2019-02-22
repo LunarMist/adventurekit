@@ -1,9 +1,9 @@
 import {InitState, NetEventType} from 'rpgcore-common';
+import * as util from 'util';
 
 import {SocketHandler, SocketHandlerFactory} from './sockets';
 import GameRoom from '../entities/room';
 import User from '../entities/user';
-import * as util from 'util';
 
 /**
  * Game room socket.io handler.
