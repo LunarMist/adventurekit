@@ -2,7 +2,7 @@ import { InitState, NetEventType } from 'rpgcore-common';
 import * as util from 'util';
 
 import { SocketHandler, SocketHandlerFactory } from './sockets';
-import GameRoom from '../entities/GameRoom';
+import GameRoom from '../entities/Game-room';
 import User from '../entities/User';
 
 /**
@@ -15,7 +15,7 @@ export class GameRoomSocketHandler extends SocketHandler {
     console.log(`User connected: ${this.socket.id}`);
 
     // First thing: Register error handler
-    this.socket.on('error', (error) => {
+    this.socket.on('error', error => {
       console.error(error);
     });
 

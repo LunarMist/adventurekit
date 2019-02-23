@@ -3,7 +3,7 @@
   "rules": {
     "max-line-length": {
       "options": [
-        140
+        170
       ]
     },
     "trailing-comma": [
@@ -25,7 +25,22 @@
       true,
       "ban-single-arg-parens"
     ],
-    "ter-arrow-parens": false
+    "ter-arrow-parens": false,
+    "align": [
+      true,
+      "parameters",
+      "statements",
+      "members",
+      "elements"
+    ],
+    "import-name": [
+      true,
+      {
+        "v4": "uuid",
+        "mail": "SGMail",
+        "jsonwebtoken": "jwt"
+      }
+    ]
   },
   "linterOptions": {
     "exclude": [

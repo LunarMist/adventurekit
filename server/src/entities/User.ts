@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 import bcrypt from 'bcrypt';
 
-import GameRoom from './GameRoom';
+import GameRoom from './Game-room';
 
 @Entity()
 @Index('idx_case_insensitive_username', { synchronize: false })
@@ -84,14 +84,14 @@ export default class User {
   }
 
   static async getById(id: number): Promise<User | undefined> {
-    return getRepository(User).findOne(id, { relations: ['default_room'] });
+    return getRepository(User).findOne(id, { relations: ['defaultRoom'] });
   }
 
   static async getByUsername(username: string): Promise<User | undefined> {
     return getRepository(User)
       .createQueryBuilder('user')
       .where('LOWER(user.username) = LOWER(:username)', { username })
-      .leftJoinAndSelect('user.default_room', 'default_room')
+      .leftJoinAndSelect('user.defaultRoom', 'defaultRoom')
       .getOne();
   }
 
@@ -99,7 +99,7 @@ export default class User {
     return getRepository(User)
       .createQueryBuilder('user')
       .where('LOWER(user.email) = LOWER(:email)', { email })
-      .leftJoinAndSelect('user.default_room', 'default_room')
+      .leftJoinAndSelect('user.defaultRoom', 'defaultRoom')
       .getOne();
   }
 }

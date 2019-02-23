@@ -1,5 +1,5 @@
-import * as IOEvent from "IO/event";
-import * as ImGui from "ImGui/imgui";
+import * as IOEvent from 'IO/event';
+import * as ImGui from 'ImGui/imgui';
 
 /**
  * This connector class passes through data between iostate <---> ImGui's own representation of the io state.
@@ -9,12 +9,12 @@ export class ImGuiIOConnector {
   // Array index: The MouseCode as given by javascript event handler
   //        value: The mapped ImGuiIO.MouseDown value
   //              Mouse buttons: 0=left, 1=right, 2=middle + extras.
-  private readonly MouseButtonMap: number[] = [
+  private readonly MOUSE_BUTTON_MAP: number[] = [
     0, // Left Button
     2, // Middle Button
     1, // Right Button
     3, // Back Button
-    4 // Forward Button
+    4, // Forward Button
   ];
 
   init(dispatcher: IOEvent.EventDispatcher) {
@@ -91,7 +91,7 @@ export class ImGuiIOConnector {
         const io = ImGui.GetIO();
         io.MousePos.x = event.offsetX;
         io.MousePos.y = event.offsetY;
-        io.MouseDown[self.MouseButtonMap[event.button]] = true;
+        io.MouseDown[self.MOUSE_BUTTON_MAP[event.button]] = true;
         return io.WantCaptureMouse;
       }
     });
@@ -100,7 +100,7 @@ export class ImGuiIOConnector {
     dispatcher.addHandler(IOEvent.EventType.PointerUp, new class implements IOEvent.EventHandler<IOEvent.PointerUpEvent> {
       public process(event: IOEvent.PointerUpEvent): boolean {
         const io = ImGui.GetIO();
-        io.MouseDown[self.MouseButtonMap[event.button]] = false;
+        io.MouseDown[self.MOUSE_BUTTON_MAP[event.button]] = false;
         return io.WantCaptureMouse;
       }
     });

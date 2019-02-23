@@ -1,4 +1,4 @@
-import socketio from 'socket.io-client';
+import socketIoClient from 'socket.io-client';
 import { ListenCallback, NetClient } from 'Net/net-client';
 
 /**
@@ -20,7 +20,7 @@ export class SocketIONetClient implements NetClient {
     }
 
     const uri = `//${document.domain}:${location.port}/${this.namespace}`;
-    this.socket = socketio(uri, {
+    this.socket = socketIoClient(uri, {
       transports: ['websocket', 'polling'], // Prefer websocket to long polling
     });
 

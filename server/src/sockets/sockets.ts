@@ -1,6 +1,6 @@
 import http from 'http';
-import socketio from 'socket.io';
-import socketio_redis from 'socket.io-redis';
+import socketIo from 'socket.io';
+import socketIoRedis from 'socket.io-redis';
 import { RequestHandler } from 'express';
 
 /**
@@ -92,12 +92,12 @@ export class SocketServer {
     readonly redisAdapterKey: string
   ) {
     // TODO: Followup on https://github.com/socketio/socket.io/issues/3259
-    this.io = socketio(this.bindServer, {
+    this.io = socketIo(this.bindServer, {
       pingTimeout: 60000,
     });
 
     // Configure socketio redis adapter
-    this.io.adapter(socketio_redis({
+    this.io.adapter(socketIoRedis({
       host: this.redisAdapterHost,
       port: this.redisAdapterPort,
       key: this.redisAdapterKey,

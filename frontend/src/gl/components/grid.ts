@@ -1,7 +1,7 @@
-import { SimpleRenderComponent } from "GL/render";
-import * as GLUtils from "GL/utils";
-import { MouseCodes } from "IO/codes";
-import * as IOEvent from "IO/event";
+import { SimpleRenderComponent } from 'GL/render';
+import * as GLUtils from 'GL/utils';
+import { MouseCodes } from 'IO/codes';
+import * as IOEvent from 'IO/event';
 
 // TODO: Rewrite more efficiently
 // Should not need to be a full-screen fragment shader
@@ -50,7 +50,7 @@ export class GridPatternComponent extends SimpleRenderComponent {
 
     const fs = `
       precision mediump float;
-      
+
       uniform vec2 tileSize; // [width, height]
       uniform vec2 gridOffset; // [x, y]
       uniform vec2 gridSelection; // [x, y]
@@ -79,7 +79,7 @@ export class GridPatternComponent extends SimpleRenderComponent {
           && gl_FragCoord.x <= box[1]
           && gl_FragCoord.y >= box[2]
           && gl_FragCoord.y <= box[3];
-        
+
         if (selected) {
           gl_FragColor = selectedColor;
         } else if (xMod == 0 || yMod == 0) {
@@ -110,14 +110,14 @@ export class GridPatternComponent extends SimpleRenderComponent {
     this.gl.enableVertexAttribArray(aVertexPosition);
     this.gl.vertexAttribPointer(aVertexPosition, 2, this.gl.FLOAT, false, 0, 0);
 
-    const tileSize = this.gl.getUniformLocation(this.program, "tileSize");
+    const tileSize = this.gl.getUniformLocation(this.program, 'tileSize');
     this.gl.uniform2fv(tileSize, this.tileSize);
 
-    const gridOffset = this.gl.getUniformLocation(this.program, "gridOffset");
+    const gridOffset = this.gl.getUniformLocation(this.program, 'gridOffset');
     const gridOff = [(this.gridOffset[0] * scaleFactor) % this.tileSize[0], (this.gridOffset[1] * scaleFactor) % this.tileSize[1]];
     this.gl.uniform2fv(gridOffset, gridOff);
 
-    const gridSelection = this.gl.getUniformLocation(this.program, "gridSelection");
+    const gridSelection = this.gl.getUniformLocation(this.program, 'gridSelection');
     const selXY = [this.io.pointerX * scaleFactor, (this.gl.canvas.clientHeight - this.io.pointerY) * scaleFactor];
     const gridSel = [this.divToInf(selXY[0] + gridOff[0], this.tileSize[0]), this.divToInf(selXY[1] + gridOff[1], this.tileSize[1])];
     this.gl.uniform2fv(gridSelection, gridSel);

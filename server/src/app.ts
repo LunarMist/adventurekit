@@ -1,9 +1,9 @@
 import errorhandler from 'errorhandler';
 import path from 'path';
 import express from 'express';
-import express_session from 'express-session';
+import expressSession from 'express-session';
 import uuid from 'uuid/v4';
-import connect_redis from 'connect-redis';
+import connectRedis from 'connect-redis';
 import bodyParser from 'body-parser';
 import moment from 'moment';
 import passport from 'passport';
@@ -17,7 +17,8 @@ import { LoginUtils } from 'rpgcore-common';
 import config from './config/config';
 import User from './entities/User';
 
-const SessionRedisStore = connect_redis(express_session);
+// tslint:disable-next-line:variable-name
+const SessionRedisStore = connectRedis(expressSession);
 
 const templatesRoot = path.resolve(__dirname, '..', 'templates');
 const bundleRoot = path.resolve(__dirname, '..', '..', 'frontend', 'build');
@@ -83,7 +84,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Session middleware
-const sessionMiddleware = express_session({
+const sessionMiddleware = expressSession({
   cookie: {
     httpOnly: true,
     secure: config.session.cookie.secure,

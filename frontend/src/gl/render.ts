@@ -1,16 +1,16 @@
-import { IOLifeCycle } from "IO/lifecycle";
-import * as ImGui from "ImGui/imgui";
-import { KeyCodes } from "IO/codes";
-import { State } from "IO/state";
-import { EventDispatcher } from "IO/event";
-import { ImGuiIOConnector } from "IO/imgui";
-import { ImGuiImplWebGl } from "GL/imgui-impl-webgl";
-import { GameNetClient } from "Net/game-net-client";
-import { SocketIONetClient } from "Net/socketio-client";
-import { NetClient } from "Net/net-client";
-import PersistentGameSettings from "Store/persistent-game-settings";
-import InMemoryGameSettings from "Store/in-memory-game-settings";
-import { FontData } from "rpgcore-common";
+import { IOLifeCycle } from 'IO/lifecycle';
+import * as ImGui from 'ImGui/imgui';
+import { KeyCodes } from 'IO/codes';
+import { State } from 'IO/state';
+import { EventDispatcher } from 'IO/event';
+import { ImGuiIOConnector } from 'IO/imgui';
+import { ImGuiImplWebGl } from 'GL/imgui-impl-webgl';
+import { GameNetClient } from 'Net/game-net-client';
+import { SocketIONetClient } from 'Net/socketio-client';
+import { NetClient } from 'Net/net-client';
+import PersistentGameSettings from 'Store/Persistent-game-settings';
+import InMemoryGameSettings from 'Store/In-memory-game-settings';
+import { FontData } from 'rpgcore-common';
 
 export class GameContext {
   dispatcher: EventDispatcher;
@@ -113,9 +113,9 @@ export class RenderLoop {
     this.persistentGameSettings = new PersistentGameSettings();
     this.inMemoryGameSettings = new InMemoryGameSettings();
 
-    const newGl = canvas.getContext("webgl");
+    const newGl = canvas.getContext('webgl');
     if (newGl === null) {
-      throw Error("Gl context cannot be null");
+      throw Error('Gl context cannot be null');
     }
 
     this.gameContext = new GameContext(this.ioLifeCycle.dispatcher, this.ioLifeCycle.ioState, this.gameNetClient,
@@ -129,8 +129,8 @@ export class RenderLoop {
   }
 
   run(): void {
-    if (typeof (window) === "undefined") {
-      throw new Error("window must be defined");
+    if (typeof (window) === 'undefined') {
+      throw new Error('window must be defined');
     }
 
     window.requestAnimationFrame(async () => await this.init());
@@ -162,7 +162,7 @@ export class RenderLoop {
     this.resizeCanvas();
 
     // Setup components
-    this.components.forEach((c) => {
+    this.components.forEach(c => {
       c.context = this.gameContext;
       c.init();
     });
@@ -226,7 +226,7 @@ export class RenderLoop {
   }
 
   private destroy(): void {
-    console.log("RenderLoop.destroy()");
+    console.log('RenderLoop.destroy()');
 
     // Clear screen
     this.glClear();
@@ -242,7 +242,7 @@ export class RenderLoop {
     // Net
     this.netClient.close();
 
-    console.log("Total allocated space (uordblks) @ _done:", ImGui.bind.mallinfo().uordblks);
+    console.log('Total allocated space (uordblks) @ _done:', ImGui.bind.mallinfo().uordblks);
   }
 
   private glClear(): void {
@@ -252,9 +252,9 @@ export class RenderLoop {
   }
 
   private initAdditionalHandlers(): void {
-    this.gl.canvas.addEventListener("contextmenu", e => e.preventDefault());
-    this.gl.canvas.addEventListener("webglcontextlost", e => e.preventDefault(), false);
-    this.gl.canvas.addEventListener("webglcontextrestored", () => this.initFromLostContext(), false);
+    this.gl.canvas.addEventListener('contextmenu', e => e.preventDefault());
+    this.gl.canvas.addEventListener('webglcontextlost', e => e.preventDefault(), false);
+    this.gl.canvas.addEventListener('webglcontextrestored', () => this.initFromLostContext(), false);
   }
 
   private resizeCanvas() {
@@ -273,7 +273,7 @@ export class RenderLoop {
   }
 
   private renderMetricsComponent() {
-    if (!ImGui.Begin("Metrics", null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin('Metrics', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }
@@ -302,34 +302,34 @@ export class RenderLoop {
   private async initImGuiFonts() {
     const io = ImGui.GetIO();
 
-    const BuiltInFontMapping = new Map<string, FontData>([
-      ["Fonts/NotoSans-Regular.ttf", {
-        name: "Fonts/NotoSans-Regular.ttf",
-        url: require("Fonts/NotoSans-Regular.ttf"),
+    const BUILT_IN_FONT_MAPPING = new Map<string, FontData>([
+      ['Fonts/NotoSans-Regular.ttf', {
+        name: 'Fonts/NotoSans-Regular.ttf',
+        url: require('Fonts/NotoSans-Regular.ttf'),
         pixelSize: 16.0,
         glyphRange: io.Fonts.GetGlyphRangesDefault(),
       }],
-      ["Fonts/NotoSansCJK-Regular.ttc", {
-        name: "Fonts/NotoSansCJK-Regular.ttc",
-        url: require("Fonts/NotoSansCJK-Regular.ttc"),
+      ['Fonts/NotoSansCJK-Regular.ttc', {
+        name: 'Fonts/NotoSansCJK-Regular.ttc',
+        url: require('Fonts/NotoSansCJK-Regular.ttc'),
         pixelSize: 16.0,
         glyphRange: io.Fonts.GetGlyphRangesChineseFull(),
       }],
     ]);
 
-    const DEFAULT_FONT_NAME = "Fonts/NotoSans-Regular.ttf";
+    const DEFAULT_FONT_NAME = 'Fonts/NotoSans-Regular.ttf';
 
     const activeFont: FontData | null = await this.persistentGameSettings.getActiveFont();
     if (activeFont === null) {
       console.log(`No active font defined. Using: ${DEFAULT_FONT_NAME}`);
 
-      const font = BuiltInFontMapping.get(DEFAULT_FONT_NAME);
+      const font = BUILT_IN_FONT_MAPPING.get(DEFAULT_FONT_NAME);
       font && await this.fetchAndRegisterFont(font.url, font.pixelSize, font.glyphRange);
     } else {
       console.log(`Active font: ${activeFont}`);
 
-      if (BuiltInFontMapping.has(activeFont.name)) {
-        const font = BuiltInFontMapping.get(activeFont.name);
+      if (BUILT_IN_FONT_MAPPING.has(activeFont.name)) {
+        const font = BUILT_IN_FONT_MAPPING.get(activeFont.name);
         font && await this.fetchAndRegisterFont(font.url, font.pixelSize, font.glyphRange);
       } else {
         await this.fetchAndRegisterFont(activeFont.url, activeFont.pixelSize, activeFont.glyphRange);
@@ -344,7 +344,7 @@ export class RenderLoop {
     ImGui.IMGUI_CHECKVERSION();
     ImGui.CreateContext();
     ImGui.StyleColorsDark();
-    ImGui.LoadIniSettingsFromMemory(window.localStorage.getItem("imgui.ini") || "");
+    ImGui.LoadIniSettingsFromMemory(window.localStorage.getItem('imgui.ini') || '');
 
     // Fonts
     try {
@@ -352,16 +352,16 @@ export class RenderLoop {
     } catch (e) {
       // Swallow up here
       // TODO: Better error reporting to user
-      console.error("Unable to fetch font: " + e);
+      console.error(`"Unable to fetch font: ${e}`);
     }
 
     const io = ImGui.GetIO();
 
     io.ConfigMacOSXBehaviors = navigator.platform.match(/Mac/) !== null;
-    io.SetClipboardTextFn = (user_data: any, text: string): void => {
+    io.SetClipboardTextFn = (useData: any, text: string): void => {
       this.ioLifeCycle.ioState.clipboardText = text;
       // console.log(`set clipboard_text: "${text}"`);
-      if (typeof navigator !== "undefined" && typeof (navigator as any).clipboard !== "undefined") {
+      if (typeof navigator !== 'undefined' && typeof (navigator as any).clipboard !== 'undefined') {
         // console.log(`clipboard.writeText: "${text}"`);
         (navigator as any).clipboard.writeText(text).then((): void => {
           // console.log(`clipboard.writeText: "${text}" done.`);
@@ -405,53 +405,53 @@ export class RenderLoop {
 
     if (io.WantSaveIniSettings) {
       io.WantSaveIniSettings = false;
-      window.localStorage.setItem("imgui.ini", ImGui.SaveIniSettingsToMemory());
+      window.localStorage.setItem('imgui.ini', ImGui.SaveIniSettingsToMemory());
     }
 
     const w: number = this.gl.canvas.clientWidth;
     const h: number = this.gl.canvas.clientHeight;
-    const display_w: number = this.gl.drawingBufferWidth || w;
-    const display_h: number = this.gl.drawingBufferHeight || h;
+    const displayWidth: number = this.gl.drawingBufferWidth || w;
+    const displayHeight: number = this.gl.drawingBufferHeight || h;
     io.DisplaySize.x = w;
     io.DisplaySize.y = h;
-    io.DisplayFramebufferScale.x = w > 0 ? (display_w / w) : 0;
-    io.DisplayFramebufferScale.y = h > 0 ? (display_h / h) : 0;
+    io.DisplayFramebufferScale.x = w > 0 ? (displayWidth / w) : 0;
+    io.DisplayFramebufferScale.y = h > 0 ? (displayHeight / h) : 0;
 
     const dt: number = time - this.prevTime;
     this.prevTime = time;
     io.DeltaTime = dt / 1000;
 
     if (io.MouseDrawCursor) {
-      document.body.style.cursor = "none";
+      document.body.style.cursor = 'none';
     } else {
       switch (ImGui.GetMouseCursor()) {
         case ImGui.MouseCursor.None:
-          document.body.style.cursor = "none";
+          document.body.style.cursor = 'none';
           break;
         default:
         case ImGui.MouseCursor.Arrow:
-          document.body.style.cursor = "default";
+          document.body.style.cursor = 'default';
           break;
         case ImGui.MouseCursor.TextInput:
-          document.body.style.cursor = "text";
+          document.body.style.cursor = 'text';
           break;         // When hovering over InputText, etc.
         case ImGui.MouseCursor.ResizeAll:
-          document.body.style.cursor = "move";
+          document.body.style.cursor = 'move';
           break;         // Unused
         case ImGui.MouseCursor.ResizeNS:
-          document.body.style.cursor = "ns-resize";
+          document.body.style.cursor = 'ns-resize';
           break;     // When hovering over an horizontal border
         case ImGui.MouseCursor.ResizeEW:
-          document.body.style.cursor = "ew-resize";
+          document.body.style.cursor = 'ew-resize';
           break;     // When hovering over a vertical border or a column
         case ImGui.MouseCursor.ResizeNESW:
-          document.body.style.cursor = "nesw-resize";
+          document.body.style.cursor = 'nesw-resize';
           break; // When hovering over the bottom-left corner of a window
         case ImGui.MouseCursor.ResizeNWSE:
-          document.body.style.cursor = "nwse-resize";
+          document.body.style.cursor = 'nwse-resize';
           break; // When hovering over the bottom-right corner of a window
         case ImGui.MouseCursor.Hand:
-          document.body.style.cursor = "pointer";
+          document.body.style.cursor = 'pointer';
           break;
       }
     }
