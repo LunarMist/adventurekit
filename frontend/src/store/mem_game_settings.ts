@@ -8,9 +8,4 @@ export default class InMemoryGameSettings {
     this.userProfile = {username: "Anonymous"};
     this.roomId = -1;
   }
-
-  onLogout() {
-    this.userProfile = {username: "Anonymous"};
-    this.roomId = -1;
-  }
 }

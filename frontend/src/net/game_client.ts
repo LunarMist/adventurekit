@@ -37,4 +37,8 @@ export class GameNetClient {
   async sendCreateRoomRequest(password: string): Promise<number> {
     return this.client.sendMessage<number>(NetEventType.CreateRoom, password);
   }
+
+  listenDisconnect(cb: () => void) {
+    this.client.listen('disconnect', cb);
+  }
 }

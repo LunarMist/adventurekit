@@ -24,6 +24,9 @@
       "Store/*": [
         "src/store/*"
       ],
+      "Api/*": [
+        "src/api/*"
+      ],
       "Fonts/*": [
         "fonts/*"
       ]

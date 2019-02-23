@@ -33,6 +33,7 @@ module.exports = {
       "IO": path.resolve(__dirname, 'src', 'io'),
       "Net": path.resolve(__dirname, 'src', 'net'),
       "Store": path.resolve(__dirname, 'src', 'store'),
+      "Api":  path.resolve(__dirname, 'src', 'api'),
       "Fonts": path.resolve(__dirname, 'fonts'),
     },
     extensions: ['.tsx', '.ts', '.js']

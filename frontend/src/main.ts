@@ -4,11 +4,12 @@ import {GridPatternComponent} from "GL/components/grid"
 import {LostContextComponent} from "GL/components/lost_context";
 import {ChatWindowComponent} from "GL/components/chat_client";
 import {AboutComponent} from "GL/components/about";
-import {RegisterUserComponent} from "GL/components/register";
-import {LoginComponent} from "GL/components/login";
+import {LogoutComponent} from "GL/components/logout";
 import {RenderLoop} from "GL/render";
 import {RoomComponent} from "GL/components/room";
 import * as ImGuiExport from "ImGui/imgui"
+import {LoginUtils} from "rpgcore-common";
+import * as LoginApi from "Api/login";
 
 export default function main(canvas: HTMLCanvasElement) {
   const components = [
@@ -18,8 +19,7 @@ export default function main(canvas: HTMLCanvasElement) {
     new LostContextComponent(),
     new AboutComponent(),
     new ChatWindowComponent(),
-    new RegisterUserComponent(),
-    new LoginComponent(),
+    new LogoutComponent(),
     new GridPatternComponent()
   ];
 
@@ -27,3 +27,4 @@ export default function main(canvas: HTMLCanvasElement) {
 }
 
 export const ImGui = ImGuiExport;
+export {LoginUtils, LoginApi};

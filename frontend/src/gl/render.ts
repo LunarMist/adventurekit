@@ -155,6 +155,10 @@ export class RenderLoop {
       this.inMemoryGameSettings.roomId = initState.roomId;
     });
 
+    this.gameNetClient.listenDisconnect(() => {
+      location.replace('/login/'); // On disconnect, redirect to login page
+    });
+
     this.resizeCanvas();
 
     // Setup components

@@ -11,11 +11,11 @@ import {Strategy as LocalStrategy} from 'passport-local';
 import SGMail from '@sendgrid/mail';
 import jwt, {VerifyErrors} from 'jsonwebtoken';
 import {NextFunction, Request, Response} from 'express-serve-static-core';
+import * as util from 'util';
+import {LoginUtils} from 'rpgcore-common';
 
 import config from './config/config';
 import User from './entities/user';
-import * as LoginUtils from './utils/login_utils';
-import * as util from 'util';
 
 const SessionRedisStore = connect_redis(express_session);
 
@@ -122,12 +122,24 @@ app.set('view engine', 'pug');
 /*** Routes ***/
 
 app.get('/', (req, res) => {
-  res.render('index', {
-    bundlePath: bundleManifest['main.js']
+  if (req.isAuthenticated()) {
+    res.render('index', {
+      bundlePath: bundleManifest['main.js'],
+    });
+  } else {
+    res.redirect('/login/');
+  }
+});
+
+app.get('/login/', (req, res) => {
+  res.render('login', {
+    bundlePath: bundleManifest['main.js'],
+    usernameRequirementMessage: LoginUtils.UsernameRequirementMessage,
+    passwordRequirementMessage: LoginUtils.PasswordRequirementMessage,
   });
 });
 
-app.post('/api/login/',
+app.post('/login/',
   passport.authenticate('local', {failWithError: true}),
   (req: Request, res: Response, next: NextFunction) => res.json({message: 'Success!'}),
   (err: any, req: Request, res: Response, next: NextFunction) => {
@@ -139,12 +151,12 @@ app.post('/api/login/',
   }
 );
 
-app.post('/api/logout/', (req, res) => {
+app.post('/logout/', (req, res) => {
   req.logout();
   res.json({message: 'Success!'});
 });
 
-app.post('/api/register/', async (req, res, next) => {
+app.post('/register/', async (req, res, next) => {
   try {
     if (!LoginUtils.validateUsername(req.body.username)) {
       res.status(400);

@@ -36,8 +36,4 @@ export default class PersistentGameSettings {
   async setRegisteredFonts(data: FontData[]): Promise<FontData[]> {
     return this.store.setItem<FontData[]>(SettingsKey.RegisteredFonts, data);
   }
-
-  async onLogout(): Promise<void> {
-    // Nothing, for now
-  }
 }

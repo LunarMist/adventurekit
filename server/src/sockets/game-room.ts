@@ -132,7 +132,7 @@ export class GameRoomSocketHandler extends SocketHandler {
   getInitState(): InitState {
     return {
       userProfile: {
-        username: this.passport.user.username
+        username: this.passport.user.username,
       },
       roomId: this.currentGameRoomId,
     };

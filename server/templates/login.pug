@@ -1,0 +1,105 @@
+// TODO: Make this page pretty. Use a vue instead?
+doctype html
+head
+  meta(charset='UTF-8')
+  meta(name='viewport' content='width=device-width, initial-scale=1')
+
+  title Login
+
+  link(rel='preload' href=bundlePath as='script')
+
+  style.
+    .success-text {
+      color: rgb(34, 139, 34);
+    }
+
+    .failure-text {
+      color: rgb(178, 34, 34);
+    }
+
+    input {
+      margin: 2px;
+      display: block;
+    }
+div
+  h2 Notes
+  ul
+    li #{usernameRequirementMessage}
+    li #{passwordRequirementMessage}
+div
+  h2 Login
+  input#login_email(type='email', placeholder='Email', size=50)
+  input#login_password(type='password', placeholder='Password', size=50)
+  p#login_success_message.success-text
+  p#login_failure_message.failure-text
+  button#login_button(onclick='onLogin()') Login
+div
+  h2 Register
+  input#register_username(type='text', placeholder='Username', size=50)
+  input#register_email(type='email', placeholder='Email', size=50)
+  input#register_password(type='password', placeholder='Password', size=50)
+  input#register_password2(type='password', placeholder='Confirm Password', size=50)
+  p#register_success_message.success-text
+  p#register_failure_message.failure-text
+  button#register_button(onclick='onRegister()') Register
+
+script(src=bundlePath)
+
+script.
+  const loginSM = document.getElementById('login_success_message');
+  const loginFM = document.getElementById('login_failure_message');
+  const loginButton = document.getElementById('login_button');
+
+  function onLogin() {
+    loginSM.innerText = '';
+    loginFM.innerText = '';
+    loginButton.disabled = true;
+    const email = document.getElementById('login_email').value;
+    const password = document.getElementById('login_password').value;
+    rpgcore.LoginApi.login(email, password)
+      .then(function (data) {
+        if (data.status) {
+          loginSM.innerText = data.message;
+          location.replace('/');
+        } else {
+          loginFM.innerText = data.message;
+        }
+        loginButton.disabled = false;
+      })
+      .catch(function (reason) {
+        console.log(reason);
+        loginButton.disabled = false;
+      });
+  }
+
+  const registerSM = document.getElementById('register_success_message');
+  const registerFM = document.getElementById('register_failure_message');
+  const registerButton = document.getElementById('register_button');
+
+  function onRegister() {
+    registerSM.innerText = '';
+    registerFM.innerText = '';
+    const username = document.getElementById('register_username').value;
+    const email = document.getElementById('register_email').value;
+    const password = document.getElementById('register_password').value;
+    const confirmPassword = document.getElementById('register_password2').value;
+    if (password !== confirmPassword) {
+      registerFM.innerText = 'Passwords do not match';
+      return;
+    }
+    registerButton.disabled = true;
+    rpgcore.LoginApi.register(username, email, password)
+      .then(function (data) {
+        if (data.status) {
+          registerSM.innerText = data.message;
+          location.replace('/');
+        } else {
+          registerFM.innerText = data.message;
+        }
+        registerButton.disabled = false;
+      })
+      .catch(function (reason) {
+        console.log(reason);
+        registerButton.disabled = false;
+      });
+  }
