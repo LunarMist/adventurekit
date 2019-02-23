@@ -1,7 +1,7 @@
 import Axios, {AxiosError, AxiosResponse} from "axios";
 import qs from "qs";
 
-export type LoginResponse = { status: boolean, message: string };
+export type LoginResponse = { status: boolean; message: string };
 
 export function login(email: string, password: string): Promise<LoginResponse> {
   const formData = {

@@ -5,12 +5,12 @@ import {KeyCodes} from "IO/codes";
 import {State} from "IO/state";
 import {EventDispatcher} from "IO/event";
 import {ImGuiIOConnector} from "IO/imgui";
-import {ImGuiImplWebGl} from "GL/imgui_impl_webgl";
-import {GameNetClient} from "Net/game_client";
-import {SocketIONetClient} from "Net/socketio_client";
-import {NetClient} from "Net/net_client";
-import PersistentGameSettings from "Store/persistent_game_settings";
-import InMemoryGameSettings from "Store/mem_game_settings";
+import {ImGuiImplWebGl} from "GL/imgui-impl-webgl";
+import {GameNetClient} from "Net/game-net-client";
+import {SocketIONetClient} from "Net/socketio-client";
+import {NetClient} from "Net/net-client";
+import PersistentGameSettings from "Store/persistent-game-settings";
+import InMemoryGameSettings from "Store/in-memory-game-settings";
 import {FontData} from "rpgcore-common";
 
 export class GameContext {
@@ -155,9 +155,10 @@ export class RenderLoop {
       this.inMemoryGameSettings.roomId = initState.roomId;
     });
 
-    this.gameNetClient.listenDisconnect(() => {
-      location.replace('/login/'); // On disconnect, redirect to login page
-    });
+    // TODO: Re-enable for prod, or find a better way
+    // this.gameNetClient.listenDisconnect(() => {
+    //   location.replace('/login/'); // On disconnect, redirect to login page
+    // });
 
     this.resizeCanvas();
 

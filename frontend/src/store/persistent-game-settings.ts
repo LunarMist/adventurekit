@@ -1,4 +1,4 @@
-import localforage from 'localforage';
+import * as LocalForage from 'localforage';
 import {FontData} from 'rpgcore-common';
 
 enum SettingsKey {
@@ -13,10 +13,10 @@ export default class PersistentGameSettings {
   private readonly store: LocalForage;
 
   constructor() {
-    this.store = localforage.createInstance({
+    this.store = LocalForage.createInstance({
       name: 'rpgcore-app',
       version: 1.0,
-      storeName: 'game_settings',
+      storeName: 'game-settings',
       description: 'Game settings',
     });
   }

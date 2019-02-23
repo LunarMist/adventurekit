@@ -1,5 +1,5 @@
 import socketio from 'socket.io-client';
-import {ListenCallback, NetClient} from 'Net/net_client';
+import {ListenCallback, NetClient} from 'Net/net-client';
 
 /**
  * A socket.io implementation for {@link NetClient}.

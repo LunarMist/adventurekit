@@ -1,4 +1,4 @@
-import {NetClient} from 'Net/net_client';
+import {NetClient} from 'Net/net-client';
 import {InitState, NetEventType} from 'rpgcore-common';
 
 /**
