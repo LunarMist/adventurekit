@@ -15,7 +15,7 @@ export class GameRoomSocketHandler extends SocketHandler {
     console.log(`User connected: ${this.socket.id}`);
 
     // First thing: Register error handler
-    this.socket.on('error', error => {
+    this.socket.on('error', (error) => {
       console.error(error);
     });
 

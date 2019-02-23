@@ -36,7 +36,7 @@ export function register(username: string, email: string, password: string): Pro
     .catch((error: AxiosError) => {
       let message = 'An unknown error has occurred';
       if (error.response) {
-        message = error.response.data.message || error.response.statusText || "An unknown error has occurred";
+        message = error.response.data.message || error.response.statusText || 'An unknown error has occurred';
       }
       return { message, status: false };
     });

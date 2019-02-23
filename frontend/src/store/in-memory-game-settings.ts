@@ -5,7 +5,7 @@ export default class InMemoryGameSettings {
   public roomId: number;
 
   constructor() {
-    this.userProfile = { username: "Anonymous" };
+    this.userProfile = { username: 'Anonymous' };
     this.roomId = -1;
   }
 }

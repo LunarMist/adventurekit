@@ -1,3 +1,5 @@
+/* tslint:disable:max-line-length */
+
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
@@ -31,11 +33,11 @@ export class PseudoEncrypt1548757978325 implements MigrationInterface {
       $$ LANGUAGE plpgsql strict immutable;
     `);
 
-    await queryRunner.query(`ALTER TABLE game_room ALTER COLUMN id SET DEFAULT pseudo_encrypt(nextval('game_room_id_seq')::int)`);
+    await queryRunner.query("ALTER TABLE game_room ALTER COLUMN id SET DEFAULT pseudo_encrypt(nextval('game_room_id_seq')::int)");
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(`ALTER TABLE game_room ALTER COLUMN id SET DEFAULT nextval('game_room_id_seq')`);
-    await queryRunner.query(`DROP FUNCTION pseudo_encrypt(VALUE int)`);
+    await queryRunner.query("ALTER TABLE game_room ALTER COLUMN id SET DEFAULT nextval('game_room_id_seq')");
+    await queryRunner.query('DROP FUNCTION pseudo_encrypt(VALUE int)');
   }
 }

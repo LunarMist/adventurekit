@@ -128,7 +128,7 @@ export enum KeyCodes {
   OpenBracket = 219,
   ClosedBracket = 221,
   BackSlash = 220,
-  Quote = 222
+  Quote = 222,
 }
 
 /**
@@ -145,5 +145,5 @@ export enum MouseCodes {
   MiddleButton,
   RightButton,
   BackButton,
-  ForwardButton
+  ForwardButton,
 }

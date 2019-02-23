@@ -24,7 +24,7 @@ export enum EventType {
   PointerDown,
   PointerUp,
   Wheel,
-  LENGTH
+  LENGTH,
 }
 
 /**
@@ -50,7 +50,7 @@ abstract class ClipboardTypeEvent implements Event {
   readonly abstract type: EventType;
 
   constructor(
-    readonly clipboardText: string
+    readonly clipboardText: string,
   ) {
 
   }
@@ -200,7 +200,7 @@ export class SimpleEventDispatcher implements EventDispatcher {
   private eventQueue: Event[] = [];
 
   constructor(readonly suppressHandlerExceptions: boolean) {
-    for (let i = 0; i < EventType.LENGTH; i++) {
+    for (let i = 0; i < EventType.LENGTH; i += 1) {
       this.handlers.push([]);
     }
   }
@@ -211,7 +211,7 @@ export class SimpleEventDispatcher implements EventDispatcher {
 
   removeHandler(type: EventType, handler: EventHandler<Event>): void {
     const loc = this.handlers[type].findIndex(v => v === handler);
-    if (loc != -1) {
+    if (loc !== -1) {
       this.handlers[type].splice(loc, 1);
     }
   }
@@ -219,11 +219,11 @@ export class SimpleEventDispatcher implements EventDispatcher {
   dispatchEvents(): void {
     let processed = 0;
     try {
-      for (; processed < this.eventQueue.length; processed++) {
-        let nextEvent = this.eventQueue[processed];
-        let chain = this.handlers[nextEvent.type];
+      for (; processed < this.eventQueue.length; processed += 1) {
+        const nextEvent = this.eventQueue[processed];
+        const chain = this.handlers[nextEvent.type];
         // Propagate each event down the chain until one returns true
-        for (let handler of chain) {
+        for (const handler of chain) {
           if (handler.process(nextEvent)) {
             break;
           }

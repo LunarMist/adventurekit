@@ -5,12 +5,12 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  */
 export class UserUniqIndex1546637395257 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(`CREATE UNIQUE INDEX "idx_case_insensitive_username" ON "user" (lower("username"))`);
-    await queryRunner.query(`CREATE UNIQUE INDEX "idx_case_insensitive_email" ON "user" (lower("email"))`);
+    await queryRunner.query('CREATE UNIQUE INDEX "idx_case_insensitive_username" ON "user" (lower("username"))');
+    await queryRunner.query('CREATE UNIQUE INDEX "idx_case_insensitive_email" ON "user" (lower("email"))');
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(`DROP INDEX "idx_case_insensitive_email"`);
-    await queryRunner.query(`DROP INDEX "idx_case_insensitive_username"`);
+    await queryRunner.query('DROP INDEX "idx_case_insensitive_email"');
+    await queryRunner.query('DROP INDEX "idx_case_insensitive_username"');
   }
 }

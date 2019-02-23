@@ -14,6 +14,7 @@ if (!secret) {
 }
 
 const dev: AppSettings = {
+  secret,
   mode: 'development',
   web: {
     host: 'localhost',
@@ -47,7 +48,6 @@ const dev: AppSettings = {
     urlBase: 'http://localhost:9000',
     jwtSecret: 'rpgcore-registration-dev-secret-goes-here-123',
   },
-  secret: secret,
 };
 
 export = dev; // Has to be commonjs style
