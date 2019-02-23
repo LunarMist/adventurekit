@@ -5,7 +5,27 @@
       "options": [
         140
       ]
-    }
+    },
+    "trailing-comma": [
+      true,
+      {
+        "multiline": {
+          "arrays": "always",
+          "objects": "always",
+          "functions": "never",
+          "imports": "never",
+          "exports": "never",
+          "typeLiterals": "always"
+        },
+        "singleline": "never"
+      }
+    ],
+    "no-increment-decrement": false,
+    "arrow-parens": [
+      true,
+      "ban-single-arg-parens"
+    ],
+    "ter-arrow-parens": false
   },
   "linterOptions": {
     "exclude": [

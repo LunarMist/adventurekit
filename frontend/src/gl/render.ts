@@ -1,6 +1,5 @@
 import { IOLifeCycle } from "IO/lifecycle";
 import * as ImGui from "ImGui/imgui";
-import { ImGuiWindowFlags } from "ImGui/imgui";
 import { KeyCodes } from "IO/codes";
 import { State } from "IO/state";
 import { EventDispatcher } from "IO/event";
@@ -150,7 +149,7 @@ export class RenderLoop {
     // Init net
     this.netClient.open();
     this.gameNetClient.listenInitState(initState => {
-      console.log("Setting initial state");
+      console.log('Setting initial state');
       this.inMemoryGameSettings.userProfile = initState.userProfile;
       this.inMemoryGameSettings.roomId = initState.roomId;
     });
@@ -163,7 +162,7 @@ export class RenderLoop {
     this.resizeCanvas();
 
     // Setup components
-    this.components.forEach(c => {
+    this.components.forEach((c) => {
       c.context = this.gameContext;
       c.init();
     });
@@ -172,11 +171,11 @@ export class RenderLoop {
   }
 
   private initFromLostContext() {
-    console.log("RenderLoop.initFromLostContext()");
+    console.log('RenderLoop.initFromLostContext()');
 
-    const newGl = this.canvas.getContext("webgl");
+    const newGl = this.canvas.getContext('webgl');
     if (newGl === null) {
-      throw Error("Gl context cannot be null");
+      throw Error('Gl context cannot be null');
     } else {
       this.gameContext.gl = newGl;
     }
@@ -265,7 +264,7 @@ export class RenderLoop {
     const desiredWidth = this.gl.canvas.clientWidth * devicePixelRatio;
     const desiredHeight = this.gl.canvas.clientHeight * devicePixelRatio;
 
-    if (canvasWidth != desiredWidth || canvasHeight != desiredHeight) {
+    if (canvasWidth !== desiredWidth || canvasHeight !== desiredHeight) {
       this.gl.canvas.width = desiredWidth;
       this.gl.canvas.height = desiredHeight;
       // console.log("Adjusting canvas size");
@@ -274,7 +273,7 @@ export class RenderLoop {
   }
 
   private renderMetricsComponent() {
-    if (!ImGui.Begin("Metrics", null, ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin("Metrics", null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }
@@ -308,23 +307,23 @@ export class RenderLoop {
         name: "Fonts/NotoSans-Regular.ttf",
         url: require("Fonts/NotoSans-Regular.ttf"),
         pixelSize: 16.0,
-        glyphRange: io.Fonts.GetGlyphRangesDefault()
+        glyphRange: io.Fonts.GetGlyphRangesDefault(),
       }],
       ["Fonts/NotoSansCJK-Regular.ttc", {
         name: "Fonts/NotoSansCJK-Regular.ttc",
         url: require("Fonts/NotoSansCJK-Regular.ttc"),
         pixelSize: 16.0,
-        glyphRange: io.Fonts.GetGlyphRangesChineseFull()
+        glyphRange: io.Fonts.GetGlyphRangesChineseFull(),
       }],
     ]);
 
-    const DefaultFontName = "Fonts/NotoSans-Regular.ttf";
+    const DEFAULT_FONT_NAME = "Fonts/NotoSans-Regular.ttf";
 
     const activeFont: FontData | null = await this.persistentGameSettings.getActiveFont();
     if (activeFont === null) {
-      console.log(`No active font defined. Using: ${DefaultFontName}`);
+      console.log(`No active font defined. Using: ${DEFAULT_FONT_NAME}`);
 
-      const font = BuiltInFontMapping.get(DefaultFontName);
+      const font = BuiltInFontMapping.get(DEFAULT_FONT_NAME);
       font && await this.fetchAndRegisterFont(font.url, font.pixelSize, font.glyphRange);
     } else {
       console.log(`Active font: ${activeFont}`);

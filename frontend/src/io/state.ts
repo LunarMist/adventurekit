@@ -1,5 +1,5 @@
-import * as IOEvent from "IO/event";
-import { KeyCodes } from "IO/codes";
+import * as IOEvent from 'IO/event';
+import { KeyCodes } from 'IO/codes';
 
 /**
  * A {@link State} implementation tracks the current IO state; clipboard, keys, pointer(s), etc...
@@ -26,7 +26,7 @@ export interface State {
 export class IOState implements State {
   /*** State ***/
   hasFocus: boolean = false;
-  clipboardText: string = "";
+  clipboardText: string = '';
 
   keysDown: boolean[] = [];
 
@@ -41,8 +41,8 @@ export class IOState implements State {
 
   keyDownEvents: (IOEvent.KeyDownEvent | null) [] = [];
 
-  private static readonly KeyUpMetaResetKeys = [
-    KeyCodes.A, KeyCodes.C, KeyCodes.V, KeyCodes.X, KeyCodes.Y, KeyCodes.Z
+  private static readonly KEY_UP_META_RESET_KEYS = [
+    KeyCodes.A, KeyCodes.C, KeyCodes.V, KeyCodes.X, KeyCodes.Y, KeyCodes.Z,
   ];
 
   constructor() {
@@ -60,11 +60,12 @@ export class IOState implements State {
     let fakeEvent: IOEvent.KeyUpEvent;
     if (prevKeyDown !== null) {
       fakeEvent = new IOEvent.KeyUpEvent(
-        prevKeyDown.char, prevKeyDown.key, prevKeyDown.code, prevKeyDown.charCode, keyCode, keyCode, false, prevKeyDown.location, false, false, false, false
+        prevKeyDown.char, prevKeyDown.key, prevKeyDown.code, prevKeyDown.charCode, keyCode, keyCode, false,
+        prevKeyDown.location, false, false, false, false
       );
     } else {
       fakeEvent = new IOEvent.KeyUpEvent(
-        "", "", "", 0, keyCode, keyCode, false, 0, false, false, false, false
+        '', '', '', 0, keyCode, keyCode, false, 0, false, false, false, false
       );
     }
     // console.log("Dispatching fake event:");
@@ -75,7 +76,7 @@ export class IOState implements State {
   private dispatchFakePointerUpEvent(dispatcher: IOEvent.EventDispatcher, mouseCode: number) {
     const fakeEvent = new IOEvent.PointerUpEvent(
       false, mouseCode, 0, this.pointerX, this.pointerY, false, false, 0, 0, false, 0,
-      this.pointerHeight, true, 1, "mouse", this.pointerPressure, 0, this.pointerTiltX, this.pointerTiltY,
+      this.pointerHeight, true, 1, 'mouse', this.pointerPressure, 0, this.pointerTiltX, this.pointerTiltY,
       0, this.pointerWidth
     );
     // console.log("Dispatching fake event:");
@@ -104,12 +105,12 @@ export class IOState implements State {
       public process(event: IOEvent.FocusLostEvent): boolean {
         self.hasFocus = false;
         // Unset stuff
-        for (let i = 0; i < self.keysDown.length; ++i) {
+        for (let i = 0; i < self.keysDown.length; i++) {
           if (self.keysDown[i]) {
             self.dispatchFakeKeyUpEvent(dispatcher, i);
           }
         }
-        for (let i = 0; i < self.pointerDown.length; ++i) {
+        for (let i = 0; i < self.pointerDown.length; i++) {
           if (self.pointerDown[i]) {
             self.dispatchFakePointerUpEvent(dispatcher, i);
           }
@@ -135,8 +136,8 @@ export class IOState implements State {
         self.keysDown[event.keyCode] = false;
         // Because of osx metakey weirdness,
         // unset the states for some of the keys
-        if (event.keyCode == KeyCodes.LeftWindowKey || event.keyCode == KeyCodes.RightWindowKey) {
-          IOState.KeyUpMetaResetKeys.map(k => {
+        if (event.keyCode === KeyCodes.LeftWindowKey || event.keyCode === KeyCodes.RightWindowKey) {
+          IOState.KEY_UP_META_RESET_KEYS.map(k => {
             self.dispatchFakeKeyUpEvent(dispatcher, k);
           });
         }

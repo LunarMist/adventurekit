@@ -23,10 +23,10 @@ async function run() {
     password: config.postgres.password,
     database: config.postgres.database,
     entities: [
-      __dirname + '/entities/*.js',
+      `${__dirname}/entities/*.js`,
     ],
     migrations: [
-      __dirname + '/migrations/*.js',
+      `${__dirname}/migrations/*.js`,
     ],
     synchronize: false,
     logging: config.mode === 'development',
@@ -54,9 +54,9 @@ async function run() {
   });
 }
 
-run().catch((err) => {
+run().catch(err => {
   // Ensure we crash/terminate the process
-  setTimeout(() => {
+  process.nextTick(() => {
     throw new Error(err);
-  }, 0);
+  });
 });

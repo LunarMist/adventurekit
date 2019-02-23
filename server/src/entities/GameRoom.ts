@@ -10,11 +10,11 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 import bcrypt from 'bcrypt';
 
-import User from './user';
+import User from './User';
 
 @Entity()
 export default class GameRoom {
@@ -22,13 +22,13 @@ export default class GameRoom {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(type => User, owner => owner.rooms_owned)
+  @ManyToOne(type => User, owner => owner.roomsOwned)
   owner: User;
 
   @Column({ length: 80, nullable: false })
-  password_hash: string;
+  passwordHash: string;
 
-  @ManyToMany(type => User, member => member.game_rooms)
+  @ManyToMany(type => User, member => member.gameRooms)
   @JoinTable()
   members?: User[];
 
@@ -38,12 +38,12 @@ export default class GameRoom {
   @UpdateDateColumn()
   updated!: Date;
 
-  @OneToMany(type => User, user => user.default_room)
-  defaulted_rooms?: User[];
+  @OneToMany(type => User, user => user.defaultRoom)
+  defaultedRooms?: User[];
 
   private constructor(owner: User, passwordHash: string) {
     this.owner = owner;
-    this.password_hash = passwordHash;
+    this.passwordHash = passwordHash;
   }
 
   async addMember(userId: number): Promise<void> {
@@ -55,9 +55,8 @@ export default class GameRoom {
       .catch(e => {
         if (e.message.includes('duplicate key value')) {
           return;
-        } else {
-          throw e;
         }
+        throw e;
       });
   }
 
@@ -72,7 +71,7 @@ export default class GameRoom {
     if (room === undefined) {
       return undefined;
     }
-    const verified: boolean = await bcrypt.compare(password, room.password_hash);
+    const verified: boolean = await bcrypt.compare(password, room.passwordHash);
     return verified ? room : undefined;
   }
 

@@ -9,11 +9,11 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 import bcrypt from 'bcrypt';
 
-import GameRoom from './game-room';
+import GameRoom from './GameRoom';
 
 @Entity()
 @Index('idx_case_insensitive_username', { synchronize: false })
@@ -30,7 +30,7 @@ export default class User {
   email: string;
 
   @Column({ length: 80, nullable: false })
-  password_hash: string;
+  passwordHash: string;
 
   @CreateDateColumn()
   created!: Date;
@@ -39,32 +39,32 @@ export default class User {
   updated!: Date;
 
   @Column({ default: false })
-  verified_email: boolean;
+  verifiedEmail: boolean;
 
-  @ManyToMany(type => GameRoom, game_room => game_room.members)
-  game_rooms?: GameRoom[];
+  @ManyToMany(type => GameRoom, gameRoom => gameRoom.members)
+  gameRooms?: GameRoom[];
 
-  @OneToMany(type => GameRoom, game_room => game_room.owner)
-  rooms_owned?: GameRoom[];
+  @OneToMany(type => GameRoom, gameRoom => gameRoom.owner)
+  roomsOwned?: GameRoom[];
 
-  @ManyToOne(type => GameRoom, game_room => game_room.defaulted_rooms)
-  default_room: GameRoom | null;
+  @ManyToOne(type => GameRoom, gameRoom => gameRoom.defaultedRooms)
+  defaultRoom: GameRoom | null;
 
   private constructor(username: string, email: string, passwordHash: string) {
     this.username = username;
     this.email = email;
-    this.password_hash = passwordHash;
-    this.verified_email = false;
-    this.default_room = null;
+    this.passwordHash = passwordHash;
+    this.verifiedEmail = false;
+    this.defaultRoom = null;
   }
 
   async setEmailVerified(status: boolean = true): Promise<User> {
-    this.verified_email = status;
+    this.verifiedEmail = status;
     return getManager().save(this);
   }
 
   async setDefaultRoom(room: GameRoom): Promise<User> {
-    this.default_room = room;
+    this.defaultRoom = room;
     return getManager().save(this);
   }
 
@@ -79,7 +79,7 @@ export default class User {
     if (user === undefined) {
       return undefined;
     }
-    const verified: boolean = await bcrypt.compare(password, user.password_hash);
+    const verified: boolean = await bcrypt.compare(password, user.passwordHash);
     return verified ? user : undefined;
   }
 
@@ -90,7 +90,7 @@ export default class User {
   static async getByUsername(username: string): Promise<User | undefined> {
     return getRepository(User)
       .createQueryBuilder('user')
-      .where('LOWER(user.username) = LOWER(:username)', { username: username })
+      .where('LOWER(user.username) = LOWER(:username)', { username })
       .leftJoinAndSelect('user.default_room', 'default_room')
       .getOne();
   }
@@ -98,7 +98,7 @@ export default class User {
   static async getByEmail(email: string): Promise<User | undefined> {
     return getRepository(User)
       .createQueryBuilder('user')
-      .where('LOWER(user.email) = LOWER(:email)', { email: email })
+      .where('LOWER(user.email) = LOWER(:email)', { email })
       .leftJoinAndSelect('user.default_room', 'default_room')
       .getOne();
   }

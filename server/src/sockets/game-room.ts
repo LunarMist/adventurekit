@@ -2,8 +2,8 @@ import { InitState, NetEventType } from 'rpgcore-common';
 import * as util from 'util';
 
 import { SocketHandler, SocketHandlerFactory } from './sockets';
-import GameRoom from '../entities/game-room';
-import User from '../entities/user';
+import GameRoom from '../entities/GameRoom';
+import User from '../entities/User';
 
 /**
  * Game room socket.io handler.
@@ -144,13 +144,13 @@ export class GameRoomSocketHandler extends SocketHandler {
       return;
     }
     // No default room is specified
-    if (!user.default_room) {
+    if (!user.defaultRoom) {
       return;
     }
     // Join the room
-    await this.joinRoom(GameRoomSocketHandler.formatRoomName(user.default_room.id));
+    await this.joinRoom(GameRoomSocketHandler.formatRoomName(user.defaultRoom.id));
     // Update current room
-    this.currentGameRoomId = user.default_room.id;
+    this.currentGameRoomId = user.defaultRoom.id;
   }
 }
 

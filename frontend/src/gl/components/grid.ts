@@ -129,7 +129,7 @@ export class GridPatternComponent extends SimpleRenderComponent {
     // return Math.trunc(i / div);
     const q: number = Math.trunc(i / div);
     const r: number = Math.trunc(i % div);
-    if (i < 0 && r != 0) {
+    if (i < 0 && r !== 0) {
       return q - 1;
     }
     return q;

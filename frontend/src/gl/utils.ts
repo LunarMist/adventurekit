@@ -8,13 +8,14 @@ export function compileShader(gl: WebGLRenderingContext, shaderSource: string, s
 
   // Check if it compiled
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS) && !gl.isContextLost()) {
-    throw new Error("Could not compile shader: " + gl.getShaderInfoLog(shader));
+    throw new Error(`Could not compile shader: ${gl.getShaderInfoLog(shader)}`);
   }
 
   return shader;
 }
 
-export function createProgram(gl: WebGLRenderingContext, vertexShader: WebGLShader | null, fragmentShader: WebGLShader | null): WebGLProgram | null {
+export function createProgram(gl: WebGLRenderingContext, vertexShader: WebGLShader | null,
+                              fragmentShader: WebGLShader | null): WebGLProgram | null {
   if (vertexShader === null || fragmentShader === null) {
     return null;
   }
@@ -28,7 +29,7 @@ export function createProgram(gl: WebGLRenderingContext, vertexShader: WebGLShad
 
   // Check
   if (!gl.getProgramParameter(program, gl.LINK_STATUS) && !gl.isContextLost()) {
-    throw new Error("Could not compile WebGL program: " + gl.getProgramInfoLog(program));
+    throw new Error(`Could not compile WebGL program: ${gl.getProgramInfoLog(program)}`);
   }
 
   return program;

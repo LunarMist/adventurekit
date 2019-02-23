@@ -21,7 +21,7 @@ export class SocketIONetClient implements NetClient {
 
     const uri = `//${document.domain}:${location.port}/${this.namespace}`;
     this.socket = socketio(uri, {
-      transports: ['websocket', 'polling'] // Prefer websocket to long polling
+      transports: ['websocket', 'polling'], // Prefer websocket to long polling
     });
 
     this.socket.on('connect', () => {

@@ -50,7 +50,7 @@ abstract class ClipboardTypeEvent implements Event {
   readonly abstract type: EventType;
 
   constructor(
-    readonly clipboardText: string,
+    readonly clipboardText: string
   ) {
 
   }
@@ -84,7 +84,7 @@ abstract class KeyboardTypeEvent implements Event {
     readonly ctrlKey: boolean,
     readonly shiftKey: boolean,
     readonly altKey: boolean,
-    readonly metaKey: boolean,
+    readonly metaKey: boolean
   ) {
 
   }
@@ -128,7 +128,7 @@ abstract class PointerTypeEvent implements Event {
     readonly tiltX: number,
     readonly tiltY: number,
     readonly twist: number,
-    readonly width: number,
+    readonly width: number
   ) {
 
   }
@@ -166,7 +166,7 @@ export class WheelEvent implements Event {
     readonly deltaMode: number,
     readonly deltaX: number,
     readonly deltaY: number,
-    readonly deltaZ: number,
+    readonly deltaZ: number
   ) {
 
   }
@@ -200,7 +200,7 @@ export class SimpleEventDispatcher implements EventDispatcher {
   private eventQueue: Event[] = [];
 
   constructor(readonly suppressHandlerExceptions: boolean) {
-    for (let i = 0; i < EventType.LENGTH; i += 1) {
+    for (let i = 0; i < EventType.LENGTH; i++) {
       this.handlers.push([]);
     }
   }
@@ -219,7 +219,7 @@ export class SimpleEventDispatcher implements EventDispatcher {
   dispatchEvents(): void {
     let processed = 0;
     try {
-      for (; processed < this.eventQueue.length; processed += 1) {
+      for (; processed < this.eventQueue.length; processed++) {
         const nextEvent = this.eventQueue[processed];
         const chain = this.handlers[nextEvent.type];
         // Propagate each event down the chain until one returns true

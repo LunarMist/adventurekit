@@ -9,7 +9,7 @@ import { RequestHandler } from 'express';
 export abstract class SocketHandler {
   constructor(
     readonly io: SocketIO.Server,
-    readonly socket: SocketIO.Socket,
+    readonly socket: SocketIO.Socket
   ) {
 
   }

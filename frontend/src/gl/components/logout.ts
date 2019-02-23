@@ -1,17 +1,16 @@
 import { SimpleRenderComponent } from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import { ImGuiWindowFlags, ImVec4 } from "ImGui/imgui";
 import Axios, { AxiosError, AxiosResponse } from "axios";
 
 export class LogoutComponent extends SimpleRenderComponent {
-  private readonly TextSuccessColor: ImVec4 = new ImVec4(34 / 255, 139 / 255, 34 / 255, 1.0);
-  private readonly TextErrorColor: ImVec4 = new ImVec4(178 / 255, 34 / 255, 34 / 255, 1.0);
+  private readonly TextSuccessColor: ImGui.ImVec4 = new ImGui.ImVec4(34 / 255, 139 / 255, 34 / 255, 1.0);
+  private readonly TextErrorColor: ImGui.ImVec4 = new ImGui.ImVec4(178 / 255, 34 / 255, 34 / 255, 1.0);
 
   private errorString = "";
   private successString = "";
 
   render(): void {
-    if (!ImGui.Begin("Sess", null, ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin("Sess", null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }

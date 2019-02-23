@@ -1,6 +1,5 @@
 import { SimpleRenderComponent } from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import { ImGuiWindowFlags, ImVec2 } from "ImGui/imgui";
 import * as IOEvent from "IO/event";
 import { KeyCodes } from "IO/codes";
 
@@ -12,7 +11,7 @@ export class LostContextComponent extends SimpleRenderComponent {
 
     this.dispatcher.addHandler(IOEvent.EventType.KeyUp, new class implements IOEvent.EventHandler<IOEvent.KeyUpEvent> {
       public process(event: IOEvent.KeyUpEvent): boolean {
-        if (event.keyCode == KeyCodes.Space) {
+        if (event.keyCode === KeyCodes.Space) {
           if (self.gl.isContextLost()) {
             console.log("Initiating restore context");
             self.ext.restoreContext();
@@ -24,8 +23,8 @@ export class LostContextComponent extends SimpleRenderComponent {
   }
 
   render(): void {
-    ImGui.SetNextWindowPos(new ImVec2(100, 500), ImGui.Cond.FirstUseEver);
-    if (!ImGui.Begin("GL Context", null, ImGuiWindowFlags.AlwaysAutoResize)) {
+    ImGui.SetNextWindowPos(new ImGui.ImVec2(100, 500), ImGui.Cond.FirstUseEver);
+    if (!ImGui.Begin("GL Context", null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }

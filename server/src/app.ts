@@ -15,7 +15,7 @@ import * as util from 'util';
 import { LoginUtils } from 'rpgcore-common';
 
 import config from './config/config';
-import User from './entities/user';
+import User from './entities/User';
 
 const SessionRedisStore = connect_redis(express_session);
 
@@ -62,7 +62,7 @@ passport.use(new LocalStrategy(
     } catch (e) {
       done(e);
     }
-  },
+  }
 ));
 
 passport.serializeUser((user, done) => {
@@ -134,7 +134,8 @@ app.get('/login/', (req, res) => {
   });
 });
 
-app.post('/login/',
+app.post(
+  '/login/',
   passport.authenticate('local', { failWithError: true }),
   (req: Request, res: Response, next: NextFunction) => res.json({ message: 'Success!' }),
   (err: any, req: Request, res: Response, next: NextFunction) => {
@@ -143,7 +144,7 @@ app.post('/login/',
     } else {
       next(err);
     }
-  },
+  }
 );
 
 app.post('/logout/', (req, res) => {
