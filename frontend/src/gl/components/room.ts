@@ -1,6 +1,6 @@
-import {SimpleRenderComponent} from "GL/render";
+import { SimpleRenderComponent } from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import {ImGuiWindowFlags, ImStringBuffer, ImVec4} from "ImGui/imgui";
+import { ImGuiWindowFlags, ImStringBuffer, ImVec4 } from "ImGui/imgui";
 
 export class RoomComponent extends SimpleRenderComponent {
   private readonly roomIdBuffer = new ImStringBuffer(15, "");

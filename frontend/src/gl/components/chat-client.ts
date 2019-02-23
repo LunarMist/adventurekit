@@ -1,6 +1,6 @@
-import {SimpleRenderComponent} from "GL/render";
+import { SimpleRenderComponent } from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import {ImGuiInputTextFlags, ImGuiWindowFlags, ImStringBuffer, ImVec2} from "ImGui/imgui";
+import { ImGuiInputTextFlags, ImGuiWindowFlags, ImStringBuffer, ImVec2 } from "ImGui/imgui";
 
 export class ChatWindowComponent extends SimpleRenderComponent {
   private inputBuffer = new ImStringBuffer(1000);

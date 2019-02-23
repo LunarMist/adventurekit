@@ -9,27 +9,27 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import bcrypt from 'bcrypt';
 
-import GameRoom from './room';
+import GameRoom from './game-room';
 
 @Entity()
-@Index('idx_case_insensitive_username', {synchronize: false})
-@Index('idx_case_insensitive_email', {synchronize: false})
+@Index('idx_case_insensitive_username', { synchronize: false })
+@Index('idx_case_insensitive_email', { synchronize: false })
 export default class User {
 
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({length: 15, nullable: false})
+  @Column({ length: 15, nullable: false })
   username: string;
 
-  @Column({length: 120, nullable: false})
+  @Column({ length: 120, nullable: false })
   email: string;
 
-  @Column({length: 80, nullable: false})
+  @Column({ length: 80, nullable: false })
   password_hash: string;
 
   @CreateDateColumn()
@@ -38,7 +38,7 @@ export default class User {
   @UpdateDateColumn()
   updated!: Date;
 
-  @Column({default: false})
+  @Column({ default: false })
   verified_email: boolean;
 
   @ManyToMany(type => GameRoom, game_room => game_room.members)
@@ -84,13 +84,13 @@ export default class User {
   }
 
   static async getById(id: number): Promise<User | undefined> {
-    return getRepository(User).findOne(id, {relations: ['default_room']});
+    return getRepository(User).findOne(id, { relations: ['default_room'] });
   }
 
   static async getByUsername(username: string): Promise<User | undefined> {
     return getRepository(User)
       .createQueryBuilder('user')
-      .where('LOWER(user.username) = LOWER(:username)', {username: username})
+      .where('LOWER(user.username) = LOWER(:username)', { username: username })
       .leftJoinAndSelect('user.default_room', 'default_room')
       .getOne();
   }
@@ -98,7 +98,7 @@ export default class User {
   static async getByEmail(email: string): Promise<User | undefined> {
     return getRepository(User)
       .createQueryBuilder('user')
-      .where('LOWER(user.email) = LOWER(:email)', {email: email})
+      .where('LOWER(user.email) = LOWER(:email)', { email: email })
       .leftJoinAndSelect('user.default_room', 'default_room')
       .getOne();
   }

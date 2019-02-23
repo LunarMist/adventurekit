@@ -1,17 +1,17 @@
-import {IOLifeCycle} from "IO/lifecycle";
+import { IOLifeCycle } from "IO/lifecycle";
 import * as ImGui from "ImGui/imgui";
-import {ImGuiWindowFlags} from "ImGui/imgui";
-import {KeyCodes} from "IO/codes";
-import {State} from "IO/state";
-import {EventDispatcher} from "IO/event";
-import {ImGuiIOConnector} from "IO/imgui";
-import {ImGuiImplWebGl} from "GL/imgui-impl-webgl";
-import {GameNetClient} from "Net/game-net-client";
-import {SocketIONetClient} from "Net/socketio-client";
-import {NetClient} from "Net/net-client";
+import { ImGuiWindowFlags } from "ImGui/imgui";
+import { KeyCodes } from "IO/codes";
+import { State } from "IO/state";
+import { EventDispatcher } from "IO/event";
+import { ImGuiIOConnector } from "IO/imgui";
+import { ImGuiImplWebGl } from "GL/imgui-impl-webgl";
+import { GameNetClient } from "Net/game-net-client";
+import { SocketIONetClient } from "Net/socketio-client";
+import { NetClient } from "Net/net-client";
 import PersistentGameSettings from "Store/persistent-game-settings";
 import InMemoryGameSettings from "Store/in-memory-game-settings";
-import {FontData} from "rpgcore-common";
+import { FontData } from "rpgcore-common";
 
 export class GameContext {
   dispatcher: EventDispatcher;
@@ -25,7 +25,7 @@ export class GameContext {
     this.dispatcher = dispatcher;
     this.io = io;
     this.net = net;
-    this.store = {p, mem};
+    this.store = { p, mem };
     this.gl = gl;
   }
 }
@@ -119,8 +119,8 @@ export class RenderLoop {
       throw Error("Gl context cannot be null");
     }
 
-    this.gameContext = new GameContext(this.ioLifeCycle.dispatcher, this.ioLifeCycle.ioState,
-      this.gameNetClient, this.persistentGameSettings, this.inMemoryGameSettings, newGl);
+    this.gameContext = new GameContext(this.ioLifeCycle.dispatcher, this.ioLifeCycle.ioState, this.gameNetClient,
+      this.persistentGameSettings, this.inMemoryGameSettings, newGl);
 
     this.imGuiWebGlHelper = new ImGuiImplWebGl(this.gameContext);
 

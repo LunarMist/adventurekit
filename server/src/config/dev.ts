@@ -1,4 +1,4 @@
-import AppSettings, {AppSettingsSecret} from './settings';
+import { AppSettingsSecret, AppSettings } from './settings';
 
 // Safety check
 if (process.env.NODE_ENV !== 'development') {

@@ -1,4 +1,4 @@
-import AppSettings from './settings';
+import { AppSettings } from './settings';
 
 const configPath = process.env.CONFIG_PATH || './dev';
 

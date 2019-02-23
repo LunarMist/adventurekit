@@ -1,8 +1,8 @@
-import {SimpleRenderComponent} from "GL/render";
+import { SimpleRenderComponent } from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import {ImGuiWindowFlags, ImVec2} from "ImGui/imgui";
-import * as IOEvent from "IO/event"
-import {KeyCodes} from "IO/codes";
+import { ImGuiWindowFlags, ImVec2 } from "ImGui/imgui";
+import * as IOEvent from "IO/event";
+import { KeyCodes } from "IO/codes";
 
 export class LostContextComponent extends SimpleRenderComponent {
   private ext!: WEBGL_lose_context;

@@ -1,11 +1,11 @@
-import {UserProfile} from 'rpgcore-common';
+import { UserProfile } from 'rpgcore-common';
 
 export default class InMemoryGameSettings {
   public userProfile: UserProfile;
   public roomId: number;
 
   constructor() {
-    this.userProfile = {username: "Anonymous"};
+    this.userProfile = { username: "Anonymous" };
     this.roomId = -1;
   }
 }

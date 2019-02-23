@@ -1,7 +1,7 @@
 import * as GLUtils from "GL/utils";
 import * as ImGui from "ImGui/imgui";
-import {ImTextureID} from "ImGui/imgui";
-import {GameContext} from "GL/render";
+import { ImTextureID } from "ImGui/imgui";
+import { GameContext } from "GL/render";
 
 export class ImGuiImplWebGl {
   private g_ShaderHandle: WebGLProgram | null = null;
@@ -64,7 +64,7 @@ export class ImGuiImplWebGl {
     const io = ImGui.GetIO();
 
     // Fonts
-    const {width, height, pixels} = io.Fonts.GetTexDataAsRGBA32();   // Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than just a GL texture id, consider calling GetTexDataAsAlpha8() instead to save on GPU memory.
+    const { width, height, pixels } = io.Fonts.GetTexDataAsRGBA32();   // Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than just a GL texture id, consider calling GetTexDataAsAlpha8() instead to save on GPU memory.
 
     // Upload texture to graphics system
     this.g_FontTexture = this.gl.createTexture();

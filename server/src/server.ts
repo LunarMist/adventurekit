@@ -1,12 +1,11 @@
 import 'reflect-metadata'; // Required for typeorm
 import http from 'http';
-import {ConnectionOptions, createConnection} from 'typeorm';
+import { ConnectionOptions, createConnection } from 'typeorm';
 
-import {app, sessionMiddleware} from './app';
-import {SocketServer} from './sockets/sockets';
-import {GameRoomSocketHandlerFactory} from './sockets/game-room';
+import { app, sessionMiddleware } from './app';
+import { SocketServer } from './sockets/sockets';
+import { GameRoomSocketHandlerFactory } from './sockets/game-room';
 import config from './config/config';
-
 
 // Only process unhandled promises in development mode
 if (config.mode === 'development') {
@@ -24,10 +23,10 @@ async function run() {
     password: config.postgres.password,
     database: config.postgres.database,
     entities: [
-      __dirname + '/entities/*.js'
+      __dirname + '/entities/*.js',
     ],
     migrations: [
-      __dirname + '/migrations/*.js'
+      __dirname + '/migrations/*.js',
     ],
     synchronize: false,
     logging: config.mode === 'development',
@@ -55,7 +54,7 @@ async function run() {
   });
 }
 
-run().catch(err => {
+run().catch((err) => {
   // Ensure we crash/terminate the process
   setTimeout(() => {
     throw new Error(err);

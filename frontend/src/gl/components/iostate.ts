@@ -1,7 +1,7 @@
-import {SimpleRenderComponent} from "GL/render";
+import { SimpleRenderComponent } from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import {ImGuiCol, ImGuiStyleVar, ImGuiTreeNodeFlags, ImGuiWindowFlags, ImVec2, ImVec4} from "ImGui/imgui";
-import {KeyCodes, MouseCodes} from "IO/codes";
+import { ImGuiCol, ImGuiStyleVar, ImGuiTreeNodeFlags, ImGuiWindowFlags, ImVec2, ImVec4 } from "ImGui/imgui";
+import { KeyCodes, MouseCodes } from "IO/codes";
 import * as IOEvent from "IO/event";
 
 export class IOStateUIComponent extends SimpleRenderComponent {
@@ -188,7 +188,7 @@ export class IOStateUIComponent extends SimpleRenderComponent {
       ImGui.EndGroup();
     }
 
-    if (ImGui.CollapsingHeader("Other", ImGuiTreeNodeFlags.DefaultOpen)) {
+    if (ImGui.CollapsingHeader('Other', ImGuiTreeNodeFlags.DefaultOpen)) {
       ImGui.TextColored(this.io.hasFocus ? this.TextActiveColor : this.TextInactiveColor, "Focused?");
       ImGui.TextWrapped(`Clipboard: ${this.io.clipboardText}`);
       ImGui.TextWrapped(`Keypresses: ${this.charBuffer}`);

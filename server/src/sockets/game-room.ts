@@ -1,8 +1,8 @@
-import {InitState, NetEventType} from 'rpgcore-common';
+import { InitState, NetEventType } from 'rpgcore-common';
 import * as util from 'util';
 
-import {SocketHandler, SocketHandlerFactory} from './sockets';
-import GameRoom from '../entities/room';
+import { SocketHandler, SocketHandlerFactory } from './sockets';
+import GameRoom from '../entities/game-room';
 import User from '../entities/user';
 
 /**

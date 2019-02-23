@@ -1,7 +1,7 @@
-import {SimpleRenderComponent} from "GL/render";
+import { SimpleRenderComponent } from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import {ImGuiWindowFlags, ImVec4} from "ImGui/imgui";
-import Axios, {AxiosError, AxiosResponse} from "axios";
+import { ImGuiWindowFlags, ImVec4 } from "ImGui/imgui";
+import Axios, { AxiosError, AxiosResponse } from "axios";
 
 export class LogoutComponent extends SimpleRenderComponent {
   private readonly TextSuccessColor: ImVec4 = new ImVec4(34 / 255, 139 / 255, 34 / 255, 1.0);

@@ -1,5 +1,5 @@
 import * as IOEvent from "IO/event";
-import {KeyCodes} from "IO/codes";
+import { KeyCodes } from "IO/codes";
 
 /**
  * A {@link State} implementation tracks the current IO state; clipboard, keys, pointer(s), etc...

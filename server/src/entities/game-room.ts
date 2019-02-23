@@ -10,7 +10,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import bcrypt from 'bcrypt';
 
@@ -25,7 +25,7 @@ export default class GameRoom {
   @ManyToOne(type => User, owner => owner.rooms_owned)
   owner: User;
 
-  @Column({length: 80, nullable: false})
+  @Column({ length: 80, nullable: false })
   password_hash: string;
 
   @ManyToMany(type => User, member => member.game_rooms)
@@ -77,6 +77,6 @@ export default class GameRoom {
   }
 
   static async getById(id: number): Promise<GameRoom | undefined> {
-    return getRepository(GameRoom).findOne(id, {relations: ['owner']});
+    return getRepository(GameRoom).findOne(id, { relations: ['owner'] });
   }
 }

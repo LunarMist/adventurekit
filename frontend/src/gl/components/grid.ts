@@ -1,7 +1,7 @@
-import {SimpleRenderComponent} from "GL/render";
+import { SimpleRenderComponent } from "GL/render";
 import * as GLUtils from "GL/utils";
-import {MouseCodes} from "IO/codes"
-import * as IOEvent from "IO/event"
+import { MouseCodes } from "IO/codes";
+import * as IOEvent from "IO/event";
 
 // TODO: Rewrite more efficiently
 // Should not need to be a full-screen fragment shader
@@ -11,7 +11,7 @@ export class GridPatternComponent extends SimpleRenderComponent {
   private readonly vertices = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
   private readonly tileSize = [50.0, 50.0]; // [width, height]
   private gridOffset = [0.0, 0.0]; // [x, y]
-  private prevPointerXY = {x: 0.0, y: 0.0};
+  private prevPointerXY = { x: 0.0, y: 0.0 };
 
   init(): void {
     const self = this;
@@ -19,7 +19,7 @@ export class GridPatternComponent extends SimpleRenderComponent {
     this.dispatcher.addHandler(IOEvent.EventType.PointerDown, new class implements IOEvent.EventHandler<IOEvent.PointerDownEvent> {
       public process(event: IOEvent.PointerDownEvent): boolean {
         // For touch events: To prevent jank, reset the prev xy
-        self.prevPointerXY = {x: event.offsetX, y: event.offsetY};
+        self.prevPointerXY = { x: event.offsetX, y: event.offsetY };
         return false;
       }
     });
@@ -29,10 +29,10 @@ export class GridPatternComponent extends SimpleRenderComponent {
         if (self.io.pointerDown[MouseCodes.LeftButton]) {
           self.gridOffset[0] += (self.prevPointerXY.x - event.offsetX);
           self.gridOffset[1] -= (self.prevPointerXY.y - event.offsetY);
-          self.prevPointerXY = {x: event.offsetX, y: event.offsetY};
+          self.prevPointerXY = { x: event.offsetX, y: event.offsetY };
           return true;
         }
-        self.prevPointerXY = {x: event.offsetX, y: event.offsetY};
+        self.prevPointerXY = { x: event.offsetX, y: event.offsetY };
         return false;
       }
     });

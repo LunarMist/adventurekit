@@ -1,6 +1,6 @@
 import * as IOEvent from "IO/event";
 import * as IOState from "IO/state";
-import {KeyCodes} from "IO/codes";
+import { KeyCodes } from "IO/codes";
 
 export interface LifeCycle {
   init(): void;

@@ -7,12 +7,12 @@ import connect_redis from 'connect-redis';
 import bodyParser from 'body-parser';
 import moment from 'moment';
 import passport from 'passport';
-import {Strategy as LocalStrategy} from 'passport-local';
+import { Strategy as LocalStrategy } from 'passport-local';
 import SGMail from '@sendgrid/mail';
-import jwt, {VerifyErrors} from 'jsonwebtoken';
-import {NextFunction, Request, Response} from 'express-serve-static-core';
+import jwt, { VerifyErrors } from 'jsonwebtoken';
+import { NextFunction, Request, Response } from 'express-serve-static-core';
 import * as util from 'util';
-import {LoginUtils} from 'rpgcore-common';
+import { LoginUtils } from 'rpgcore-common';
 
 import config from './config/config';
 import User from './entities/user';
@@ -26,7 +26,6 @@ const bundleManifest = require(path.resolve(bundleRoot, 'manifest.json'));
 
 const app = express();
 
-
 // Only in development mode
 if (config.mode === 'development') {
   app.locals.pretty = true;
@@ -39,20 +38,18 @@ if (config.mode === 'development') {
   console.log('Running in production mode!');
 }
 
-
 /*** Configure sendgrid ***/
 
 SGMail.setApiKey(config.secret.sendgrid.apiKey);
 
-
 /*** Configure passport ***/
 
 function createSessionStoredUser(user: User) {
-  return {id: user.id, username: user.username, email: user.email};
+  return { id: user.id, username: user.username, email: user.email };
 }
 
 passport.use(new LocalStrategy(
-  {usernameField: 'email', passwordField: 'password'},
+  { usernameField: 'email', passwordField: 'password' },
   async (email, password, done) => {
     try {
       const user: User | undefined = await User.validate(email, password);
@@ -65,7 +62,7 @@ passport.use(new LocalStrategy(
     } catch (e) {
       done(e);
     }
-  }
+  },
 ));
 
 passport.serializeUser((user, done) => {
@@ -76,14 +73,13 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 
-
 /*** Configure middleware ***/
 
 // Static file middleware
 app.use('/static/bundle/', express.static(bundleRoot));
 
 // bodyparser middleware
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Session middleware
@@ -118,7 +114,6 @@ app.use(passport.session());
 app.set('views', templatesRoot);
 app.set('view engine', 'pug');
 
-
 /*** Routes ***/
 
 app.get('/', (req, res) => {
@@ -134,45 +129,45 @@ app.get('/', (req, res) => {
 app.get('/login/', (req, res) => {
   res.render('login', {
     bundlePath: bundleManifest['main.js'],
-    usernameRequirementMessage: LoginUtils.UsernameRequirementMessage,
-    passwordRequirementMessage: LoginUtils.PasswordRequirementMessage,
+    usernameRequirementMessage: LoginUtils.USERNAME_REQUIREMENT_MESSAGE,
+    passwordRequirementMessage: LoginUtils.PASSWORD_REQUIREMENT_MESSAGE,
   });
 });
 
 app.post('/login/',
-  passport.authenticate('local', {failWithError: true}),
-  (req: Request, res: Response, next: NextFunction) => res.json({message: 'Success!'}),
+  passport.authenticate('local', { failWithError: true }),
+  (req: Request, res: Response, next: NextFunction) => res.json({ message: 'Success!' }),
   (err: any, req: Request, res: Response, next: NextFunction) => {
     if (err.status === 400 || err.status === 401) {
-      res.json({message: 'Invalid username/password combination'});
+      res.json({ message: 'Invalid username/password combination' });
     } else {
       next(err);
     }
-  }
+  },
 );
 
 app.post('/logout/', (req, res) => {
   req.logout();
-  res.json({message: 'Success!'});
+  res.json({ message: 'Success!' });
 });
 
 app.post('/register/', async (req, res, next) => {
   try {
     if (!LoginUtils.validateUsername(req.body.username)) {
       res.status(400);
-      res.json({message: 'Invalid username'});
+      res.json({ message: 'Invalid username' });
       return;
     }
 
     if (!LoginUtils.validateEmail(req.body.email)) {
       res.status(400);
-      res.json({message: 'Invalid email'});
+      res.json({ message: 'Invalid email' });
       return;
     }
 
     if (!LoginUtils.validatePassword(req.body.password)) {
       res.status(400);
-      res.json({message: 'Invalid password'});
+      res.json({ message: 'Invalid password' });
       return;
     }
 
@@ -185,7 +180,7 @@ app.post('/register/', async (req, res, next) => {
 
     // Sign the token with jwt
     const jwtSignFunc = util.promisify<any, any, any, any>(jwt.sign.bind(jwt));
-    const regToken = await jwtSignFunc({id: user.id}, config.registration.jwtSecret, {expiresIn: '1 day'});
+    const regToken = await jwtSignFunc({ id: user.id }, config.registration.jwtSecret, { expiresIn: '1 day' });
 
     // Send a registration mail
     await SGMail.send({
@@ -196,14 +191,14 @@ app.post('/register/', async (req, res, next) => {
     });
 
     // Report success
-    res.json({message: 'Success!'});
+    res.json({ message: 'Success!' });
   } catch (e) {
     if (e.message.includes('idx_case_insensitive_username')) {
       res.status(400);
-      res.json({message: 'Username already in use'});
+      res.json({ message: 'Username already in use' });
     } else if (e.message.includes('idx_case_insensitive_email')) {
       res.status(400);
-      res.json({message: 'Email already in use'});
+      res.json({ message: 'Email already in use' });
     } else {
       next(e);
     }
@@ -239,4 +234,4 @@ app.get('/authorized/', (req, res) => {
   }
 });
 
-export {app, sessionMiddleware};
+export { app, sessionMiddleware };

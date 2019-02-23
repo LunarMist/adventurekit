@@ -1,5 +1,5 @@
-import {NetClient} from 'Net/net-client';
-import {InitState, NetEventType} from 'rpgcore-common';
+import { NetClient } from 'Net/net-client';
+import { InitState, NetEventType } from 'rpgcore-common';
 
 /**
  * Used for sending all game-relevant messages between the client <--> server.

@@ -1,6 +1,6 @@
-import {SimpleRenderComponent} from "GL/render";
+import { SimpleRenderComponent } from "GL/render";
 import * as ImGui from "ImGui/imgui";
-import {ImGuiWindowFlags, ImVec2} from "ImGui/imgui";
+import { ImGuiWindowFlags, ImVec2 } from "ImGui/imgui";
 
 export class AboutComponent extends SimpleRenderComponent {
   private showLicensesWindow: boolean = false;

@@ -1,5 +1,5 @@
 import * as IOEvent from "IO/event";
-import * as ImGui from "ImGui/imgui"
+import * as ImGui from "ImGui/imgui";
 
 /**
  * This connector class passes through data between iostate <---> ImGui's own representation of the io state.
