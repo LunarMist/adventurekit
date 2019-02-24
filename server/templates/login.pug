@@ -52,6 +52,13 @@ script.
   const loginFM = document.getElementById('login_failure_message');
   const loginButton = document.getElementById('login_button');
 
+  document.getElementById('login_password')
+    .addEventListener('keydown', function (e) {
+      if (e.keyCode === 13) {
+        onLogin();
+      }
+    });
+
   function onLogin() {
     loginSM.innerText = '';
     loginFM.innerText = '';
@@ -77,6 +84,13 @@ script.
   const registerSM = document.getElementById('register_success_message');
   const registerFM = document.getElementById('register_failure_message');
   const registerButton = document.getElementById('register_button');
+
+  document.getElementById('register_password2')
+    .addEventListener('keydown', function (e) {
+      if (e.keyCode === 13) {
+        onRegister();
+      }
+    });
 
   function onRegister() {
     registerSM.innerText = '';

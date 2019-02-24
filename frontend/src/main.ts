@@ -7,6 +7,7 @@ import { AboutComponent } from 'GL/components/about';
 import { LogoutComponent } from 'GL/components/logout';
 import { RenderLoop } from 'GL/render';
 import { RoomComponent } from 'GL/components/room';
+import { ServerStatusComponent } from 'GL/components/server-status';
 import * as ImGui from 'ImGui/imgui';
 import { LoginUtils } from 'rpgcore-common';
 import * as LoginApi from 'Api/login';
@@ -21,6 +22,7 @@ export default function main(canvas: HTMLCanvasElement) {
     new ChatWindowComponent(),
     new LogoutComponent(),
     new GridPatternComponent(),
+    new ServerStatusComponent(), // Keep as last one so it's on top of everything
   ];
 
   new RenderLoop(components, canvas).run();

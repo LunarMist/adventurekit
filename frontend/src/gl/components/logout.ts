@@ -24,7 +24,8 @@ export class LogoutComponent extends SimpleRenderComponent {
       axios.post('/logout/')
         .then((response: AxiosResponse) => {
           this.successString = response.data.message;
-          location.replace('/login/'); // On logout, redirect to login page
+          this.net.disconnect();
+          // location.replace('/login/'); // On logout, redirect to login page
         })
         .catch((error: AxiosError) => {
           if (error.response) {

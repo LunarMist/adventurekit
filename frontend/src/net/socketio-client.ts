@@ -39,6 +39,10 @@ export class SocketIONetClient implements NetClient {
     }
   }
 
+  isConnected(): boolean {
+    return this.socket !== null && this.socket.connected;
+  }
+
   async sendMessage<T>(event: string, ...data: any[]): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       this.open();

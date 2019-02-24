@@ -18,6 +18,10 @@ export class GameNetClient {
     this.client.close();
   }
 
+  isConnected(): boolean {
+    return this.client.isConnected();
+  }
+
   sendChatMessage(message: string): void {
     this.client.sendSimpleMessage(NetEventType.ChatMessage, message);
   }

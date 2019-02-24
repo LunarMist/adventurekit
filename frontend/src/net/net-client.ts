@@ -16,6 +16,11 @@ export interface NetClient {
   close(): void;
 
   /**
+   * Are we connected?
+   */
+  isConnected(): boolean;
+
+  /**
    * Send a single message to the server.
    *
    * @param event The event name (identifier)
