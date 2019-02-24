@@ -1,0 +1,11 @@
+dist: trusty
+language: node_js
+node_js:
+  - 10
+  - 11
+install:
+  - npm run setup-modules
+script:
+  - npm run lint
+  - npm run build
+  # TODO: unit tests
