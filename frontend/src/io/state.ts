@@ -90,103 +90,87 @@ export class IOState implements State {
     // Init state
     this.hasFocus = hasFocus;
 
-    const self = this;
-
     // Focus gained handler
-    dispatcher.addHandler(IOEvent.EventType.Focused, new class implements IOEvent.EventHandler<IOEvent.FocusedEvent> {
-      public process(event: IOEvent.FocusedEvent): boolean {
-        self.hasFocus = true;
-        return false; // Always propagate
-      }
+    dispatcher.addHandler(IOEvent.EventType.Focused, event => {
+      this.hasFocus = true;
+      return false; // Always propagate
     });
 
     // Focus lost handler
-    dispatcher.addHandler(IOEvent.EventType.FocusLost, new class implements IOEvent.EventHandler<IOEvent.FocusLostEvent> {
-      public process(event: IOEvent.FocusLostEvent): boolean {
-        self.hasFocus = false;
-        // Unset stuff
-        for (let i = 0; i < self.keysDown.length; i++) {
-          if (self.keysDown[i]) {
-            self.dispatchFakeKeyUpEvent(dispatcher, i);
-          }
+    dispatcher.addHandler(IOEvent.EventType.FocusLost, event => {
+      this.hasFocus = false;
+      // Unset stuff
+      for (let i = 0; i < this.keysDown.length; i++) {
+        if (this.keysDown[i]) {
+          this.dispatchFakeKeyUpEvent(dispatcher, i);
         }
-        for (let i = 0; i < self.pointerDown.length; i++) {
-          if (self.pointerDown[i]) {
-            self.dispatchFakePointerUpEvent(dispatcher, i);
-          }
-        }
-        return false; // Always propagate
       }
+      for (let i = 0; i < this.pointerDown.length; i++) {
+        if (this.pointerDown[i]) {
+          this.dispatchFakePointerUpEvent(dispatcher, i);
+        }
+      }
+      return false; // Always propagate
     });
 
     // ! Clipboard events not handled here !
 
     // Keydown handler
-    dispatcher.addHandler(IOEvent.EventType.KeyDown, new class implements IOEvent.EventHandler<IOEvent.KeyDownEvent> {
-      public process(event: IOEvent.KeyDownEvent): boolean {
-        self.keysDown[event.keyCode] = true;
-        self.keyDownEvents[event.keyCode] = event; // Save a copy of the down event
-        return false; // Always propagate
-      }
+    dispatcher.addHandler(IOEvent.EventType.KeyDown, event => {
+      this.keysDown[event.keyCode] = true;
+      this.keyDownEvents[event.keyCode] = event; // Save a copy of the down event
+      return false; // Always propagate
     });
 
     // keyup handler
-    dispatcher.addHandler(IOEvent.EventType.KeyUp, new class implements IOEvent.EventHandler<IOEvent.KeyUpEvent> {
-      public process(event: IOEvent.KeyUpEvent): boolean {
-        self.keysDown[event.keyCode] = false;
-        // Because of osx metakey weirdness,
-        // unset the states for some of the keys
-        if (event.keyCode === KeyCodes.LeftWindowKey || event.keyCode === KeyCodes.RightWindowKey) {
-          IOState.KEY_UP_META_RESET_KEYS.map(k => {
-            self.dispatchFakeKeyUpEvent(dispatcher, k);
-          });
-        }
-        return false; // Always propagate
+    dispatcher.addHandler(IOEvent.EventType.KeyUp, event => {
+      this.keysDown[event.keyCode] = false;
+      // Because of osx metakey weirdness,
+      // unset the states for some of the keys
+      if (event.keyCode === KeyCodes.LeftWindowKey || event.keyCode === KeyCodes.RightWindowKey) {
+        IOState.KEY_UP_META_RESET_KEYS.map(k => {
+          this.dispatchFakeKeyUpEvent(dispatcher, k);
+        });
       }
+      return false; // Always propagate
     });
 
     // pointermove handler
-    dispatcher.addHandler(IOEvent.EventType.PointerMove, new class implements IOEvent.EventHandler<IOEvent.PointerMoveEvent> {
-      public process(event: IOEvent.PointerMoveEvent): boolean {
-        self.pointerX = event.offsetX;
-        self.pointerY = event.offsetY;
-        self.pointerPressure = event.pressure;
-        self.pointerTiltX = event.tiltX;
-        self.pointerTiltY = event.tiltY;
-        self.pointerWidth = event.width;
-        self.pointerHeight = event.height;
-        return false; // Always propagate
-      }
+    dispatcher.addHandler(IOEvent.EventType.PointerMove, event => {
+      this.pointerX = event.offsetX;
+      this.pointerY = event.offsetY;
+      this.pointerPressure = event.pressure;
+      this.pointerTiltX = event.tiltX;
+      this.pointerTiltY = event.tiltY;
+      this.pointerWidth = event.width;
+      this.pointerHeight = event.height;
+      return false; // Always propagate
     });
 
     // pointerdown handler
-    dispatcher.addHandler(IOEvent.EventType.PointerDown, new class implements IOEvent.EventHandler<IOEvent.PointerDownEvent> {
-      public process(event: IOEvent.PointerDownEvent): boolean {
-        self.pointerX = event.offsetX;
-        self.pointerY = event.offsetY;
-        self.pointerPressure = event.pressure;
-        self.pointerTiltX = event.tiltX;
-        self.pointerTiltY = event.tiltY;
-        self.pointerWidth = event.width;
-        self.pointerHeight = event.height;
-        self.pointerDown[event.button] = true;
-        return false; // Always propagate
-      }
+    dispatcher.addHandler(IOEvent.EventType.PointerDown, event => {
+      this.pointerX = event.offsetX;
+      this.pointerY = event.offsetY;
+      this.pointerPressure = event.pressure;
+      this.pointerTiltX = event.tiltX;
+      this.pointerTiltY = event.tiltY;
+      this.pointerWidth = event.width;
+      this.pointerHeight = event.height;
+      this.pointerDown[event.button] = true;
+      return false; // Always propagate
     });
 
     // pointerup handler
-    dispatcher.addHandler(IOEvent.EventType.PointerUp, new class implements IOEvent.EventHandler<IOEvent.PointerUpEvent> {
-      public process(event: IOEvent.PointerUpEvent): boolean {
-        self.pointerX = event.offsetX;
-        self.pointerY = event.offsetY;
-        self.pointerPressure = event.pressure;
-        self.pointerTiltX = event.tiltX;
-        self.pointerTiltY = event.tiltY;
-        self.pointerWidth = event.width;
-        self.pointerHeight = event.height;
-        self.pointerDown[event.button] = false;
-        return false; // Always propagate
-      }
+    dispatcher.addHandler(IOEvent.EventType.PointerUp, event => {
+      this.pointerX = event.offsetX;
+      this.pointerY = event.offsetY;
+      this.pointerPressure = event.pressure;
+      this.pointerTiltX = event.tiltX;
+      this.pointerTiltY = event.tiltY;
+      this.pointerWidth = event.width;
+      this.pointerHeight = event.height;
+      this.pointerDown[event.button] = false;
+      return false; // Always propagate
     });
   }
 }

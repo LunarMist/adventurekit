@@ -38,12 +38,9 @@ export class IOStateUIComponent extends SimpleRenderComponent {
   private charBuffer = '';
 
   init(): void {
-    const self = this;
-    this.dispatcher.addHandler(IOEvent.EventType.KeyPress, new class implements IOEvent.EventHandler<IOEvent.KeyPressEvent> {
-      public process(event: IOEvent.KeyPressEvent): boolean {
-        self.charBuffer += event.key;
-        return false; // Always propagate
-      }
+    this.dispatcher.addHandler(IOEvent.EventType.KeyPress, event => {
+      this.charBuffer += event.key;
+      return false; // Always propagate
     });
   }
 

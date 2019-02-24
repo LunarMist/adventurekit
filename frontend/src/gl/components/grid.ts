@@ -14,27 +14,21 @@ export class GridPatternComponent extends SimpleRenderComponent {
   private prevPointerXY = { x: 0.0, y: 0.0 };
 
   init(): void {
-    const self = this;
-
-    this.dispatcher.addHandler(IOEvent.EventType.PointerDown, new class implements IOEvent.EventHandler<IOEvent.PointerDownEvent> {
-      public process(event: IOEvent.PointerDownEvent): boolean {
-        // For touch events: To prevent jank, reset the prev xy
-        self.prevPointerXY = { x: event.offsetX, y: event.offsetY };
-        return false;
-      }
+    this.dispatcher.addHandler(IOEvent.EventType.PointerDown, event => {
+      // For touch events: To prevent jank, reset the prev xy
+      this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
+      return false;
     });
 
-    this.dispatcher.addHandler(IOEvent.EventType.PointerMove, new class implements IOEvent.EventHandler<IOEvent.PointerMoveEvent> {
-      public process(event: IOEvent.PointerMoveEvent): boolean {
-        if (self.io.pointerDown[MouseCodes.LeftButton]) {
-          self.gridOffset[0] += (self.prevPointerXY.x - event.offsetX);
-          self.gridOffset[1] -= (self.prevPointerXY.y - event.offsetY);
-          self.prevPointerXY = { x: event.offsetX, y: event.offsetY };
-          return true;
-        }
-        self.prevPointerXY = { x: event.offsetX, y: event.offsetY };
-        return false;
+    this.dispatcher.addHandler(IOEvent.EventType.PointerMove, event => {
+      if (this.io.pointerDown[MouseCodes.LeftButton]) {
+        this.gridOffset[0] += (this.prevPointerXY.x - event.offsetX);
+        this.gridOffset[1] -= (this.prevPointerXY.y - event.offsetY);
+        this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
+        return true;
       }
+      this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
+      return false;
     });
 
     this.initFromLostContext();

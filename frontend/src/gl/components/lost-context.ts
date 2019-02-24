@@ -7,18 +7,14 @@ export class LostContextComponent extends SimpleRenderComponent {
   private ext!: WEBGL_lose_context;
 
   init(): void {
-    const self = this;
-
-    this.dispatcher.addHandler(IOEvent.EventType.KeyUp, new class implements IOEvent.EventHandler<IOEvent.KeyUpEvent> {
-      public process(event: IOEvent.KeyUpEvent): boolean {
-        if (event.keyCode === KeyCodes.Space) {
-          if (self.gl.isContextLost()) {
-            console.log('Initiating restore context');
-            self.ext.restoreContext();
-          }
+    this.dispatcher.addHandler(IOEvent.EventType.KeyUp, event => {
+      if (event.keyCode === KeyCodes.Space) {
+        if (this.gl.isContextLost()) {
+          console.log('Initiating restore context');
+          this.ext.restoreContext();
         }
-        return false;
       }
+      return false;
     });
   }
 

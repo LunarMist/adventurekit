@@ -176,16 +176,64 @@ export class WheelEvent implements Event {
  * Event handlers for IO should all extend {@link EventHandler<T>}
  */
 export interface EventHandler<T extends Event> {
-  process(event: T): boolean;
+  (event: T): boolean;
 }
 
 /**
  * Handles the work of dispatching IO events
  */
 export interface EventDispatcher {
-  addHandler(type: EventType, handler: EventHandler<Event>): void;
+  addHandler(type: EventType.Focused, handler: EventHandler<FocusedEvent>): void;
 
-  removeHandler(type: EventType, handler: EventHandler<Event>): void;
+  addHandler(type: EventType.FocusLost, handler: EventHandler<FocusLostEvent>): void;
+
+  addHandler(type: EventType.Resized, handler: EventHandler<ResizedEvent>): void;
+
+  addHandler(type: EventType.ClipboardCut, handler: EventHandler<ClipboardCutEvent>): void;
+
+  addHandler(type: EventType.ClipboardCopy, handler: EventHandler<ClipboardCopyEvent>): void;
+
+  addHandler(type: EventType.ClipboardPaste, handler: EventHandler<ClipboardPasteEvent>): void;
+
+  addHandler(type: EventType.KeyDown, handler: EventHandler<KeyDownEvent>): void;
+
+  addHandler(type: EventType.KeyPress, handler: EventHandler<KeyPressEvent>): void;
+
+  addHandler(type: EventType.KeyUp, handler: EventHandler<KeyUpEvent>): void;
+
+  addHandler(type: EventType.PointerMove, handler: EventHandler<PointerMoveEvent>): void;
+
+  addHandler(type: EventType.PointerDown, handler: EventHandler<PointerDownEvent>): void;
+
+  addHandler(type: EventType.PointerUp, handler: EventHandler<PointerUpEvent>): void;
+
+  addHandler(type: EventType.Wheel, handler: EventHandler<WheelEvent>): void;
+
+  removeHandler(type: EventType.Focused, handler: EventHandler<FocusedEvent>): void;
+
+  removeHandler(type: EventType.FocusLost, handler: EventHandler<FocusLostEvent>): void;
+
+  removeHandler(type: EventType.Resized, handler: EventHandler<ResizedEvent>): void;
+
+  removeHandler(type: EventType.ClipboardCut, handler: EventHandler<ClipboardCutEvent>): void;
+
+  removeHandler(type: EventType.ClipboardCopy, handler: EventHandler<ClipboardCopyEvent>): void;
+
+  removeHandler(type: EventType.ClipboardPaste, handler: EventHandler<ClipboardPasteEvent>): void;
+
+  removeHandler(type: EventType.KeyDown, handler: EventHandler<KeyDownEvent>): void;
+
+  removeHandler(type: EventType.KeyPress, handler: EventHandler<KeyPressEvent>): void;
+
+  removeHandler(type: EventType.KeyUp, handler: EventHandler<KeyUpEvent>): void;
+
+  removeHandler(type: EventType.PointerMove, handler: EventHandler<PointerMoveEvent>): void;
+
+  removeHandler(type: EventType.PointerDown, handler: EventHandler<PointerDownEvent>): void;
+
+  removeHandler(type: EventType.PointerUp, handler: EventHandler<PointerUpEvent>): void;
+
+  removeHandler(type: EventType.Wheel, handler: EventHandler<WheelEvent>): void;
 
   dispatchEvents(): void;
 
@@ -205,11 +253,12 @@ export class SimpleEventDispatcher implements EventDispatcher {
     }
   }
 
-  addHandler(type: EventType, handler: EventHandler<Event>): void {
+  addHandler<T extends Event>(type: EventType, handler: EventHandler<T>): void {
+    // @ts-ignore
     this.handlers[type].push(handler);
   }
 
-  removeHandler(type: EventType, handler: EventHandler<Event>): void {
+  removeHandler<T extends Event>(type: EventType, handler: EventHandler<T>): void {
     const loc = this.handlers[type].findIndex(v => v === handler);
     if (loc !== -1) {
       this.handlers[type].splice(loc, 1);
@@ -224,7 +273,7 @@ export class SimpleEventDispatcher implements EventDispatcher {
         const chain = this.handlers[nextEvent.type];
         // Propagate each event down the chain until one returns true
         for (const handler of chain) {
-          if (handler.process(nextEvent)) {
+          if (handler(nextEvent)) {
             break;
           }
         }
