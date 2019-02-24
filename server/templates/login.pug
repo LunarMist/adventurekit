@@ -1,10 +1,10 @@
-// TODO: Make this page pretty. Use a vue instead?
+// TODO: Make this page pretty. Use vue.js instead?
 doctype html
 head
   meta(charset='UTF-8')
   meta(name='viewport' content='width=device-width, initial-scale=1')
 
-  title Login
+  title Adventure Kit: Login
 
   link(rel='preload' href=bundlePath as='script')
 
@@ -21,6 +21,8 @@ head
       margin: 2px;
       display: block;
     }
+noscript
+  p Javascript must be enabled!
 div
   h2 Notes
   ul
@@ -67,7 +69,7 @@ script.
         loginButton.disabled = false;
       })
       .catch(function (reason) {
-        console.log(reason);
+        console.error(reason);
         loginButton.disabled = false;
       });
   }
@@ -99,7 +101,7 @@ script.
         registerButton.disabled = false;
       })
       .catch(function (reason) {
-        console.log(reason);
+        console.error(reason);
         registerButton.disabled = false;
       });
   }

@@ -32,6 +32,10 @@ export abstract class SocketHandler {
     return this.session.passport;
   }
 
+  get sessionUser() {
+    return this.passport.user;
+  }
+
   isAuthenticated(): boolean {
     return this.passport && this.passport.user !== undefined && this.passport.user !== null;
   }

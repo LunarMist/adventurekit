@@ -1,5 +1,3 @@
-/* tslint:disable:max-line-length */
-
 export const MIN_USERNAME_LENGTH = 3;
 export const MAX_USERNAME_LENGTH = 15; // Sync with user model column length if changed
 export const MAX_EMAIL_LENGTH = 120; // Sync with user model column length if changed

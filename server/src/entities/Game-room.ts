@@ -61,7 +61,7 @@ export default class GameRoom {
   }
 
   static async create(owner: User, password: string): Promise<GameRoom> {
-    const passwordHash = await bcrypt.hash(password || '', 10);
+    const passwordHash = await bcrypt.hash(password || '', 10); // Default password to empty ''
     const newRoom = new GameRoom(owner, passwordHash);
     return getManager().save(newRoom);
   }

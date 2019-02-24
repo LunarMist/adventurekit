@@ -33,7 +33,7 @@ export class GameRoomSocketHandler extends SocketHandler {
 
     this.listenChatMessage((message: string) => {
       if (this.currentGameRoomId !== -1) {
-        this.sendChatMessage(this.passport.user.username, message, GameRoomSocketHandler.formatRoomName(this.currentGameRoomId));
+        this.sendChatMessage(this.sessionUser.username, message, GameRoomSocketHandler.formatRoomName(this.currentGameRoomId));
       }
     });
 
@@ -52,7 +52,7 @@ export class GameRoomSocketHandler extends SocketHandler {
 
         // Modify db
         await user.setDefaultRoom(room);
-        await room.addMember(this.passport.user.id);
+        await room.addMember(this.sessionUser.id);
 
         // Leave old rooms
         const promises = Object.keys(this.socket.rooms)
@@ -126,13 +126,13 @@ export class GameRoomSocketHandler extends SocketHandler {
   }
 
   async getCurrentUser(): Promise<User | undefined> {
-    return User.getById(this.passport.user.id);
+    return User.getById(this.sessionUser.id);
   }
 
   getInitState(): InitState {
     return {
       userProfile: {
-        username: this.passport.user.username,
+        username: this.sessionUser.username,
       },
       roomId: this.currentGameRoomId,
     };

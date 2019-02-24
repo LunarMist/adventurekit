@@ -182,7 +182,7 @@ app.post('/register/', async (req, res, next) => {
 
     // Sign the token with jwt
     const jwtSignFunc = util.promisify<any, any, any, any>(jwt.sign.bind(jwt));
-    const regToken = await jwtSignFunc({ id: user.id }, config.registration.jwtSecret, { expiresIn: '1 day' });
+    const regToken = await jwtSignFunc({ id: user.id }, config.registration.jwtSecret, { expiresIn: '3 day' });
 
     // Send a registration mail
     await SGMail.send({

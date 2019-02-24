@@ -16,7 +16,7 @@ export class GameContext {
   dispatcher: EventDispatcher;
   io: State;
   net: GameNetClient;
-  store: { p: PersistentGameSettings, mem: InMemoryGameSettings };
+  store: { p: PersistentGameSettings; mem: InMemoryGameSettings };
   gl: WebGLRenderingContext;
 
   constructor(dispatcher: EventDispatcher, io: State, net: GameNetClient,

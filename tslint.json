@@ -40,7 +40,8 @@
         "mail": "SGMail",
         "jsonwebtoken": "jwt"
       }
-    ]
+    ],
+    "type-literal-delimiter": true
   },
   "linterOptions": {
     "exclude": [
