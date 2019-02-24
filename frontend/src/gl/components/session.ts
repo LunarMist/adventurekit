@@ -2,7 +2,7 @@ import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
-export class LogoutComponent extends SimpleRenderComponent {
+export class SessionComponent extends SimpleRenderComponent {
   private readonly TEXT_SUCCESS_COLOR: ImGui.ImVec4 = new ImGui.ImVec4(34 / 255, 139 / 255, 34 / 255, 1.0);
   private readonly TEXT_ERROR_COLOR: ImGui.ImVec4 = new ImGui.ImVec4(178 / 255, 34 / 255, 34 / 255, 1.0);
 
@@ -10,10 +10,26 @@ export class LogoutComponent extends SimpleRenderComponent {
   private successString = '';
 
   render(): void {
-    if (!ImGui.Begin('Sess', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin('Session', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }
+
+    if (ImGui.Button('Disconnect')) {
+      this.net.disconnect();
+    }
+
+    ImGui.SameLine();
+
+    if (ImGui.Button('Attempt reconnect')) {
+      this.net.connect();
+    }
+
+    if (ImGui.Button('Login')) {
+      location.replace('/login/');
+    }
+
+    ImGui.SameLine();
 
     if (ImGui.Button('Logout')) {
       // Reset messages
@@ -25,7 +41,6 @@ export class LogoutComponent extends SimpleRenderComponent {
         .then((response: AxiosResponse) => {
           this.successString = response.data.message;
           this.net.disconnect();
-          // location.replace('/login/'); // On logout, redirect to login page
         })
         .catch((error: AxiosError) => {
           if (error.response) {

@@ -4,7 +4,7 @@ import { GridPatternComponent } from 'GL/components/grid';
 import { LostContextComponent } from 'GL/components/lost-context';
 import { ChatWindowComponent } from 'GL/components/chat-client';
 import { AboutComponent } from 'GL/components/about';
-import { LogoutComponent } from 'GL/components/logout';
+import { SessionComponent } from 'GL/components/session';
 import { RenderLoop } from 'GL/render';
 import { RoomComponent } from 'GL/components/room';
 import { ServerStatusComponent } from 'GL/components/server-status';
@@ -20,7 +20,7 @@ export default function main(canvas: HTMLCanvasElement) {
     new LostContextComponent(),
     new AboutComponent(),
     new ChatWindowComponent(),
-    new LogoutComponent(),
+    new SessionComponent(),
     new GridPatternComponent(),
     new ServerStatusComponent(), // Keep as last one so it's on top of everything
   ];
