@@ -315,6 +315,12 @@ export class RenderLoop {
         pixelSize: 16.0,
         glyphRange: io.Fonts.GetGlyphRangesChineseFull(),
       }],
+      ['Fonts/NotoMono-Regular.ttf', {
+        name: 'Fonts/NotoMono-Regular.ttf',
+        url: require('Fonts/NotoMono-Regular.ttf'),
+        pixelSize: 16.0,
+        glyphRange: io.Fonts.GetGlyphRangesDefault(),
+      }],
     ]);
 
     const DEFAULT_FONT_NAME = 'Fonts/NotoSans-Regular.ttf';

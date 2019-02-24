@@ -1521,4 +1521,6 @@ MemAlloc(sz: number): any;
 // IMGUI_API void          MemFree(void* ptr);
 MemFree(ptr: any): void;
 
+// Freetype functions
+FreeTypeBuildFontAtlas(atlas: reference_ImFontAtlas, extra_flags: number) : boolean;
 }
