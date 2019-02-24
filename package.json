@@ -4,13 +4,22 @@
   "description": "adventure kit",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "cd common && npm run build && cd ../frontend && npm run build && cd ../server && npm run build && cd ..",
+    "watch": "echo \"Error: not implemented\" && exit 1",
+    "clean": "cd common && npm run clean && cd ../frontend && npm run clean && cd ../server && npm run clean && cd ..",
+    "setup-modules": "npm install && cd common && npm install && npm link && cd ../frontend && npm install && npm link rpgcore-common && cd ../server && npm install && npm link rpgcore-common && cd ..",
+    "clean-modules": "rimraf common/node_modules/ frontend/node_modules/ server/node_modules/",
+    "clean-all": "npm run clean && npm run clean-modules",
+    "lint": "tslint -p tslint.json"
   },
   "author": "Jeremy Simpson",
   "license": "MIT",
   "devDependencies": {
+    "rimraf": "^2.6.3",
     "tslint": "^5.12.1",
-    "tslint-config-airbnb": "^5.11.1"
+    "tslint-config-airbnb": "^5.11.1",
+    "typeorm": "^0.2.13"
   },
   "dependencies": {
     "typescript": "^3.3.3333"

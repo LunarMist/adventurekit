@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "watch": "tsc --watch",
+    "clean": "rimraf build/",
     "serve": "node build/server.js",
     "serve-dev": "nodemon --watch build/ --watch ../frontend/build/ --inspect build/server.js"
   },

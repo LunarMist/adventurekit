@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.js --mode production  --devtool source-map",
-    "watch": "webpack --config webpack.config.js --mode development --devtool eval-source-map --watch --info-verbosity verbose --display-error-details"
+    "watch": "webpack --config webpack.config.js --mode development --devtool eval-source-map --watch --info-verbosity verbose --display-error-details",
+    "clean": "rimraf build/"
   },
   "author": "Jeremy Simpson",
   "license": "MIT",
