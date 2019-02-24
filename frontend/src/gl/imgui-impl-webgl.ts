@@ -3,8 +3,8 @@ import * as ImGui from 'ImGui/imgui';
 import { GameContext } from 'GL/render';
 
 export class ImGuiImplWebGl {
-  private shaderHandle: WebGLProgram | null = null;
-  private attribLocationTex: WebGLUniformLocation | null = null;
+  private programHandle: WebGLProgram | null = null;
+  private attribLocationTexture: WebGLUniformLocation | null = null;
   private attribLocationProjMtx: WebGLUniformLocation | null = null;
   private attribLocationPosition: GLint = -1;
   private attribLocationUV: GLint = -1;
@@ -47,14 +47,14 @@ export class ImGuiImplWebGl {
       }
     `;
 
-    this.shaderHandle = GLUtils.createProgramFromSrc(this.gl, vertexShader, fragmentShader);
+    this.programHandle = GLUtils.createProgramFromSrc(this.gl, vertexShader, fragmentShader);
 
-    if (this.shaderHandle !== null) {
-      this.attribLocationTex = this.gl.getUniformLocation(this.shaderHandle, 'Texture');
-      this.attribLocationProjMtx = this.gl.getUniformLocation(this.shaderHandle, 'ProjMtx');
-      this.attribLocationPosition = this.gl.getAttribLocation(this.shaderHandle, 'Position') || 0;
-      this.attribLocationUV = this.gl.getAttribLocation(this.shaderHandle, 'UV') || 0;
-      this.attribLocationColor = this.gl.getAttribLocation(this.shaderHandle, 'Color') || 0;
+    if (this.programHandle !== null) {
+      this.attribLocationTexture = this.gl.getUniformLocation(this.programHandle, 'Texture');
+      this.attribLocationProjMtx = this.gl.getUniformLocation(this.programHandle, 'ProjMtx');
+      this.attribLocationPosition = this.gl.getAttribLocation(this.programHandle, 'Position');
+      this.attribLocationUV = this.gl.getAttribLocation(this.programHandle, 'UV');
+      this.attribLocationColor = this.gl.getAttribLocation(this.programHandle, 'Color');
     }
 
     this.vboHandle = this.gl.createBuffer();
@@ -89,14 +89,14 @@ export class ImGuiImplWebGl {
     this.gl.deleteBuffer(this.elementsHandle);
     this.elementsHandle = null;
 
-    this.attribLocationTex = null;
+    this.attribLocationTexture = null;
     this.attribLocationProjMtx = null;
     this.attribLocationPosition = -1;
     this.attribLocationUV = -1;
     this.attribLocationColor = -1;
 
-    this.gl.deleteProgram(this.shaderHandle);
-    this.shaderHandle = null;
+    this.gl.deleteProgram(this.programHandle);
+    this.programHandle = null;
 
     // TODO: Destroy program shaders
 
@@ -145,8 +145,8 @@ export class ImGuiImplWebGl {
       0.0, 0.0, -1.0, 0.0,
       (R + L) / (L - R), (T + B) / (B - T), 0.0, 1.0,
     ]);
-    this.gl.useProgram(this.shaderHandle);
-    this.gl.uniform1i(this.attribLocationTex, 0);
+    this.gl.useProgram(this.programHandle);
+    this.gl.uniform1i(this.attribLocationTexture, 0);
     this.attribLocationProjMtx && this.gl.uniformMatrix4fv(this.attribLocationProjMtx, false, orthoProjection);
 
     // Render command lists
@@ -198,10 +198,5 @@ export class ImGuiImplWebGl {
     });
 
     this.gl.disable(this.gl.SCISSOR_TEST);
-
-    // Restore modified GL state
-    this.gl.disableVertexAttribArray(this.attribLocationPosition);
-    this.gl.disableVertexAttribArray(this.attribLocationUV);
-    this.gl.disableVertexAttribArray(this.attribLocationColor);
   }
 }

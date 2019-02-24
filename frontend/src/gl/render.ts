@@ -321,9 +321,21 @@ export class RenderLoop {
         pixelSize: 16.0,
         glyphRange: io.Fonts.GetGlyphRangesDefault(),
       }],
+      ['Fonts/Roboto-Regular.ttf', {
+        name: 'Fonts/Roboto-Regular.ttf',
+        url: require('Fonts/Roboto-Regular.ttf'),
+        pixelSize: 16.0,
+        glyphRange: io.Fonts.GetGlyphRangesDefault(),
+      }],
+      ['Fonts/Sweet16mono.ttf', {
+        name: 'Fonts/Sweet16mono.ttf',
+        url: require('Fonts/Sweet16mono.ttf'),
+        pixelSize: 16.0,
+        glyphRange: io.Fonts.GetGlyphRangesDefault(),
+      }],
     ]);
 
-    const DEFAULT_FONT_NAME = 'Fonts/NotoSans-Regular.ttf';
+    const DEFAULT_FONT_NAME = 'Fonts/Sweet16mono.ttf';
 
     const activeFont: FontData | null = await this.persistentGameSettings.getActiveFont();
     if (activeFont === null) {
