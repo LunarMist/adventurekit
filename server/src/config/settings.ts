@@ -19,6 +19,7 @@ export interface AppSettings {
   redis: {
     host: string;
     port: number;
+    password: string | undefined;
   };
   postgres: {
     host: string;

@@ -93,6 +93,7 @@ export class SocketServer {
     readonly expressSessionMiddleware: RequestHandler,
     readonly redisAdapterHost: string,
     readonly redisAdapterPort: number,
+    readonly redisAdapterPass: string | undefined,
     readonly redisAdapterKey: string
   ) {
     // TODO: Followup on https://github.com/socketio/socket.io/issues/3259
@@ -104,6 +105,7 @@ export class SocketServer {
     this.io.adapter(socketIoRedis({
       host: this.redisAdapterHost,
       port: this.redisAdapterPort,
+      auth_pass: this.redisAdapterPass,
       key: this.redisAdapterKey,
     }));
   }

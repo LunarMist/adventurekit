@@ -97,6 +97,7 @@ const sessionMiddleware = expressSession({
   store: new SessionRedisStore({
     host: config.redis.host,
     port: config.redis.port,
+    pass: config.redis.password,
     ttl: moment.duration(config.session.ttl).asSeconds(),
     db: config.session.redisDB,
     prefix: config.session.redisPrefix,

@@ -45,6 +45,7 @@ async function run() {
     sessionMiddleware,
     config.redis.host,
     config.redis.port,
+    config.redis.password,
     config.socketIO.redisKey
   ).serve();
 
