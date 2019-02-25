@@ -63,6 +63,7 @@ export class ImGuiImplWebGl {
     const io = ImGui.GetIO();
 
     // Must be called before GetTexDataAsRGBA32()
+    // https://github.com/ocornut/imgui/tree/master/misc/freetype
     ImGui.FreeTypeBuildFontAtlas(io.Fonts);
 
     // Fonts

@@ -122,7 +122,8 @@ export class RenderLoop {
     this.persistentGameSettings = new PersistentGameSettings();
     this.inMemoryGameSettings = new InMemoryGameSettings();
 
-    const newGl = canvas.getContext('webgl');
+    // https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
+    const newGl = canvas.getContext('webgl', { alpha: false });
     if (newGl === null) {
       throw Error('Gl context cannot be null');
     }
@@ -182,7 +183,7 @@ export class RenderLoop {
   private initFromLostContext() {
     console.log('RenderLoop.initFromLostContext()');
 
-    const newGl = this.canvas.getContext('webgl');
+    const newGl = this.canvas.getContext('webgl', { alpha: false });
     if (newGl === null) {
       throw Error('Gl context cannot be null');
     } else {
@@ -344,7 +345,7 @@ export class RenderLoop {
       }],
     ]);
 
-    const DEFAULT_FONT_NAME = 'Fonts/Sweet16mono.ttf';
+    const DEFAULT_FONT_NAME = 'Fonts/NotoSans-Regular.ttf';
 
     const activeFont: FontData | null = await this.persistentGameSettings.getActiveFont();
     if (activeFont === null) {
