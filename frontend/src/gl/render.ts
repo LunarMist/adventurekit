@@ -30,7 +30,7 @@ export class GameContext {
 }
 
 export interface RenderComponent {
-  context: GameContext;
+  bindGameContext(context: GameContext): void;
 
   init(): void;
 
@@ -46,7 +46,7 @@ export interface RenderComponent {
 }
 
 export abstract class SimpleRenderComponent implements RenderComponent {
-  context!: GameContext;
+  protected context!: GameContext;
 
   get dispatcher(): EventDispatcher {
     return this.context.dispatcher;
@@ -68,21 +68,30 @@ export abstract class SimpleRenderComponent implements RenderComponent {
     return this.context.gl;
   }
 
+  bindGameContext(context: GameContext): void {
+    this.context = context;
+  }
+
   init(): void {
+
   }
 
   initFromLostContext(): void {
+
   }
 
   startFrame(): void {
+
   }
 
   abstract render(): void;
 
   endFrame(): void {
+
   }
 
   destroy(): void {
+
   }
 }
 
@@ -163,7 +172,7 @@ export class RenderLoop {
 
     // Setup components
     this.components.forEach(c => {
-      c.context = this.gameContext;
+      c.bindGameContext(this.gameContext);
       c.init();
     });
 

@@ -5,12 +5,21 @@ export class ChatWindowComponent extends SimpleRenderComponent {
   private inputBuffer = new ImGui.ImStringBuffer(1000);
   private chatLogs: string[] = [];
 
+  public isVisible: boolean = true;
+
   init(): void {
     this.net.listenChatMessage((speaker, message) => this.chatLogs.push(`${speaker}: ${message}`));
   }
 
   render(): void {
-    ImGui.Begin('Chat', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize);
+    if (!this.isVisible) {
+      return;
+    }
+
+    if (!ImGui.Begin('Chat', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+      ImGui.End();
+      return;
+    }
 
     ImGui.BeginChild('a1', new ImGui.ImVec2(700, 300));
     ImGui.Text(this.chatLogs.join('\n'));

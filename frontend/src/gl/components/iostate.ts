@@ -37,6 +37,8 @@ export class IOStateUIComponent extends SimpleRenderComponent {
   // Buffer for keys
   private charBuffer = '';
 
+  public isVisible = false;
+
   init(): void {
     this.dispatcher.addHandler(IOEvent.EventType.KeyPress, event => {
       this.charBuffer += event.key;
@@ -45,7 +47,11 @@ export class IOStateUIComponent extends SimpleRenderComponent {
   }
 
   render(): void {
-    if (!ImGui.Begin('IO State', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!this.isVisible) {
+      return;
+    }
+
+    if (!ImGui.Begin('IO State', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }

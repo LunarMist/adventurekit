@@ -9,8 +9,14 @@ export class SessionComponent extends SimpleRenderComponent {
   private errorString = '';
   private successString = '';
 
+  public isVisible: boolean = false;
+
   render(): void {
-    if (!ImGui.Begin('Session', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!this.isVisible) {
+      return;
+    }
+
+    if (!ImGui.Begin('Session', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }

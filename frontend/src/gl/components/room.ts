@@ -11,8 +11,14 @@ export class RoomComponent extends SimpleRenderComponent {
   private errorString = '';
   private successString = '';
 
+  public isVisible: boolean = false;
+
   render(): void {
-    if (!ImGui.Begin('Manage rooms', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!this.isVisible) {
+      return;
+    }
+
+    if (!ImGui.Begin('Manage rooms', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }

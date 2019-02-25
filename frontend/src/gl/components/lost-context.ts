@@ -5,6 +5,7 @@ import { KeyCodes } from 'IO/codes';
 
 export class LostContextComponent extends SimpleRenderComponent {
   private ext!: WEBGL_lose_context;
+  public isVisible: boolean = false;
 
   init(): void {
     this.dispatcher.addHandler(IOEvent.EventType.KeyUp, event => {
@@ -12,6 +13,7 @@ export class LostContextComponent extends SimpleRenderComponent {
         if (this.gl.isContextLost()) {
           console.log('Initiating restore context');
           this.ext.restoreContext();
+          return true;
         }
       }
       return false;
@@ -19,8 +21,12 @@ export class LostContextComponent extends SimpleRenderComponent {
   }
 
   render(): void {
+    if (!this.isVisible) {
+      return;
+    }
+
     ImGui.SetNextWindowPos(new ImGui.ImVec2(100, 500), ImGui.Cond.FirstUseEver);
-    if (!ImGui.Begin('GL Context', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin('GL Context', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }

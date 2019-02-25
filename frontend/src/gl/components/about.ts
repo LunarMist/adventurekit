@@ -3,33 +3,35 @@ import * as ImGui from 'ImGui/imgui';
 
 export class AboutComponent extends SimpleRenderComponent {
   private showLicensesWindow: boolean = false;
+  public isVisible: boolean = false;
 
   render(): void {
     /**
      * About window
      */
-    ImGui.SetNextWindowPos(new ImGui.ImVec2(500, 100), ImGui.Cond.FirstUseEver);
-    ImGui.Begin('About', null, ImGui.ImGuiWindowFlags.AlwaysAutoResize);
+    if (this.isVisible) {
+      ImGui.SetNextWindowPos(new ImGui.ImVec2(500, 100), ImGui.Cond.FirstUseEver);
+      ImGui.Begin('About', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize);
 
-    if (ImGui.Button('View on github! (must allow popups)')) {
-      window.open('https://github.com/LunarMist/adventurekit', '_blank');
+      if (ImGui.Button('View on github! (must allow popups)')) {
+        window.open('https://github.com/LunarMist/adventurekit', '_blank');
+      }
+
+      if (ImGui.Button('View licenses')) {
+        this.showLicensesWindow = true;
+      }
+
+      ImGui.Text('Email: jeremy@adventurekit.app');
+      ImGui.Text('Copyright (c) Jeremy Simpson 2019');
+      ImGui.End();
     }
-
-    if (ImGui.Button('View licenses')) {
-      this.showLicensesWindow = true;
-    }
-
-    ImGui.Text('Email: jeremy@adventurekit.app');
-    ImGui.Text('Copyright (c) Jeremy Simpson 2019');
-    ImGui.End();
 
     /**
      * Licenses window
      */
     if (this.showLicensesWindow) {
-      ImGui.SetNextWindowSize(new ImGui.ImVec2(600, 700));
-      ImGui.Begin('Licenses',
-                  (value = this.showLicensesWindow) => this.showLicensesWindow = value, ImGui.ImGuiWindowFlags.NoResize);
+      ImGui.SetNextWindowSize(new ImGui.ImVec2(650, 700));
+      ImGui.Begin('Licenses', (value = this.showLicensesWindow) => this.showLicensesWindow = value, ImGui.ImGuiWindowFlags.NoResize);
 
       for (const l in this.licenses) {
         if (ImGui.CollapsingHeader(l)) {
@@ -122,7 +124,8 @@ Each sub-folders in this archive correspond to a different contributor :
 
 Please, include a mention "Icons made by {author}" in your derivative work.
 
-If you use them in one of your project, don't hesitate to drop a message to delapouite@gmail.com or ping @GameIcons on twitter.
+If you use them in one of your project, don't hesitate to drop a message to
+delapouite@gmail.com or ping @GameIcons on twitter.
 
 More info and icons available at https://game-icons.net
 `,
