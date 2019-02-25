@@ -1,15 +1,27 @@
 import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
 import { ShowDemoWindow, ShowStyleEditor } from 'ImGui/imgui_demo';
+import { WindowId } from 'GL/components/menu';
 
 export class DemoUIComponent extends SimpleRenderComponent {
-  public enableDemoUI: boolean = false;
+  public isVisible: boolean = false;
 
   render(): void {
-    if (this.enableDemoUI) {
+    if (this.isVisible) {
       ImGui.SetNextWindowPos(new ImGui.ImVec2(650, 20), ImGui.Cond.FirstUseEver);
-      ShowDemoWindow((value = this.enableDemoUI) => this.enableDemoUI = value);
+      ShowDemoWindow(this.savedOpen());
       ShowStyleEditor();
     }
+  }
+
+  savedOpen(): ImGui.ImAccess<boolean> {
+    return (value: boolean = this.isVisible) => {
+      if (value !== this.isVisible) {
+        this.isVisible = value;
+        this.store.p.setWindowDefaultVisibility(WindowId.DemoUI, this.isVisible)
+          .catch(console.error);
+      }
+      return this.isVisible;
+    };
   }
 }

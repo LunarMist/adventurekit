@@ -2,6 +2,7 @@ import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
 import * as IOEvent from 'IO/event';
 import { KeyCodes } from 'IO/codes';
+import { WindowId } from 'GL/components/menu';
 
 export class LostContextComponent extends SimpleRenderComponent {
   private ext!: WEBGL_lose_context;
@@ -26,7 +27,7 @@ export class LostContextComponent extends SimpleRenderComponent {
     }
 
     ImGui.SetNextWindowPos(new ImGui.ImVec2(100, 500), ImGui.Cond.FirstUseEver);
-    if (!ImGui.Begin('GL Context', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin('GL Context', this.savedOpen(), ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }
@@ -48,5 +49,16 @@ export class LostContextComponent extends SimpleRenderComponent {
     ImGui.Text('Press [Space] to regain context');
 
     ImGui.End();
+  }
+
+  savedOpen(): ImGui.ImAccess<boolean> {
+    return (value: boolean = this.isVisible) => {
+      if (value !== this.isVisible) {
+        this.isVisible = value;
+        this.store.p.setWindowDefaultVisibility(WindowId.GLContext, this.isVisible)
+          .catch(console.error);
+      }
+      return this.isVisible;
+    };
   }
 }

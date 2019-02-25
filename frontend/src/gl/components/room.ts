@@ -1,5 +1,6 @@
 import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
+import { WindowId } from 'GL/components/menu';
 
 export class RoomComponent extends SimpleRenderComponent {
   private readonly roomIdBuffer = new ImGui.ImStringBuffer(15, '');
@@ -18,7 +19,7 @@ export class RoomComponent extends SimpleRenderComponent {
       return;
     }
 
-    if (!ImGui.Begin('Manage rooms', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin('Manage rooms', this.savedOpen(), ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }
@@ -76,5 +77,16 @@ export class RoomComponent extends SimpleRenderComponent {
     }
 
     ImGui.End();
+  }
+
+  savedOpen(): ImGui.ImAccess<boolean> {
+    return (value: boolean = this.isVisible) => {
+      if (value !== this.isVisible) {
+        this.isVisible = value;
+        this.store.p.setWindowDefaultVisibility(WindowId.Room, this.isVisible)
+          .catch(console.error);
+      }
+      return this.isVisible;
+    };
   }
 }

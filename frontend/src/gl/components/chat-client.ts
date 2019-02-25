@@ -1,11 +1,12 @@
 import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
+import { WindowId } from 'GL/components/menu';
 
 export class ChatWindowComponent extends SimpleRenderComponent {
   private inputBuffer = new ImGui.ImStringBuffer(1000);
   private chatLogs: string[] = [];
 
-  public isVisible: boolean = true;
+  public isVisible: boolean = false;
 
   init(): void {
     this.net.listenChatMessage((speaker, message) => this.chatLogs.push(`${speaker}: ${message}`));
@@ -16,7 +17,7 @@ export class ChatWindowComponent extends SimpleRenderComponent {
       return;
     }
 
-    if (!ImGui.Begin('Chat', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin('Chat', this.savedOpen(), ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }
@@ -34,5 +35,16 @@ export class ChatWindowComponent extends SimpleRenderComponent {
     ImGui.PopItemWidth();
 
     ImGui.End();
+  }
+
+  savedOpen(): ImGui.ImAccess<boolean> {
+    return (value: boolean = this.isVisible) => {
+      if (value !== this.isVisible) {
+        this.isVisible = value;
+        this.store.p.setWindowDefaultVisibility(WindowId.Chat, this.isVisible)
+          .catch(console.error);
+      }
+      return this.isVisible;
+    };
   }
 }

@@ -2,6 +2,7 @@ import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
 import { KeyCodes, MouseCodes } from 'IO/codes';
 import * as IOEvent from 'IO/event';
+import { WindowId } from 'GL/components/menu';
 
 export class IOStateUIComponent extends SimpleRenderComponent {
   // Colors
@@ -51,7 +52,7 @@ export class IOStateUIComponent extends SimpleRenderComponent {
       return;
     }
 
-    if (!ImGui.Begin('IO State', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
+    if (!ImGui.Begin('IO State', this.savedOpen(), ImGui.ImGuiWindowFlags.AlwaysAutoResize)) {
       ImGui.End();
       return;
     }
@@ -210,5 +211,16 @@ export class IOStateUIComponent extends SimpleRenderComponent {
     ImGui.PushStyleColor(ImGui.ImGuiCol.Text, this.KEY_TEXT_COLOR);
     ImGui.Button(text, size);
     ImGui.PopStyleColor(4);
+  }
+
+  savedOpen(): ImGui.ImAccess<boolean> {
+    return (value: boolean = this.isVisible) => {
+      if (value !== this.isVisible) {
+        this.isVisible = value;
+        this.store.p.setWindowDefaultVisibility(WindowId.IOState, this.isVisible)
+          .catch(console.error);
+      }
+      return this.isVisible;
+    };
   }
 }

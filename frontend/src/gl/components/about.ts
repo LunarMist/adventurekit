@@ -1,5 +1,6 @@
 import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
+import { WindowId } from 'GL/components/menu';
 
 export class AboutComponent extends SimpleRenderComponent {
   private showLicensesWindow: boolean = false;
@@ -11,7 +12,7 @@ export class AboutComponent extends SimpleRenderComponent {
      */
     if (this.isVisible) {
       ImGui.SetNextWindowPos(new ImGui.ImVec2(500, 100), ImGui.Cond.FirstUseEver);
-      ImGui.Begin('About', (value = this.isVisible) => this.isVisible = value, ImGui.ImGuiWindowFlags.AlwaysAutoResize);
+      ImGui.Begin('About', this.savedOpen(), ImGui.ImGuiWindowFlags.AlwaysAutoResize);
 
       if (ImGui.Button('View on github! (must allow popups)')) {
         window.open('https://github.com/LunarMist/adventurekit', '_blank');
@@ -41,6 +42,17 @@ export class AboutComponent extends SimpleRenderComponent {
 
       ImGui.End();
     }
+  }
+
+  savedOpen(): ImGui.ImAccess<boolean> {
+    return (value: boolean = this.isVisible) => {
+      if (value !== this.isVisible) {
+        this.isVisible = value;
+        this.store.p.setWindowDefaultVisibility(WindowId.About, this.isVisible)
+          .catch(console.error);
+      }
+      return this.isVisible;
+    };
   }
 
   private readonly licenses: { [key: string]: string } = {
