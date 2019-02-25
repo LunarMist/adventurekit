@@ -28,19 +28,19 @@ module.exports = {
   },
   resolve: {
     alias: {
-      "ImGui": path.resolve(__dirname, 'src', 'imgui'),
-      "GL": path.resolve(__dirname, 'src', 'gl'),
-      "IO": path.resolve(__dirname, 'src', 'io'),
-      "Net": path.resolve(__dirname, 'src', 'net'),
-      "Store": path.resolve(__dirname, 'src', 'store'),
-      "Api":  path.resolve(__dirname, 'src', 'api'),
-      "Fonts": path.resolve(__dirname, 'fonts'),
+      'ImGui': path.resolve(__dirname, 'src', 'imgui'),
+      'GL': path.resolve(__dirname, 'src', 'gl'),
+      'IO': path.resolve(__dirname, 'src', 'io'),
+      'Net': path.resolve(__dirname, 'src', 'net'),
+      'Store': path.resolve(__dirname, 'src', 'store'),
+      'Api': path.resolve(__dirname, 'src', 'api'),
+      'Fonts': path.resolve(__dirname, 'assets', 'fonts'),
     },
     extensions: ['.tsx', '.ts', '.js']
   },
   output: {
-    filename: "rpgcore.[contenthash].js",
-    library: "rpgcore",
+    filename: 'rpgcore.[contenthash].js',
+    library: 'rpgcore',
     libraryTarget: 'umd',
     path: outputPath,
     publicPath: '/static/bundle/',

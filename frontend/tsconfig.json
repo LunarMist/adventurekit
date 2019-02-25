@@ -28,7 +28,7 @@
         "src/api/*"
       ],
       "Fonts/*": [
-        "fonts/*"
+        "assets/fonts/*"
       ]
     }
   },
