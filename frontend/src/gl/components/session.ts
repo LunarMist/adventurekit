@@ -26,7 +26,7 @@ export class SessionComponent extends SimpleRenderComponent {
     }
 
     if (ImGui.Button('Login')) {
-      location.replace('/login/');
+      window.location.href = '/login/';
     }
 
     ImGui.SameLine();
