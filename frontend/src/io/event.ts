@@ -2,8 +2,8 @@
 * Steps to add a new event type:
 * 1) Add a new entry to EventType at the end, but before LENGTH (event.ts)
 * 2) Create the new Event object implementation (event.ts)
-* 3) Add to State interface, as needed (state.ts)
-* 4) Implement in IOState, as needed (state.ts)
+* 3) Add to IOState interface, as needed (state.ts)
+* 4) Implement in EventDispatchedIOState, as needed (state.ts)
 * 5) Add event queuing in IOLifeCycle (lifecycle.ts)
 ***************************************************************************** */
 
@@ -182,7 +182,7 @@ export interface EventHandler<T extends Event> {
 /**
  * Handles the work of dispatching IO events
  */
-export interface EventDispatcher {
+export interface IOEventDispatcher {
   addHandler(type: EventType.Focused, handler: EventHandler<FocusedEvent>): void;
 
   addHandler(type: EventType.FocusLost, handler: EventHandler<FocusLostEvent>): void;
@@ -241,9 +241,9 @@ export interface EventDispatcher {
 }
 
 /**
- * Simple array-based implementation for {@link EventDispatcher}
+ * Simple array-based implementation for {@link IOEventDispatcher}
  */
-export class SimpleEventDispatcher implements EventDispatcher {
+export class SimpleIOEventDispatcher implements IOEventDispatcher {
   private handlers: EventHandler<Event>[][] = [];
   private eventQueue: Event[] = [];
 

@@ -1,8 +1,8 @@
 import { IOLifeCycle } from 'IO/lifecycle';
 import * as ImGui from 'ImGui/imgui';
 import { KeyCodes } from 'IO/codes';
-import { State } from 'IO/state';
-import { EventDispatcher } from 'IO/event';
+import { IOState } from 'IO/state';
+import { IOEventDispatcher } from 'IO/event';
 import { ImGuiIOConnector } from 'IO/imgui';
 import { ImGuiImplWebGl } from 'GL/imgui-impl-webgl';
 import { GameNetClient } from 'Net/game-net-client';
@@ -13,13 +13,13 @@ import InMemoryGameSettings from 'Store/In-memory-game-settings';
 import { FontData } from 'rpgcore-common';
 
 export class GameContext {
-  dispatcher: EventDispatcher;
-  io: State;
+  dispatcher: IOEventDispatcher;
+  io: IOState;
   net: GameNetClient;
   store: { p: PersistentGameSettings; mem: InMemoryGameSettings };
   gl: WebGLRenderingContext;
 
-  constructor(dispatcher: EventDispatcher, io: State, net: GameNetClient,
+  constructor(dispatcher: IOEventDispatcher, io: IOState, net: GameNetClient,
               p: PersistentGameSettings, mem: InMemoryGameSettings, gl: WebGLRenderingContext) {
     this.dispatcher = dispatcher;
     this.io = io;
@@ -48,11 +48,11 @@ export interface RenderComponent {
 export abstract class SimpleRenderComponent implements RenderComponent {
   protected context!: GameContext;
 
-  get dispatcher(): EventDispatcher {
+  get dispatcher(): IOEventDispatcher {
     return this.context.dispatcher;
   }
 
-  get io(): State {
+  get io(): IOState {
     return this.context.io;
   }
 
@@ -487,11 +487,11 @@ export class RenderLoop {
     ImGui.NewFrame();
   }
 
-  get dispatcher(): EventDispatcher {
+  get dispatcher(): IOEventDispatcher {
     return this.gameContext.dispatcher;
   }
 
-  get io(): State {
+  get io(): IOState {
     return this.gameContext.io;
   }
 

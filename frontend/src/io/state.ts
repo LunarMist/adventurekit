@@ -2,9 +2,9 @@ import * as IOEvent from 'IO/event';
 import { KeyCodes } from 'IO/codes';
 
 /**
- * A {@link State} implementation tracks the current IO state; clipboard, keys, pointer(s), etc...
+ * A {@link IOState} implementation tracks the current IO state; clipboard, keys, pointer(s), etc...
  */
-export interface State {
+export interface IOState {
   readonly hasFocus: boolean; // True if target element has focus
   readonly clipboardText: string; // The clipboard data as text
 
@@ -21,9 +21,9 @@ export interface State {
 }
 
 /**
- * Implementation of {@link State} that depends on an {@link EventDispatcher}
+ * Implementation of {@link IOState} that depends on an {@link IOEventDispatcher}
  */
-export class IOState implements State {
+export class EventDispatchedIOState implements IOState {
   /*** State ***/
   hasFocus: boolean = false;
   clipboardText: string = '';
@@ -55,7 +55,7 @@ export class IOState implements State {
     }
   }
 
-  private dispatchFakeKeyUpEvent(dispatcher: IOEvent.EventDispatcher, keyCode: number) {
+  private dispatchFakeKeyUpEvent(dispatcher: IOEvent.IOEventDispatcher, keyCode: number) {
     const prevKeyDown = this.keyDownEvents[keyCode];
     let fakeEvent: IOEvent.KeyUpEvent;
     if (prevKeyDown !== null) {
@@ -73,7 +73,7 @@ export class IOState implements State {
     dispatcher.queueEvent(fakeEvent);
   }
 
-  private dispatchFakePointerUpEvent(dispatcher: IOEvent.EventDispatcher, mouseCode: number) {
+  private dispatchFakePointerUpEvent(dispatcher: IOEvent.IOEventDispatcher, mouseCode: number) {
     const fakeEvent = new IOEvent.PointerUpEvent(
       false, mouseCode, 0, this.pointerX, this.pointerY, false, false, 0, 0, false, 0,
       this.pointerHeight, true, 1, 'mouse', this.pointerPressure, 0, this.pointerTiltX, this.pointerTiltY,
@@ -86,7 +86,7 @@ export class IOState implements State {
 
   /*** Handlers ***/
 
-  init(dispatcher: IOEvent.EventDispatcher, hasFocus: boolean) {
+  init(dispatcher: IOEvent.IOEventDispatcher, hasFocus: boolean) {
     // Init state
     this.hasFocus = hasFocus;
 
@@ -128,7 +128,7 @@ export class IOState implements State {
       // Because of osx metakey weirdness,
       // unset the states for some of the keys
       if (event.keyCode === KeyCodes.LeftWindowKey || event.keyCode === KeyCodes.RightWindowKey) {
-        IOState.KEY_UP_META_RESET_KEYS.map(k => {
+        EventDispatchedIOState.KEY_UP_META_RESET_KEYS.map(k => {
           this.dispatchFakeKeyUpEvent(dispatcher, k);
         });
       }

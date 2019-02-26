@@ -1,8 +1,8 @@
 import * as IOEvent from 'IO/event';
-import * as IOState from 'IO/state';
 import { KeyCodes } from 'IO/codes';
+import { EventDispatchedIOState } from 'IO/state';
 
-export interface LifeCycle {
+interface LifeCycle {
   init(): void;
 
   startFrame(): void;
@@ -31,12 +31,12 @@ const KEYDOWN_PREVENT_DEFAULTS = new Set([
  * {@link LifeCycle implementation for javascript io events}
  */
 export class IOLifeCycle implements LifeCycle {
-  readonly dispatcher: IOEvent.EventDispatcher;
-  readonly ioState: IOState.IOState;
+  readonly dispatcher: IOEvent.IOEventDispatcher;
+  readonly ioState: EventDispatchedIOState;
 
   constructor(readonly element: HTMLElement) {
-    this.dispatcher = new IOEvent.SimpleEventDispatcher(false);
-    this.ioState = new IOState.IOState();
+    this.dispatcher = new IOEvent.SimpleIOEventDispatcher(false);
+    this.ioState = new EventDispatchedIOState();
   }
 
   init(): void {

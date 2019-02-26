@@ -3,7 +3,7 @@ import * as ImGui from 'ImGui/imgui';
 
 /**
  * This connector class passes through data between iostate <---> ImGui's own representation of the io state.
- * Depends on {@link EventDispatcher} for IO events
+ * Depends on {@link IOEventDispatcher} for IO events
  */
 export class ImGuiIOConnector {
   // Array index: The MouseCode as given by javascript event handler
@@ -17,7 +17,7 @@ export class ImGuiIOConnector {
     4, // Forward Button
   ];
 
-  init(dispatcher: IOEvent.EventDispatcher) {
+  init(dispatcher: IOEvent.IOEventDispatcher) {
     // Focus lost handler
     dispatcher.addHandler(IOEvent.EventType.FocusLost, event => {
       const io = ImGui.GetIO();
