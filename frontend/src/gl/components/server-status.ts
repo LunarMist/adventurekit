@@ -1,7 +1,7 @@
-import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
+import { RenderComponent } from 'GL/render/renderable';
 
-export class ServerStatusComponent extends SimpleRenderComponent {
+export class ServerStatusComponent extends RenderComponent {
   private readonly WINDOW_PIVOT = new ImGui.ImVec2(0.5, 0.5);
   private readonly WINDOW_POS = new ImGui.ImVec2();
   private readonly FLAGS = ImGui.ImGuiWindowFlags.NoTitleBar | ImGui.ImGuiWindowFlags.NoResize

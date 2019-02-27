@@ -1,16 +1,15 @@
-import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
 import axios, { AxiosError, AxiosResponse } from 'axios';
-import { WindowId } from 'GL/components/menu';
+import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 
-export class SessionComponent extends SimpleRenderComponent {
+export class SessionComponent extends WindowRenderComponent {
   private readonly TEXT_SUCCESS_COLOR: ImGui.ImVec4 = new ImGui.ImVec4(34 / 255, 139 / 255, 34 / 255, 1.0);
   private readonly TEXT_ERROR_COLOR: ImGui.ImVec4 = new ImGui.ImVec4(178 / 255, 34 / 255, 34 / 255, 1.0);
 
   private errorString = '';
   private successString = '';
 
-  public isVisible: boolean = false;
+  protected readonly windowId: WindowId = WindowId.Session;
 
   render(): void {
     if (!this.isVisible) {
@@ -65,16 +64,5 @@ export class SessionComponent extends SimpleRenderComponent {
     }
 
     ImGui.End();
-  }
-
-  savedOpen(): ImGui.ImAccess<boolean> {
-    return (value: boolean = this.isVisible) => {
-      if (value !== this.isVisible) {
-        this.isVisible = value;
-        this.store.p.setWindowDefaultVisibility(WindowId.Session, this.isVisible)
-          .catch(console.error);
-      }
-      return this.isVisible;
-    };
   }
 }

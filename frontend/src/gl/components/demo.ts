@@ -1,10 +1,9 @@
-import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
 import { ShowDemoWindow, ShowStyleEditor } from 'ImGui/imgui_demo';
-import { WindowId } from 'GL/components/menu';
+import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 
-export class DemoUIComponent extends SimpleRenderComponent {
-  public isVisible: boolean = false;
+export class DemoUIComponent extends WindowRenderComponent {
+  protected readonly windowId: WindowId = WindowId.DemoUI;
 
   render(): void {
     if (this.isVisible) {
@@ -12,16 +11,5 @@ export class DemoUIComponent extends SimpleRenderComponent {
       ShowDemoWindow(this.savedOpen());
       ShowStyleEditor();
     }
-  }
-
-  savedOpen(): ImGui.ImAccess<boolean> {
-    return (value: boolean = this.isVisible) => {
-      if (value !== this.isVisible) {
-        this.isVisible = value;
-        this.store.p.setWindowDefaultVisibility(WindowId.DemoUI, this.isVisible)
-          .catch(console.error);
-      }
-      return this.isVisible;
-    };
   }
 }

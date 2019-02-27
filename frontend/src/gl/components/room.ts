@@ -1,8 +1,7 @@
-import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
-import { WindowId } from 'GL/components/menu';
+import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 
-export class RoomComponent extends SimpleRenderComponent {
+export class RoomComponent extends WindowRenderComponent {
   private readonly roomIdBuffer = new ImGui.ImStringBuffer(15, '');
   private readonly passwordBuffer = new ImGui.ImStringBuffer(32, '');
 
@@ -12,7 +11,7 @@ export class RoomComponent extends SimpleRenderComponent {
   private errorString = '';
   private successString = '';
 
-  public isVisible: boolean = false;
+  protected readonly windowId: WindowId = WindowId.Room;
 
   render(): void {
     if (!this.isVisible) {
@@ -77,16 +76,5 @@ export class RoomComponent extends SimpleRenderComponent {
     }
 
     ImGui.End();
-  }
-
-  savedOpen(): ImGui.ImAccess<boolean> {
-    return (value: boolean = this.isVisible) => {
-      if (value !== this.isVisible) {
-        this.isVisible = value;
-        this.store.p.setWindowDefaultVisibility(WindowId.Room, this.isVisible)
-          .catch(console.error);
-      }
-      return this.isVisible;
-    };
   }
 }

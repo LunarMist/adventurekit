@@ -1,8 +1,6 @@
 import { IOLifeCycle } from 'IO/lifecycle';
 import * as ImGui from 'ImGui/imgui';
 import { KeyCodes } from 'IO/codes';
-import { IOState } from 'IO/state';
-import { IOEventDispatcher } from 'IO/event';
 import { ImGuiIOConnector } from 'IO/imgui';
 import { ImGuiImplWebGl } from 'GL/components/imgui-impl-webgl';
 import { GameNetClient } from 'Net/game-net-client';
@@ -11,114 +9,29 @@ import { NetClient } from 'Net/net-client';
 import PersistentGameSettings from 'Store/Persistent-game-settings';
 import InMemoryGameSettings from 'Store/In-memory-game-settings';
 import { FontData } from 'rpgcore-common';
-import { GameContext as GameGontext2 } from 'GL/render/renderable';
-
-export class GameContext {
-  dispatcher: IOEventDispatcher;
-  io: IOState;
-  net: GameNetClient;
-  store: { p: PersistentGameSettings; mem: InMemoryGameSettings };
-  gl: WebGLRenderingContext;
-
-  constructor(dispatcher: IOEventDispatcher, io: IOState, net: GameNetClient,
-              p: PersistentGameSettings, mem: InMemoryGameSettings, gl: WebGLRenderingContext) {
-    this.dispatcher = dispatcher;
-    this.io = io;
-    this.net = net;
-    this.store = { p, mem };
-    this.gl = gl;
-  }
-}
-
-export interface RenderComponent {
-  bindGameContext(context: GameContext): void;
-
-  init(): void;
-
-  initFromLostContext(): void;
-
-  startFrame(): void;
-
-  render(): void;
-
-  endFrame(): void;
-
-  destroy(): void;
-}
-
-export abstract class SimpleRenderComponent implements RenderComponent {
-  protected context!: GameContext;
-
-  get dispatcher(): IOEventDispatcher {
-    return this.context.dispatcher;
-  }
-
-  get io(): IOState {
-    return this.context.io;
-  }
-
-  get net(): GameNetClient {
-    return this.context.net;
-  }
-
-  get store() {
-    return this.context.store;
-  }
-
-  get gl(): WebGLRenderingContext {
-    return this.context.gl;
-  }
-
-  bindGameContext(context: GameContext): void {
-    this.context = context;
-  }
-
-  init(): void {
-
-  }
-
-  initFromLostContext(): void {
-
-  }
-
-  startFrame(): void {
-
-  }
-
-  abstract render(): void;
-
-  endFrame(): void {
-
-  }
-
-  destroy(): void {
-
-  }
-}
+import { GameContext, RenderComponent } from 'GL/render/renderable';
 
 export class RenderLoop {
   private done: boolean = false;
 
   private readonly ioLifeCycle: IOLifeCycle;
   private readonly imGuiIOConnector: ImGuiIOConnector;
-  private readonly gameContext: GameContext;
-  private readonly gameContext2: GameGontext2;
-  private readonly imGuiWebGlHelper: ImGuiImplWebGl;
-
   private readonly netClient: NetClient;
   private readonly gameNetClient: GameNetClient;
   private readonly persistentGameSettings: PersistentGameSettings;
   private readonly inMemoryGameSettings: InMemoryGameSettings;
 
-  private prevTime: number = 0;
+  private readonly gameContext: GameContext;
+  private readonly imGuiImplWebGl: ImGuiImplWebGl;
+
+  private prevFrameTime: number = 0;
   private prevFrameTimes: number[] = [];
   private prevFrameTimesIdx: number = 0;
-  private prevFrameTimesCount: number = 20;
+  private readonly prevFrameTimesWindow: number = 20;
 
   constructor(readonly components: RenderComponent[], readonly canvas: HTMLCanvasElement) {
     this.ioLifeCycle = new IOLifeCycle(this.canvas);
     this.imGuiIOConnector = new ImGuiIOConnector();
-
     this.netClient = new SocketIONetClient();
     this.gameNetClient = new GameNetClient(this.netClient);
     this.persistentGameSettings = new PersistentGameSettings();
@@ -130,20 +43,17 @@ export class RenderLoop {
       throw Error('Gl context cannot be null');
     }
 
-    this.gameContext = new GameContext(this.ioLifeCycle.dispatcher, this.ioLifeCycle.ioState, this.gameNetClient,
-      this.persistentGameSettings, this.inMemoryGameSettings, newGl);
-
-    this.gameContext2 = {
+    this.gameContext = {
       gl: newGl,
       net: this.gameNetClient,
       store: { mem: this.inMemoryGameSettings, p: this.persistentGameSettings },
       io: { dispatcher: this.ioLifeCycle.dispatcher, state: this.ioLifeCycle.ioState },
     };
 
-    this.imGuiWebGlHelper = new ImGuiImplWebGl();
-    this.imGuiWebGlHelper.bindContext(this.gameContext2);
+    this.imGuiImplWebGl = new ImGuiImplWebGl();
+    this.imGuiImplWebGl.bindContext(this.gameContext);
 
-    for (let i = 0; i < this.prevFrameTimesCount; i++) {
+    for (let i = 0; i < this.prevFrameTimesWindow; i++) {
       this.prevFrameTimes.push(0);
     }
   }
@@ -153,18 +63,15 @@ export class RenderLoop {
       throw new Error('window must be defined');
     }
 
-    window.requestAnimationFrame(async () => await this.init());
+    window.requestAnimationFrame(() => this.init());
   }
 
   private async init() {
-    // console.log("RenderLoop.init()");
-
     // Init everything
     this.ioLifeCycle.init();
-    this.imGuiIOConnector.init(this.dispatcher);
+    this.imGuiIOConnector.init(this.gameContext.io.dispatcher);
     this.initAdditionalHandlers();
     await this.initImGui();
-    this.imGuiWebGlHelper.init();
 
     // Init net
     this.netClient.open();
@@ -182,8 +89,9 @@ export class RenderLoop {
     this.resizeCanvas();
 
     // Setup components
+    this.imGuiImplWebGl.init();
     this.components.forEach(c => {
-      c.bindGameContext(this.gameContext);
+      c.bindContext(this.gameContext);
       c.init();
     });
 
@@ -200,11 +108,10 @@ export class RenderLoop {
       this.gameContext.gl = newGl;
     }
 
-    this.imGuiWebGlHelper.init();
-
     this.resizeCanvas();
 
     // Setup components
+    this.imGuiImplWebGl.initFromLostContext();
     this.components.forEach(c => c.initFromLostContext());
   }
 
@@ -218,6 +125,7 @@ export class RenderLoop {
     // Start-frame signal
     this.ioLifeCycle.startFrame(); // IO must be the first one
     this.startFrameImGui(time);
+    this.imGuiImplWebGl.startFrame();
     this.components.forEach(c => c.startFrame());
 
     // Clear
@@ -235,7 +143,10 @@ export class RenderLoop {
     // Render UI on top of everything
     ImGui.EndFrame();
     ImGui.Render();
-    this.imGuiWebGlHelper.render();
+    this.imGuiImplWebGl.render();
+
+    // Special case
+    this.imGuiImplWebGl.endFrame();
 
     // Perf time
     this.prevFrameTimes[this.prevFrameTimesIdx] = performance.now() - frameStartTime;
@@ -256,7 +167,7 @@ export class RenderLoop {
 
     // Cleanup
     this.ioLifeCycle.destroy();
-    this.imGuiWebGlHelper.destroy();
+    this.imGuiImplWebGl.destroy();
     ImGui.DestroyContext();
 
     // Net
@@ -385,13 +296,7 @@ export class RenderLoop {
     ImGui.LoadIniSettingsFromMemory(window.localStorage.getItem('imgui.ini') || '');
 
     // Fonts
-    try {
-      await this.initImGuiFonts();
-    } catch (e) {
-      // Swallow up here
-      // TODO: Better error reporting to user
-      console.error(`"Unable to fetch font: ${e}`);
-    }
+    await this.initImGuiFonts();
 
     const io = ImGui.GetIO();
 
@@ -455,8 +360,8 @@ export class RenderLoop {
     io.DisplayFramebufferScale.x = w > 0 ? (displayWidth / w) : 0;
     io.DisplayFramebufferScale.y = h > 0 ? (displayHeight / h) : 0;
 
-    const dt: number = time - this.prevTime;
-    this.prevTime = time;
+    const dt: number = time - this.prevFrameTime;
+    this.prevFrameTime = time;
     io.DeltaTime = dt / 1000;
 
     if (io.MouseDrawCursor) {
@@ -497,15 +402,7 @@ export class RenderLoop {
     ImGui.NewFrame();
   }
 
-  get dispatcher(): IOEventDispatcher {
-    return this.gameContext.dispatcher;
-  }
-
-  get io(): IOState {
-    return this.gameContext.io;
-  }
-
-  get gl(): WebGLRenderingContext {
+  get gl() {
     return this.gameContext.gl;
   }
 }

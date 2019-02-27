@@ -1,10 +1,10 @@
-import { SimpleRenderComponent } from 'GL/render';
 import * as ImGui from 'ImGui/imgui';
-import { WindowId } from 'GL/components/menu';
+import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 
-export class AboutComponent extends SimpleRenderComponent {
+export class AboutComponent extends WindowRenderComponent {
   private showLicensesWindow: boolean = false;
-  public isVisible: boolean = false;
+
+  protected readonly windowId: WindowId = WindowId.About;
 
   render(): void {
     /**
@@ -42,17 +42,6 @@ export class AboutComponent extends SimpleRenderComponent {
 
       ImGui.End();
     }
-  }
-
-  savedOpen(): ImGui.ImAccess<boolean> {
-    return (value: boolean = this.isVisible) => {
-      if (value !== this.isVisible) {
-        this.isVisible = value;
-        this.store.p.setWindowDefaultVisibility(WindowId.About, this.isVisible)
-          .catch(console.error);
-      }
-      return this.isVisible;
-    };
   }
 
   private readonly licenses: { [key: string]: string } = {

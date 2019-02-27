@@ -19,7 +19,7 @@ export interface RenderLifecycle {
 }
 
 export interface GameContext {
-  readonly gl: WebGLRenderingContext;
+  gl: WebGLRenderingContext;
   readonly io: {
     readonly dispatcher: IOEventDispatcher;
     readonly state: IOState;
@@ -34,34 +34,35 @@ export interface GameContext {
 export class RenderComponent implements RenderLifecycle, GameContext {
   private context!: GameContext;
 
-  readonly children: RenderComponent[] = [];
+  protected readonly children: RenderComponent[] = [];
 
   bindContext(context: GameContext) {
     this.context = context;
+    this.children.forEach(c => c.bindContext(this.context));
   }
 
   init(): void {
-
+    this.children.forEach(c => c.init());
   }
 
   initFromLostContext(): void {
-
+    this.children.forEach(c => c.initFromLostContext());
   }
 
   startFrame(): void {
-
+    this.children.forEach(c => c.startFrame());
   }
 
   render(): void {
-
+    this.children.forEach(c => c.render());
   }
 
   endFrame(): void {
-
+    this.children.forEach(c => c.endFrame());
   }
 
   destroy(): void {
-
+    this.children.forEach(c => c.destroy());
   }
 
   get gl() {

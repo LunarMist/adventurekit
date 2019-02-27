@@ -1,4 +1,3 @@
-import { GameContext, RenderComponent, SimpleRenderComponent } from 'GL/render';
 import { AboutComponent } from 'GL/components/about';
 import { IOStateUIComponent } from 'GL/components/iostate';
 import { LostContextComponent } from 'GL/components/lost-context';
@@ -7,19 +6,9 @@ import { DemoUIComponent } from 'GL/components/demo';
 import { RoomComponent } from 'GL/components/room';
 import { ChatWindowComponent } from 'GL/components/chat-client';
 import * as ImGui from 'ImGui/imgui';
+import { RenderComponent } from 'GL/render/renderable';
 
-export enum WindowId {
-  About = 'About',
-  IOState = 'IOState',
-  GLContext = 'GLContext',
-  Session = 'Session',
-  DemoUI = 'DemoUI',
-  Room = 'Room',
-  Chat = 'Chat',
-}
-
-export class MenuComponent extends SimpleRenderComponent {
-  private readonly childComponents: RenderComponent[] = [];
+export class MenuComponent extends RenderComponent {
   private readonly aboutComponent: AboutComponent;
   private readonly ioStateComponent: IOStateUIComponent;
   private readonly lostContextComponent: LostContextComponent;
@@ -31,61 +20,36 @@ export class MenuComponent extends SimpleRenderComponent {
   constructor() {
     super();
     this.aboutComponent = new AboutComponent();
-    this.childComponents.push(this.aboutComponent);
+    this.children.push(this.aboutComponent);
 
     this.ioStateComponent = new IOStateUIComponent();
-    this.childComponents.push(this.ioStateComponent);
+    this.children.push(this.ioStateComponent);
 
     this.lostContextComponent = new LostContextComponent();
-    this.childComponents.push(this.lostContextComponent);
+    this.children.push(this.lostContextComponent);
 
     this.sessionComponent = new SessionComponent();
-    this.childComponents.push(this.sessionComponent);
+    this.children.push(this.sessionComponent);
 
     this.demoUIComponent = new DemoUIComponent();
-    this.childComponents.push(this.demoUIComponent);
+    this.children.push(this.demoUIComponent);
 
     this.roomComponent = new RoomComponent();
-    this.childComponents.push(this.roomComponent);
+    this.children.push(this.roomComponent);
 
     this.chatComponent = new ChatWindowComponent();
-    this.childComponents.push(this.chatComponent);
-  }
-
-  setComponentVisibility(component: { isVisible: boolean }, windowId: WindowId, defaultState: boolean = false) {
-    this.store.p.getWindowDefaultVisibility(windowId, defaultState)
-      .then(v => component.isVisible = v)
-      .catch(console.error);
-  }
-
-  saveComponentVisibility(component: { isVisible: boolean }, windowId: WindowId) {
-    this.store.p.setWindowDefaultVisibility(windowId, component.isVisible)
-      .catch(console.error);
-  }
-
-  bindGameContext(context: GameContext): void {
-    super.bindGameContext(context);
-    this.childComponents.forEach(c => c.bindGameContext(context));
+    this.children.push(this.chatComponent);
   }
 
   init(): void {
-    this.setComponentVisibility(this.aboutComponent, WindowId.About);
-    this.setComponentVisibility(this.ioStateComponent, WindowId.IOState);
-    this.setComponentVisibility(this.lostContextComponent, WindowId.GLContext);
-    this.setComponentVisibility(this.sessionComponent, WindowId.Session);
-    this.setComponentVisibility(this.demoUIComponent, WindowId.DemoUI);
-    this.setComponentVisibility(this.roomComponent, WindowId.Room);
-    this.setComponentVisibility(this.chatComponent, WindowId.Chat, true);
-
-    this.childComponents.forEach(c => c.init());
-  }
-
-  initFromLostContext(): void {
-    this.childComponents.forEach(c => c.initFromLostContext());
-  }
-
-  startFrame(): void {
-    this.childComponents.forEach(c => c.startFrame());
+    this.aboutComponent.loadWindowVisibility();
+    this.ioStateComponent.loadWindowVisibility();
+    this.lostContextComponent.loadWindowVisibility();
+    this.sessionComponent.loadWindowVisibility();
+    this.demoUIComponent.loadWindowVisibility();
+    this.roomComponent.loadWindowVisibility();
+    this.chatComponent.loadWindowVisibility(true);
+    super.init();
   }
 
   render(): void {
@@ -93,12 +57,10 @@ export class MenuComponent extends SimpleRenderComponent {
       // Window menu selection
       if (ImGui.BeginMenu('Windows')) {
         if (ImGui.MenuItem('Manage Room')) {
-          this.roomComponent.isVisible = true;
-          this.saveComponentVisibility(this.roomComponent, WindowId.Room);
+          this.roomComponent.setWindowVisibility(true);
         }
         if (ImGui.MenuItem('Chat')) {
-          this.chatComponent.isVisible = true;
-          this.saveComponentVisibility(this.chatComponent, WindowId.Chat);
+          this.chatComponent.setWindowVisibility(true);
         }
         ImGui.EndMenu();
       }
@@ -106,16 +68,13 @@ export class MenuComponent extends SimpleRenderComponent {
       // Debug menu section
       if (ImGui.BeginMenu('Debug')) {
         if (ImGui.MenuItem('IO State')) {
-          this.ioStateComponent.isVisible = true;
-          this.saveComponentVisibility(this.ioStateComponent, WindowId.IOState);
+          this.ioStateComponent.setWindowVisibility(true);
         }
         if (ImGui.MenuItem('GL Context')) {
-          this.lostContextComponent.isVisible = true;
-          this.saveComponentVisibility(this.lostContextComponent, WindowId.GLContext);
+          this.lostContextComponent.setWindowVisibility(true);
         }
         if (ImGui.MenuItem('Session')) {
-          this.sessionComponent.isVisible = true;
-          this.saveComponentVisibility(this.sessionComponent, WindowId.Session);
+          this.sessionComponent.setWindowVisibility(true);
         }
         ImGui.EndMenu();
       }
@@ -123,27 +82,16 @@ export class MenuComponent extends SimpleRenderComponent {
       // Help menu section
       if (ImGui.BeginMenu('Help')) {
         if (ImGui.MenuItem('About')) {
-          this.aboutComponent.isVisible = true;
-          this.saveComponentVisibility(this.aboutComponent, WindowId.About);
+          this.aboutComponent.setWindowVisibility(true);
         }
         if (ImGui.MenuItem('ImGui Demo')) {
-          this.demoUIComponent.isVisible = true;
-          this.saveComponentVisibility(this.demoUIComponent, WindowId.DemoUI);
+          this.demoUIComponent.setWindowVisibility(true);
         }
         ImGui.EndMenu();
       }
 
       ImGui.EndMainMenuBar();
     }
-
-    this.childComponents.forEach(c => c.render());
-  }
-
-  endFrame(): void {
-    this.childComponents.forEach(c => c.endFrame());
-  }
-
-  destroy(): void {
-    this.childComponents.forEach(c => c.destroy());
+    super.render();
   }
 }

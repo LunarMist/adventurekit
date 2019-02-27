@@ -1,12 +1,12 @@
-import { SimpleRenderComponent } from 'GL/render';
 import * as GLUtils from 'GL/utils';
 import { MouseCodes } from 'IO/codes';
 import * as IOEvent from 'IO/event';
+import { RenderComponent } from 'GL/render/renderable';
 
 // TODO: Rewrite more efficiently
 // Should not need to be a full-screen fragment shader
 // Use lines instead
-export class GridPatternComponent extends SimpleRenderComponent {
+export class GridPatternComponent extends RenderComponent {
   private program: WebGLProgram | null = null;
   private readonly vertices = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
   private readonly tileSize = [50.0, 50.0]; // [width, height]
@@ -14,14 +14,14 @@ export class GridPatternComponent extends SimpleRenderComponent {
   private prevPointerXY = { x: 0.0, y: 0.0 };
 
   init(): void {
-    this.dispatcher.addHandler(IOEvent.EventType.PointerDown, event => {
+    this.io.dispatcher.addHandler(IOEvent.EventType.PointerDown, event => {
       // For touch events: To prevent jank, reset the prev xy
       this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
       return false;
     });
 
-    this.dispatcher.addHandler(IOEvent.EventType.PointerMove, event => {
-      if (this.io.pointerDown[MouseCodes.LeftButton]) {
+    this.io.dispatcher.addHandler(IOEvent.EventType.PointerMove, event => {
+      if (this.io.state.pointerDown[MouseCodes.LeftButton]) {
         this.gridOffset[0] += (this.prevPointerXY.x - event.offsetX);
         this.gridOffset[1] -= (this.prevPointerXY.y - event.offsetY);
         this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
@@ -112,11 +112,16 @@ export class GridPatternComponent extends SimpleRenderComponent {
     this.gl.uniform2fv(gridOffset, gridOff);
 
     const gridSelection = this.gl.getUniformLocation(this.program, 'gridSelection');
-    const selXY = [this.io.pointerX * scaleFactor, (this.gl.canvas.clientHeight - this.io.pointerY) * scaleFactor];
+    const selXY = [this.io.state.pointerX * scaleFactor, (this.gl.canvas.clientHeight - this.io.state.pointerY) * scaleFactor];
     const gridSel = [this.divToInf(selXY[0] + gridOff[0], this.tileSize[0]), this.divToInf(selXY[1] + gridOff[1], this.tileSize[1])];
     this.gl.uniform2fv(gridSelection, gridSel);
 
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, this.vertices.length / 2);
+  }
+
+  destroy(): void {
+    this.gl.deleteProgram(this.program);
+    this.program = null;
   }
 
   private divToInf(i: number, div: number): number {
