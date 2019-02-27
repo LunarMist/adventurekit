@@ -38,5 +38,6 @@ export function createProgram(gl: WebGLRenderingContext, vertexShader: WebGLShad
 export function createProgramFromSrc(gl: WebGLRenderingContext, vertexShaderSrc: string, fragmentShaderSrc: string): WebGLProgram | null {
   const vs = compileShader(gl, vertexShaderSrc, gl.VERTEX_SHADER);
   const fs = compileShader(gl, fragmentShaderSrc, gl.FRAGMENT_SHADER);
+  // TODO: Do I need to unlink and destroy shaders? How about on lost context?
   return createProgram(gl, vs, fs);
 }

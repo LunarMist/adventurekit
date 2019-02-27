@@ -4,13 +4,14 @@ import { KeyCodes } from 'IO/codes';
 import { IOState } from 'IO/state';
 import { IOEventDispatcher } from 'IO/event';
 import { ImGuiIOConnector } from 'IO/imgui';
-import { ImGuiImplWebGl } from 'GL/imgui-impl-webgl';
+import { ImGuiImplWebGl } from 'GL/components/imgui-impl-webgl';
 import { GameNetClient } from 'Net/game-net-client';
 import { SocketIONetClient } from 'Net/socketio-client';
 import { NetClient } from 'Net/net-client';
 import PersistentGameSettings from 'Store/Persistent-game-settings';
 import InMemoryGameSettings from 'Store/In-memory-game-settings';
 import { FontData } from 'rpgcore-common';
+import { GameContext as GameGontext2 } from 'GL/render/renderable';
 
 export class GameContext {
   dispatcher: IOEventDispatcher;
@@ -101,6 +102,7 @@ export class RenderLoop {
   private readonly ioLifeCycle: IOLifeCycle;
   private readonly imGuiIOConnector: ImGuiIOConnector;
   private readonly gameContext: GameContext;
+  private readonly gameContext2: GameGontext2;
   private readonly imGuiWebGlHelper: ImGuiImplWebGl;
 
   private readonly netClient: NetClient;
@@ -131,7 +133,15 @@ export class RenderLoop {
     this.gameContext = new GameContext(this.ioLifeCycle.dispatcher, this.ioLifeCycle.ioState, this.gameNetClient,
       this.persistentGameSettings, this.inMemoryGameSettings, newGl);
 
-    this.imGuiWebGlHelper = new ImGuiImplWebGl(this.gameContext);
+    this.gameContext2 = {
+      gl: newGl,
+      net: this.gameNetClient,
+      store: { mem: this.inMemoryGameSettings, p: this.persistentGameSettings },
+      io: { dispatcher: this.ioLifeCycle.dispatcher, state: this.ioLifeCycle.ioState },
+    };
+
+    this.imGuiWebGlHelper = new ImGuiImplWebGl();
+    this.imGuiWebGlHelper.bindContext(this.gameContext2);
 
     for (let i = 0; i < this.prevFrameTimesCount; i++) {
       this.prevFrameTimes.push(0);
@@ -225,7 +235,7 @@ export class RenderLoop {
     // Render UI on top of everything
     ImGui.EndFrame();
     ImGui.Render();
-    this.imGuiWebGlHelper.render(ImGui.GetDrawData());
+    this.imGuiWebGlHelper.render();
 
     // Perf time
     this.prevFrameTimes[this.prevFrameTimesIdx] = performance.now() - frameStartTime;
