@@ -6,9 +6,10 @@ export type ListenCallback = (...data: any[]) => void;
  */
 export interface NetClient {
   /**
-   * Open the connection
+   * Open the connection.
+   * Return true if the connection needed to be opened, false if it is already open.
    */
-  open(): void;
+  open(): boolean;
 
   /**
    * Close the connection
