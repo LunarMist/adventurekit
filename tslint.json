@@ -41,7 +41,11 @@
         "jsonwebtoken": "jwt"
       }
     ],
-    "type-literal-delimiter": true
+    "type-literal-delimiter": true,
+    "object-literal-key-quotes": [
+      true,
+      "consistent-as-needed"
+    ]
   },
   "linterOptions": {
     "exclude": [

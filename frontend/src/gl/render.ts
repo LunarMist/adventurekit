@@ -1,3 +1,5 @@
+import { FontData } from 'rpgcore-common';
+
 import { IOLifeCycle } from 'IO/lifecycle';
 import * as ImGui from 'ImGui/imgui';
 import { KeyCodes } from 'IO/codes';
@@ -8,8 +10,8 @@ import { SocketIONetClient } from 'Net/socketio-client';
 import { NetClient } from 'Net/net-client';
 import PersistentGameSettings from 'Store/Persistent-game-settings';
 import InMemoryGameSettings from 'Store/In-memory-game-settings';
-import { FontData } from 'rpgcore-common';
 import { GameContext, RenderComponent } from 'GL/render/renderable';
+import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/font-selector';
 
 export class RenderLoop {
   private done: boolean = false;
@@ -219,71 +221,12 @@ export class RenderLoop {
     ImGui.End();
   }
 
-  // TODO: Error handling
-  private async fetchAndRegisterFont(url: string, sizePixels: number, glyphRanges: number | null = null) {
-    console.log(`Loading font at ${url}`);
-    const resp: Response = await fetch(url);
-    const fontBuffer: ArrayBuffer = await resp.arrayBuffer();
-    const fontConfig = new ImGui.ImFontConfig();
-    fontConfig.Name = fontConfig.Name || `${url.split(/[\\\/]/).pop()}, ${sizePixels.toFixed(0)}px`;
-    return ImGui.GetIO().Fonts.AddFontFromMemoryTTF(fontBuffer, sizePixels, fontConfig, glyphRanges);
-  }
-
-  // TODO: Refactor, turn into its own module
-  private async initImGuiFonts() {
+  private async initFonts() {
     const io = ImGui.GetIO();
 
-    const BUILT_IN_FONT_MAPPING = new Map<string, FontData>([
-      ['Fonts/NotoSans-Regular.ttf', {
-        name: 'Fonts/NotoSans-Regular.ttf',
-        url: require('Fonts/NotoSans-Regular.ttf'),
-        pixelSize: 16.0,
-        glyphRange: io.Fonts.GetGlyphRangesDefault(),
-      }],
-      ['Fonts/NotoSansCJK-Regular.ttc', {
-        name: 'Fonts/NotoSansCJK-Regular.ttc',
-        url: require('Fonts/NotoSansCJK-Regular.ttc'),
-        pixelSize: 16.0,
-        glyphRange: io.Fonts.GetGlyphRangesChineseFull(),
-      }],
-      ['Fonts/NotoMono-Regular.ttf', {
-        name: 'Fonts/NotoMono-Regular.ttf',
-        url: require('Fonts/NotoMono-Regular.ttf'),
-        pixelSize: 16.0,
-        glyphRange: io.Fonts.GetGlyphRangesDefault(),
-      }],
-      ['Fonts/Roboto-Regular.ttf', {
-        name: 'Fonts/Roboto-Regular.ttf',
-        url: require('Fonts/Roboto-Regular.ttf'),
-        pixelSize: 16.0,
-        glyphRange: io.Fonts.GetGlyphRangesDefault(),
-      }],
-      ['Fonts/Sweet16mono.ttf', {
-        name: 'Fonts/Sweet16mono.ttf',
-        url: require('Fonts/Sweet16mono.ttf'),
-        pixelSize: 16.0,
-        glyphRange: io.Fonts.GetGlyphRangesDefault(),
-      }],
-    ]);
+    const activeFont: FontData = await this.persistentGameSettings.getActiveFont() || DEFAULT_ACTIVE_FONT;
 
-    const DEFAULT_FONT_NAME = 'Fonts/NotoSans-Regular.ttf';
-
-    const activeFont: FontData | null = await this.persistentGameSettings.getActiveFont();
-    if (activeFont === null) {
-      console.log(`No active font defined. Using: ${DEFAULT_FONT_NAME}`);
-
-      const font = BUILT_IN_FONT_MAPPING.get(DEFAULT_FONT_NAME);
-      font && await this.fetchAndRegisterFont(font.url, font.pixelSize, font.glyphRange);
-    } else {
-      console.log(`Active font: ${activeFont}`);
-
-      if (BUILT_IN_FONT_MAPPING.has(activeFont.name)) {
-        const font = BUILT_IN_FONT_MAPPING.get(activeFont.name);
-        font && await this.fetchAndRegisterFont(font.url, font.pixelSize, font.glyphRange);
-      } else {
-        await this.fetchAndRegisterFont(activeFont.url, activeFont.pixelSize, activeFont.glyphRange);
-      }
-    }
+    await FontSelectorComponent.fetchAndRegisterFont(activeFont);
 
     io.Fonts.AddFontDefault();
   }
@@ -295,8 +238,7 @@ export class RenderLoop {
     ImGui.StyleColorsDark();
     ImGui.LoadIniSettingsFromMemory(window.localStorage.getItem('imgui.ini') || '');
 
-    // Fonts
-    await this.initImGuiFonts();
+    await this.initFonts();
 
     const io = ImGui.GetIO();
 

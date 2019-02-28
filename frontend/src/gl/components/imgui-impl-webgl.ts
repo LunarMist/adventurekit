@@ -1,6 +1,7 @@
 import { RenderComponent } from 'GL/render/renderable';
 import * as GLUtils from 'GL/utils';
 import * as ImGui from 'ImGui/imgui';
+import { EventType } from 'IO/event';
 
 export class ImGuiImplWebGl extends RenderComponent {
   private programHandle: WebGLProgram | null = null;
@@ -39,6 +40,39 @@ export class ImGuiImplWebGl extends RenderComponent {
     `;
 
   init(): void {
+    this.io.dispatcher.addHandler(EventType.FontRebuildRequired, e => {
+      this.initFont();
+      return true;
+    });
+    this.initFromLostContext();
+  }
+
+  initFont() {
+    const io = ImGui.GetIO();
+
+    // Must be called before GetTexDataAsRGBA32()
+    // https://github.com/ocornut/imgui/tree/master/misc/freetype
+    ImGui.FreeTypeBuildFontAtlas(io.Fonts);
+
+    const { width, height, pixels } = io.Fonts.GetTexDataAsRGBA32();
+
+    // If we are rebuilding, then delete old texture
+    if (this.fontTexture !== null) {
+      this.destroyFont();
+    }
+
+    // Upload texture to graphics system
+    this.fontTexture = this.gl.createTexture();
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.fontTexture);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
+
+    // Store our identifier
+    io.Fonts.TexID = this.fontTexture;
+  }
+
+  initFromLostContext(): void {
     this.programHandle = GLUtils.createProgramFromSrc(this.gl, this.vertexShaderSrc, this.fragmentShaderSrc);
 
     if (this.programHandle !== null) {
@@ -53,30 +87,6 @@ export class ImGuiImplWebGl extends RenderComponent {
     this.elementBuffer = this.gl.createBuffer();
 
     this.initFont();
-  }
-
-  initFont() {
-    const io = ImGui.GetIO();
-
-    // Must be called before GetTexDataAsRGBA32()
-    // https://github.com/ocornut/imgui/tree/master/misc/freetype
-    ImGui.FreeTypeBuildFontAtlas(io.Fonts);
-
-    const { width, height, pixels } = io.Fonts.GetTexDataAsRGBA32();
-
-    // Upload texture to graphics system
-    this.fontTexture = this.gl.createTexture();
-    this.gl.bindTexture(this.gl.TEXTURE_2D, this.fontTexture);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
-
-    // Store our identifier
-    io.Fonts.TexID = this.fontTexture;
-  }
-
-  initFromLostContext(): void {
-    this.init();
   }
 
   render(): void {

@@ -23,7 +23,7 @@ export class RoomComponent extends WindowRenderComponent {
       return;
     }
 
-    ImGui.InputText('RoomID', this.roomIdBuffer, this.roomIdBuffer.size);
+    ImGui.InputText('RoomID', this.roomIdBuffer, this.roomIdBuffer.size, ImGui.ImGuiInputTextFlags.CharsDecimal);
     ImGui.InputText('Room Password', this.passwordBuffer, this.passwordBuffer.size);
 
     if (ImGui.Button('Join room')) {

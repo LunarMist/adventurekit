@@ -7,6 +7,7 @@ import { RoomComponent } from 'GL/components/room';
 import { ChatWindowComponent } from 'GL/components/chat-client';
 import * as ImGui from 'ImGui/imgui';
 import { RenderComponent } from 'GL/render/renderable';
+import { FontSelectorComponent } from 'GL/components/font-selector';
 
 export class MenuComponent extends RenderComponent {
   private readonly aboutComponent: AboutComponent;
@@ -16,6 +17,7 @@ export class MenuComponent extends RenderComponent {
   private readonly demoUIComponent: DemoUIComponent;
   private readonly roomComponent: RoomComponent;
   private readonly chatComponent: ChatWindowComponent;
+  private readonly fontSelectorComponent: FontSelectorComponent;
 
   constructor() {
     super();
@@ -39,6 +41,9 @@ export class MenuComponent extends RenderComponent {
 
     this.chatComponent = new ChatWindowComponent();
     this.children.push(this.chatComponent);
+
+    this.fontSelectorComponent = new FontSelectorComponent();
+    this.children.push(this.fontSelectorComponent);
   }
 
   init(): void {
@@ -49,6 +54,7 @@ export class MenuComponent extends RenderComponent {
     this.demoUIComponent.loadWindowVisibility();
     this.roomComponent.loadWindowVisibility();
     this.chatComponent.loadWindowVisibility(true);
+    this.fontSelectorComponent.loadWindowVisibility();
     super.init();
   }
 
@@ -86,6 +92,9 @@ export class MenuComponent extends RenderComponent {
         }
         if (ImGui.MenuItem('ImGui Demo')) {
           this.demoUIComponent.setWindowVisibility(true);
+        }
+        if (ImGui.MenuItem('Fonts')) {
+          this.fontSelectorComponent.setWindowVisibility(true);
         }
         ImGui.EndMenu();
       }

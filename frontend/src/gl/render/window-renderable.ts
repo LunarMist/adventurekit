@@ -9,6 +9,7 @@ export enum WindowId {
   DemoUI = 'DemoUI',
   Room = 'Room',
   Chat = 'Chat',
+  Font = 'Font',
 }
 
 export abstract class WindowRenderComponent extends RenderComponent {

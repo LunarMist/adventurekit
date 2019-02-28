@@ -7,7 +7,8 @@ enum SettingsKey {
   WindowDefaultVisibility = 'WindowDefaultVisibility',
 }
 
-type WindowDefaultVisibility = { [name: string]: boolean };
+export type WindowDefaultVisibility = { [name: string]: boolean };
+export type RegisteredFonts = { [name: string]: FontData };
 
 /**
  * Persistent Game settings
@@ -32,12 +33,12 @@ export default class PersistentGameSettings {
     return this.store.setItem<FontData>(SettingsKey.ActiveFont, data);
   }
 
-  async getRegisteredFonts(): Promise<FontData[] | null> {
-    return this.store.getItem<FontData[]>(SettingsKey.RegisteredFonts);
+  async getRegisteredFonts(): Promise<RegisteredFonts | null> {
+    return this.store.getItem<RegisteredFonts>(SettingsKey.RegisteredFonts);
   }
 
-  async setRegisteredFonts(data: FontData[]): Promise<FontData[]> {
-    return this.store.setItem<FontData[]>(SettingsKey.RegisteredFonts, data);
+  async setRegisteredFonts(data: RegisteredFonts): Promise<RegisteredFonts> {
+    return this.store.setItem<RegisteredFonts>(SettingsKey.RegisteredFonts, data);
   }
 
   async setWindowDefaultVisibility(windowId: string, state: boolean): Promise<void> {
