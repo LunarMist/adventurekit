@@ -3,7 +3,6 @@ import { FontData } from 'rpgcore-common';
 import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 import * as ImGui from 'ImGui/imgui';
 import { RegisteredFonts } from 'Store/Persistent-game-settings';
-import { FontRebuildRequiredEvent } from 'IO/event';
 
 export const DEFAULT_ACTIVE_FONT = {
   name: 'NotoSans-Regular',
@@ -100,6 +99,7 @@ export class FontSelectorComponent extends WindowRenderComponent {
     ImGui.InputText('Url', this.urlBuffer, this.urlBuffer.size, ImGui.ImGuiInputTextFlags.CharsNoBlank);
     ImGui.InputText('Pixel Size', this.pixelSizeBuffer, this.pixelSizeBuffer.size, ImGui.ImGuiInputTextFlags.CharsDecimal);
     if (ImGui.BeginCombo('Glyph Range', this.selectedGlyphRange, 0)) {
+      // TODO: Do I need to sort keys?
       for (const item in this.GLYPH_RANGES) {
         const isSelected = this.selectedGlyphRange === item;
         if (ImGui.Selectable(item, isSelected)) {
@@ -237,6 +237,6 @@ export class FontSelectorComponent extends WindowRenderComponent {
   }
 
   private requestFontRebuild() {
-    this.io.dispatcher.queueEvent(new FontRebuildRequiredEvent());
+    this.broker.sendFontRebuildRequiredRequest();
   }
 }

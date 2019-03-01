@@ -24,7 +24,6 @@ export enum EventType {
   PointerDown,
   PointerUp,
   Wheel,
-  FontRebuildRequired,
   LENGTH,
 }
 
@@ -173,10 +172,6 @@ export class WheelEvent implements Event {
   }
 }
 
-export class FontRebuildRequiredEvent implements Event {
-  readonly type: EventType = EventType.FontRebuildRequired;
-}
-
 /**
  * Event handlers for IO should all extend {@link EventHandler<T>}
  */
@@ -214,8 +209,6 @@ export interface IOEventDispatcher {
 
   addHandler(type: EventType.Wheel, handler: EventHandler<WheelEvent>): void;
 
-  addHandler(type: EventType.FontRebuildRequired, handler: EventHandler<FontRebuildRequiredEvent>): void;
-
   removeHandler(type: EventType.Focused, handler: EventHandler<FocusedEvent>): void;
 
   removeHandler(type: EventType.FocusLost, handler: EventHandler<FocusLostEvent>): void;
@@ -241,8 +234,6 @@ export interface IOEventDispatcher {
   removeHandler(type: EventType.PointerUp, handler: EventHandler<PointerUpEvent>): void;
 
   removeHandler(type: EventType.Wheel, handler: EventHandler<WheelEvent>): void;
-
-  removeHandler(type: EventType.FontRebuildRequired, handler: EventHandler<FontRebuildRequiredEvent>): void;
 
   dispatchEvents(): void;
 

@@ -12,6 +12,7 @@ import PersistentGameSettings from 'Store/Persistent-game-settings';
 import InMemoryGameSettings from 'Store/In-memory-game-settings';
 import { GameContext, RenderComponent } from 'GL/render/renderable';
 import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/font-selector';
+import { GameMessagesBroker } from 'Message/game-messages';
 
 export class RenderLoop {
   private done: boolean = false;
@@ -20,6 +21,7 @@ export class RenderLoop {
   private readonly imGuiIOConnector: ImGuiIOConnector;
   private readonly netClient: NetClient;
   private readonly gameNetClient: GameNetClient;
+  private readonly gameMessageBroker: GameMessagesBroker;
   private readonly persistentGameSettings: PersistentGameSettings;
   private readonly inMemoryGameSettings: InMemoryGameSettings;
 
@@ -38,6 +40,7 @@ export class RenderLoop {
     this.gameNetClient = new GameNetClient(this.netClient);
     this.persistentGameSettings = new PersistentGameSettings();
     this.inMemoryGameSettings = new InMemoryGameSettings();
+    this.gameMessageBroker = new GameMessagesBroker();
 
     // https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     const newGl = canvas.getContext('webgl', { alpha: false });
@@ -49,6 +52,7 @@ export class RenderLoop {
       gl: newGl,
       net: this.gameNetClient,
       store: { mem: this.inMemoryGameSettings, p: this.persistentGameSettings },
+      broker: this.gameMessageBroker,
       io: { dispatcher: this.ioLifeCycle.dispatcher, state: this.ioLifeCycle.ioState },
     };
 
@@ -226,7 +230,12 @@ export class RenderLoop {
 
     const activeFont: FontData = await this.persistentGameSettings.getActiveFont() || DEFAULT_ACTIVE_FONT;
 
-    await FontSelectorComponent.fetchAndRegisterFont(activeFont);
+    try {
+      await FontSelectorComponent.fetchAndRegisterFont(activeFont);
+    } catch (e) {
+      // If something goes wrong fetching and registering the font, then suppress it and fallback to the default ImGui font
+      // This is to prevent the graphics from rendering badly (and, say, preventing the user from selecting a different font)
+    }
 
     io.Fonts.AddFontDefault();
   }

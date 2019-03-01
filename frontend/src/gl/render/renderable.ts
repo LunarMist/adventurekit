@@ -3,6 +3,7 @@ import { IOState } from 'IO/state';
 import { GameNetClient } from 'Net/game-net-client';
 import PersistentGameSettings from 'Store/Persistent-game-settings';
 import InMemoryGameSettings from 'Store/In-memory-game-settings';
+import { GameMessagesBroker } from 'Message/game-messages';
 
 export interface RenderLifecycle {
   init(): void;
@@ -25,6 +26,7 @@ export interface GameContext {
     readonly state: IOState;
   };
   readonly net: GameNetClient;
+  readonly broker: GameMessagesBroker;
   readonly store: {
     readonly p: PersistentGameSettings;
     readonly mem: InMemoryGameSettings;
@@ -75,6 +77,10 @@ export class RenderComponent implements RenderLifecycle, GameContext {
 
   get net() {
     return this.context.net;
+  }
+
+  get broker() {
+    return this.context.broker;
   }
 
   get store() {

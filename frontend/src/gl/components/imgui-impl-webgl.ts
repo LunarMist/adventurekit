@@ -1,7 +1,6 @@
 import { RenderComponent } from 'GL/render/renderable';
 import * as GLUtils from 'GL/utils';
 import * as ImGui from 'ImGui/imgui';
-import { EventType } from 'IO/event';
 
 export class ImGuiImplWebGl extends RenderComponent {
   private programHandle: WebGLProgram | null = null;
@@ -40,9 +39,8 @@ export class ImGuiImplWebGl extends RenderComponent {
     `;
 
   init(): void {
-    this.io.dispatcher.addHandler(EventType.FontRebuildRequired, e => {
+    this.broker.listenFontRebuildRequiredRequest(required => {
       this.initFont();
-      return true;
     });
     this.initFromLostContext();
   }

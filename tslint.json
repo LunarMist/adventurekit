@@ -38,7 +38,8 @@
       {
         "v4": "uuid",
         "mail": "SGMail",
-        "jsonwebtoken": "jwt"
+        "jsonwebtoken": "jwt",
+        "pubsubJs": "PubSub"
       }
     ],
     "type-literal-delimiter": true,

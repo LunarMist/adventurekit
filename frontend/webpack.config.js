@@ -34,6 +34,7 @@ module.exports = {
       'Net': path.resolve(__dirname, 'src', 'net'),
       'Store': path.resolve(__dirname, 'src', 'store'),
       'Api': path.resolve(__dirname, 'src', 'api'),
+      'Message': path.resolve(__dirname, 'src', 'message'),
       'Fonts': path.resolve(__dirname, 'assets', 'fonts'),
     },
     extensions: ['.tsx', '.ts', '.js']

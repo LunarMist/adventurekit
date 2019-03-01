@@ -27,6 +27,9 @@
       "Api/*": [
         "src/api/*"
       ],
+      "Message/*": [
+        "src/message/*"
+      ],
       "Fonts/*": [
         "assets/fonts/*"
       ]
