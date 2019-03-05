@@ -6,6 +6,8 @@
     "strict": true,
     "sourceMap": true,
     "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "declaration": true,
     "declarationDir": "build/types",
     "outDir": "build/lib"
