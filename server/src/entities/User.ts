@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, getManager, getRepository, Index, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import bcrypt from 'bcrypt';
 
-import GameRoom from './Game-room';
+import GameRoom from './GameRoom';
 
 @Entity()
 @Index('idx_case_insensitive_username', { synchronize: false })

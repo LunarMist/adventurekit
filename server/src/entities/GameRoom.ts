@@ -15,6 +15,9 @@ import {
 import bcrypt from 'bcrypt';
 
 import User from './User';
+import Event from './Event';
+import EventAggregate from './EventAggregate';
+import SequenceId from './SequenceId';
 
 @Entity()
 export default class GameRoom {
@@ -40,6 +43,15 @@ export default class GameRoom {
 
   @OneToMany(type => User, user => user.defaultRoom)
   defaultedRooms?: User[];
+
+  @OneToMany(type => Event, event => event.room)
+  events?: Event[];
+
+  @OneToMany(type => EventAggregate, agg => agg.room)
+  eventAggregates?: EventAggregate[];
+
+  @OneToMany(type => SequenceId, seq => seq.room)
+  sequences?: SequenceId[];
 
   private constructor(owner: User, passwordHash: string) {
     this.owner = owner;
