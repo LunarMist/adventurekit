@@ -1,5 +1,5 @@
 import { NetClient } from 'Net/net-client';
-import { InitState, NetEventType } from 'rpgcore-common';
+import { ClientSentEvent, InitState, NetEventType, ServerSentEvent } from 'rpgcore-common';
 
 /**
  * Used for sending all game-relevant messages between the client <--> server.
@@ -44,5 +44,13 @@ export class GameNetClient {
 
   listenDisconnect(cb: () => void) {
     this.client.listen('disconnect', cb);
+  }
+
+  sendEvent(clientEvent: ClientSentEvent) {
+    this.client.sendSimpleMessage(NetEventType.ESEvent, clientEvent);
+  }
+
+  listenEvent(cb: (serverEvent: ServerSentEvent) => void) {
+    this.client.listen(NetEventType.ESEvent, cb);
   }
 }

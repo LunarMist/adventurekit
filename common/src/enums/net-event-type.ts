@@ -6,4 +6,5 @@ export enum NetEventType {
   JoinRoom = 'JoinRoom',
   CreateRoom = 'CreateRoom',
   InitState = 'InitState',
+  ESEvent = 'ESEvent',
 }

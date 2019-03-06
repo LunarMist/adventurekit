@@ -1,9 +1,10 @@
-import { InitState, NetEventType } from 'rpgcore-common';
+import { ClientSentEvent, ESProtoToken, EventCategories, InitState, NetEventType, ServerSentEvent } from 'rpgcore-common';
 import * as util from 'util';
 
 import { SocketHandler, SocketHandlerFactory } from './sockets';
 import GameRoom from '../entities/GameRoom';
 import User from '../entities/User';
+import { ESServer } from '../event/es-server';
 
 /**
  * Game room socket.io handler.
@@ -89,6 +90,16 @@ export class GameRoomSocketHandler extends SocketHandler {
       }
     });
 
+    const esServer = new ESServer();
+
+    this.listenEvent(esServer.processEvent.bind(esServer));
+
+    esServer.addHandler(EventCategories.TokenChangeEvent, serverEvent => {
+      const event = ESProtoToken.TokenChangeEvent.decode(new Uint8Array(serverEvent.data));
+      console.log(event);
+      return true;
+    });
+
     // Last thing: Send over init state data
     this.sendInitState(this.getInitState());
   }
@@ -113,6 +124,14 @@ export class GameRoomSocketHandler extends SocketHandler {
 
   sendInitState(initState: InitState) {
     this.socket.emit(NetEventType.InitState, initState);
+  }
+
+  listenEvent(cb: (clientEvent: ClientSentEvent) => void) {
+    this.listenAuthenticated(NetEventType.ESEvent, cb);
+  }
+
+  sendEvent(serverEvent: ServerSentEvent, room: string) {
+    this.io.to(room).emit(NetEventType.ESEvent, serverEvent);
   }
 
   /*** Helper functions ***/

@@ -13,6 +13,7 @@ import InMemoryGameSettings from 'Store/In-memory-game-settings';
 import { GameContext, RenderComponent } from 'GL/render/renderable';
 import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/font-selector';
 import { GameMessagesBroker } from 'Message/game-messages';
+import { ESClient } from 'Event/es-client';
 
 export class RenderLoop {
   private done: boolean = false;
@@ -24,6 +25,7 @@ export class RenderLoop {
   private readonly gameMessageBroker: GameMessagesBroker;
   private readonly persistentGameSettings: PersistentGameSettings;
   private readonly inMemoryGameSettings: InMemoryGameSettings;
+  private readonly esClient: ESClient;
 
   private readonly gameContext: GameContext;
   private readonly imGuiImplWebGl: ImGuiImplWebGl;
@@ -41,6 +43,7 @@ export class RenderLoop {
     this.persistentGameSettings = new PersistentGameSettings();
     this.inMemoryGameSettings = new InMemoryGameSettings();
     this.gameMessageBroker = new GameMessagesBroker();
+    this.esClient = new ESClient(0);
 
     // https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     const newGl = canvas.getContext('webgl', { alpha: false });
@@ -54,6 +57,7 @@ export class RenderLoop {
       store: { mem: this.inMemoryGameSettings, p: this.persistentGameSettings },
       broker: this.gameMessageBroker,
       io: { dispatcher: this.ioLifeCycle.dispatcher, state: this.ioLifeCycle.ioState },
+      es: this.esClient,
     };
 
     this.imGuiImplWebGl = new ImGuiImplWebGl();
@@ -86,6 +90,9 @@ export class RenderLoop {
       this.inMemoryGameSettings.userProfile = initState.userProfile;
       this.inMemoryGameSettings.roomId = initState.roomId;
     });
+
+    // Init event sourcing
+    this.gameNetClient.listenEvent(this.esClient.processEvent.bind(this.esClient));
 
     // TODO: Re-enable for prod, or find a better way
     // this.gameNetClient.listenDisconnect(() => {

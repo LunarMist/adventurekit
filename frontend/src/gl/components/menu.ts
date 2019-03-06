@@ -8,6 +8,7 @@ import { ChatWindowComponent } from 'GL/components/chat-client';
 import * as ImGui from 'ImGui/imgui';
 import { RenderComponent } from 'GL/render/renderable';
 import { FontSelectorComponent } from 'GL/components/font-selector';
+import { ManageTokensComponent } from 'GL/components/manage-tokens';
 
 export class MenuComponent extends RenderComponent {
   private readonly aboutComponent: AboutComponent;
@@ -18,6 +19,7 @@ export class MenuComponent extends RenderComponent {
   private readonly roomComponent: RoomComponent;
   private readonly chatComponent: ChatWindowComponent;
   private readonly fontSelectorComponent: FontSelectorComponent;
+  private readonly manageTokensComponent: ManageTokensComponent;
 
   constructor() {
     super();
@@ -44,6 +46,9 @@ export class MenuComponent extends RenderComponent {
 
     this.fontSelectorComponent = new FontSelectorComponent();
     this.children.push(this.fontSelectorComponent);
+
+    this.manageTokensComponent = new ManageTokensComponent();
+    this.children.push(this.manageTokensComponent);
   }
 
   init(): void {
@@ -55,6 +60,7 @@ export class MenuComponent extends RenderComponent {
     this.roomComponent.loadWindowVisibility();
     this.chatComponent.loadWindowVisibility(true);
     this.fontSelectorComponent.loadWindowVisibility();
+    this.manageTokensComponent.loadWindowVisibility();
     super.init();
   }
 
@@ -67,6 +73,9 @@ export class MenuComponent extends RenderComponent {
         }
         if (ImGui.MenuItem('Chat')) {
           this.chatComponent.setWindowVisibility(true);
+        }
+        if (ImGui.MenuItem('Manage Tokens')) {
+          this.manageTokensComponent.setWindowVisibility(true);
         }
         ImGui.EndMenu();
       }

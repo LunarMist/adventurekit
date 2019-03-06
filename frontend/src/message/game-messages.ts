@@ -4,6 +4,9 @@ enum TopicKeys {
   FontRebuildRequired = 'FontRebuildRequired',
 }
 
+/**
+ * Pubsub for game-related message
+ */
 export class GameMessagesBroker {
   sendFontRebuildRequiredRequest(): boolean {
     return PubSub.publishSync(TopicKeys.FontRebuildRequired, true);

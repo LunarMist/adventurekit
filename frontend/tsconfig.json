@@ -32,6 +32,9 @@
       "Message/*": [
         "src/message/*"
       ],
+      "Event/*": [
+        "src/event/*"
+      ],
       "Fonts/*": [
         "assets/fonts/*"
       ]
