@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, getManager, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, EntityManager, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
 import GameRoom from './GameRoom';
 
 @Entity()
@@ -23,28 +23,32 @@ export default class Event {
   category: string;
 
   @Column({ nullable: false })
-  sequenceNumber: number;
+  sequenceNumber!: number;
 
   @Column({ nullable: false })
   source: number;
 
   @Column({ type: 'bytea', nullable: false })
-  data: Uint8Array;
+  data: Buffer;
 
-  constructor(room: GameRoom | number, category: string, sequenceNumber: number, source: number | -1, data: Uint8Array) {
+  constructor(room: GameRoom | number, category: string, source: number | -1, data: Buffer) {
     if (room instanceof GameRoom) {
       this.roomId = this.room.id;
     } else {
       this.roomId = room;
     }
     this.category = category;
-    this.sequenceNumber = sequenceNumber;
     this.source = source;
     this.data = data;
   }
 
-  static async create(room: GameRoom | number, category: string, sequenceNumber: number, source: number | -1, data: Uint8Array): Promise<Event> {
-    const newEvent = new Event(room, category, sequenceNumber, source, data);
-    return getManager().save(newEvent);
+  static async create(entityManager: EntityManager, room: GameRoom | number, category: string, source: number | -1, data: Buffer): Promise<Event> {
+    const newEvent = new Event(room, category, source, data);
+    const newObj = await entityManager.save(newEvent);
+    const reloaded = await entityManager.getRepository(Event).findOne(newObj.id);
+    if (reloaded === undefined) {
+      throw Error('Reloaded entity does not exist -- this should not happen');
+    }
+    return reloaded;
   }
 }

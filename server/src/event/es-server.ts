@@ -1,13 +1,13 @@
 import { ClientSentEvent, EventCategories } from 'rpgcore-common';
 
-type ClientSentEventHandler = (serverEvent: ClientSentEvent) => boolean;
+type ClientSentEventHandler = (clientEvent: ClientSentEvent) => boolean;
 
 interface ClientSentEventProcessor {
   addHandler(type: EventCategories, handler: ClientSentEventHandler): void;
 
   removeHandler(type: EventCategories, handler: ClientSentEventHandler): void;
 
-  processEvent(serverEvent: ClientSentEvent): void;
+  processEvent(clientEvent: ClientSentEvent): void;
 }
 
 export class ESServer implements ClientSentEventProcessor {

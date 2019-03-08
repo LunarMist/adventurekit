@@ -30,8 +30,7 @@ export class ESClient implements ServerSentEventProcessor {
       throw Error(`Invalid message: ${err}`);
     }
     const bytes = ESProtoToken.TokenChangeEvent.encode(obj).finish();
-    const arrayBuffer = Uint8Array.from(bytes).buffer;
-    return { messageId: this.nextMessageId(), data: arrayBuffer, category: EventCategories.TokenChangeEvent };
+    return new ClientSentEvent(this.nextMessageId(), EventCategories.TokenChangeEvent, bytes);
   }
 
   addHandler(type: EventCategories, handler: (serverEvent: ServerSentEvent) => boolean): void {
@@ -49,6 +48,11 @@ export class ESClient implements ServerSentEventProcessor {
 
   processEvent(serverEvent: ServerSentEvent): void {
     console.log(serverEvent);
+
+    if (serverEvent.messageId.startsWith(this.messageIdPrefix)) {
+      console.log('Got self-sent event; Skipping handling');
+      return;
+    }
 
     if (!(serverEvent.category in this.handlers)) {
       console.warn(`No handlers for event category ${serverEvent.category}`);

@@ -51,6 +51,9 @@ export class GameNetClient {
   }
 
   listenEvent(cb: (serverEvent: ServerSentEvent) => void) {
-    this.client.listen(NetEventType.ESEvent, cb);
+    this.client.listen(NetEventType.ESEvent, (s: ServerSentEvent) => {
+      // We must explicitly create the instance, because socketio only creates an object of the same 'shape' as ServerSentEvent
+      cb(new ServerSentEvent(s.sequenceNumber, s.messageId, s.category, s.data));
+    });
   }
 }

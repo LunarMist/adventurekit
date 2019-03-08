@@ -1,10 +1,12 @@
 import { ClientSentEvent, ESProtoToken, EventCategories, InitState, NetEventType, ServerSentEvent } from 'rpgcore-common';
 import * as util from 'util';
+import { getConnection } from 'typeorm';
 
 import { SocketHandler, SocketHandlerFactory } from './sockets';
 import GameRoom from '../entities/GameRoom';
 import User from '../entities/User';
 import { ESServer } from '../event/es-server';
+import Event from '../entities/Event';
 
 /**
  * Game room socket.io handler.
@@ -94,9 +96,29 @@ export class GameRoomSocketHandler extends SocketHandler {
 
     this.listenEvent(esServer.processEvent.bind(esServer));
 
-    esServer.addHandler(EventCategories.TokenChangeEvent, serverEvent => {
-      const event = ESProtoToken.TokenChangeEvent.decode(new Uint8Array(serverEvent.data));
-      console.log(event);
+    esServer.addHandler(EventCategories.TokenChangeEvent, clientEvent => {
+      const changeEvent = ESProtoToken.TokenChangeEvent.decode(clientEvent.dataUi8);
+      console.log(changeEvent);
+
+      getConnection().transaction(async entityManager => {
+        const esEvent = await Event.create(entityManager, this.currentGameRoomId, clientEvent.category, -1, clientEvent.dataBuffer);
+        const response = new ServerSentEvent(esEvent.sequenceNumber, clientEvent.messageId, esEvent.category, esEvent.data);
+        if (changeEvent.changeType === ESProtoToken.TokenChangeType.CREATE) {
+          // TODO: Transform and Agg
+        } else if (changeEvent.changeType === ESProtoToken.TokenChangeType.UPDATE) {
+          // TODO: Transform and Agg
+        } else if (changeEvent.changeType === ESProtoToken.TokenChangeType.DELETE) {
+          // TODO: Transform and Agg
+        } else {
+          throw Error(`Unknown changeType: ${changeEvent.changeType}`);
+        }
+        return response;
+      }).then(response => {
+        const roomName = GameRoomSocketHandler.formatRoomName(this.currentGameRoomId);
+        console.log(response);
+        this.sendEvent(response, roomName);
+      }).catch(console.error);
+
       return true;
     });
 
@@ -127,7 +149,10 @@ export class GameRoomSocketHandler extends SocketHandler {
   }
 
   listenEvent(cb: (clientEvent: ClientSentEvent) => void) {
-    this.listenAuthenticated(NetEventType.ESEvent, cb);
+    // We must explicitly create the instance, because socketio only creates an object of the same 'shape' as ClientSentEvent
+    this.listenAuthenticated(NetEventType.ESEvent, (c: ClientSentEvent) => {
+      cb(new ClientSentEvent(c.messageId, c.category, c.data));
+    });
   }
 
   sendEvent(serverEvent: ServerSentEvent, room: string) {

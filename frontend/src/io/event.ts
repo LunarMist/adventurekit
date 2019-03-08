@@ -30,23 +30,23 @@ export enum EventType {
 /**
  * Base event
  */
-export interface Event {
+interface IOEvent {
   readonly type: EventType;
 }
 
-export class FocusedEvent implements Event {
+export class FocusedEvent implements IOEvent {
   readonly type = EventType.Focused;
 }
 
-export class FocusLostEvent implements Event {
+export class FocusLostEvent implements IOEvent {
   readonly type = EventType.FocusLost;
 }
 
-export class ResizedEvent implements Event {
+export class ResizedEvent implements IOEvent {
   readonly type = EventType.Resized;
 }
 
-abstract class ClipboardTypeEvent implements Event {
+abstract class ClipboardTypeEvent implements IOEvent {
   readonly abstract type: EventType;
 
   constructor(
@@ -68,7 +68,7 @@ export class ClipboardPasteEvent extends ClipboardTypeEvent {
   readonly type = EventType.ClipboardPaste;
 }
 
-abstract class KeyboardTypeEvent implements Event {
+abstract class KeyboardTypeEvent implements IOEvent {
   readonly abstract type: EventType;
 
   constructor(
@@ -102,7 +102,7 @@ export class KeyPressEvent extends KeyboardTypeEvent {
   readonly type = EventType.KeyPress;
 }
 
-abstract class PointerTypeEvent implements Event {
+abstract class PointerTypeEvent implements IOEvent {
   readonly abstract type: EventType;
 
   constructor(
@@ -146,7 +146,7 @@ export class PointerUpEvent extends PointerTypeEvent {
   readonly type: EventType = EventType.PointerUp;
 }
 
-export class WheelEvent implements Event {
+export class WheelEvent implements IOEvent {
   readonly type: EventType = EventType.Wheel;
 
   constructor(
@@ -175,7 +175,7 @@ export class WheelEvent implements Event {
 /**
  * Event handlers for IO should all extend {@link EventHandler<T>}
  */
-export interface EventHandler<T extends Event> {
+export interface EventHandler<T extends IOEvent> {
   (event: T): boolean;
 }
 
@@ -237,15 +237,15 @@ export interface IOEventDispatcher {
 
   dispatchEvents(): void;
 
-  queueEvent(event: Event): void;
+  queueEvent(event: IOEvent): void;
 }
 
 /**
  * Simple array-based implementation for {@link IOEventDispatcher}
  */
 export class SimpleIOEventDispatcher implements IOEventDispatcher {
-  private handlers: EventHandler<Event>[][] = [];
-  private eventQueue: Event[] = [];
+  private handlers: EventHandler<IOEvent>[][] = [];
+  private eventQueue: IOEvent[] = [];
 
   constructor(readonly suppressHandlerExceptions: boolean) {
     for (let i = 0; i < EventType.LENGTH; i++) {
@@ -253,12 +253,11 @@ export class SimpleIOEventDispatcher implements IOEventDispatcher {
     }
   }
 
-  addHandler<T extends Event>(type: EventType, handler: EventHandler<T>): void {
-    // @ts-ignore
-    this.handlers[type].push(handler);
+  addHandler<T extends IOEvent>(type: EventType, handler: EventHandler<T>): void {
+    this.handlers[type].push(handler as EventHandler<IOEvent>);
   }
 
-  removeHandler<T extends Event>(type: EventType, handler: EventHandler<T>): void {
+  removeHandler<T extends IOEvent>(type: EventType, handler: EventHandler<T>): void {
     const loc = this.handlers[type].findIndex(v => v === handler);
     if (loc !== -1) {
       this.handlers[type].splice(loc, 1);
@@ -291,7 +290,7 @@ export class SimpleIOEventDispatcher implements IOEventDispatcher {
     }
   }
 
-  queueEvent(event: Event): void {
+  queueEvent(event: IOEvent): void {
     this.eventQueue.push(event);
   }
 }

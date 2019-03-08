@@ -1,8 +1,17 @@
 import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 import * as ImGui from 'ImGui/imgui';
+import { ESProtoToken, EventCategories } from 'rpgcore-common';
 
 export class ManageTokensComponent extends WindowRenderComponent {
   protected readonly windowId: WindowId = WindowId.ManageTokens;
+
+  init() {
+    this.es.addHandler(EventCategories.TokenChangeEvent, serverEvent => {
+      const event = ESProtoToken.TokenChangeEvent.decode(serverEvent.dataUi8);
+      console.log(event);
+      return true;
+    });
+  }
 
   render() {
     if (!this.isVisible) {

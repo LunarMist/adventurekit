@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, getManager, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, EntityManager, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
 import GameRoom from './GameRoom';
 
 @Entity()
@@ -26,9 +26,9 @@ export default class EventAggregate {
   eventWatermark: number;
 
   @Column({ type: 'bytea', nullable: false })
-  data: Uint8Array;
+  data: Buffer;
 
-  constructor(room: GameRoom | number, category: string, eventWatermark: number, data: Uint8Array) {
+  constructor(room: GameRoom | number, category: string, eventWatermark: number, data: Buffer) {
     if (room instanceof GameRoom) {
       this.roomId = this.room.id;
     } else {
@@ -39,8 +39,8 @@ export default class EventAggregate {
     this.data = data;
   }
 
-  static async create(room: GameRoom | number, category: string, eventWatermark: number, data: Uint8Array): Promise<EventAggregate> {
+  static async create(entityManager: EntityManager, room: GameRoom | number, category: string, eventWatermark: number, data: Buffer): Promise<EventAggregate> {
     const newAggregate = new EventAggregate(room, category, eventWatermark, data);
-    return getManager().save(newAggregate);
+    return entityManager.save(newAggregate);
   }
 }
