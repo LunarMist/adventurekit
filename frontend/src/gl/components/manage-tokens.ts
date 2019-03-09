@@ -24,7 +24,7 @@ export class ManageTokensComponent extends WindowRenderComponent {
     }
 
     if (ImGui.Button('Create Token')) {
-      const req = this.es.buildTokenCreationRequest('Test Label', 'Test url', 11, 22, 33, 44, 55);
+      const req = this.es.buildTokenCreationRequest('Test Label', 'Test url', ['Luney'], 11, 22, 33, 44, 55);
       this.net.sendEvent(req);
     }
 

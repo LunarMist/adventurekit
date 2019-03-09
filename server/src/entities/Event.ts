@@ -45,6 +45,8 @@ export default class Event {
   static async create(entityManager: EntityManager, room: GameRoom | number, category: string, source: number | -1, data: Buffer): Promise<Event> {
     const newEvent = new Event(room, category, source, data);
     const newObj = await entityManager.save(newEvent);
+    // This re-select is because sequenceNumber is generated via a trigger, and not auto-reloaded by the orm
+    // TODO: Do not use a re-select
     const reloaded = await entityManager.getRepository(Event).findOne(newObj.id);
     if (reloaded === undefined) {
       throw Error('Reloaded entity does not exist -- this should not happen');

@@ -23,8 +23,8 @@ export class ESClient implements ServerSentEventProcessor {
     return `${this.messageIdPrefix}-${this.prevSequenceId}`;
   }
 
-  buildTokenCreationRequest(label: string, url: string, x: number, y: number, z: number, width: number, height: number): ClientSentEvent {
-    const obj = { label, url, x, y, z, width, height, changeType: ESProtoToken.TokenChangeType.CREATE };
+  buildTokenCreationRequest(label: string, url: string, editOwners: string[], x: number, y: number, z: number, width: number, height: number): ClientSentEvent {
+    const obj = { label, url, editOwners, x, y, z, width, height, changeType: ESProtoToken.TokenChangeType.CREATE };
     const err = ESProtoToken.TokenChangeEvent.verify(obj);
     if (err) {
       throw Error(`Invalid message: ${err}`);
