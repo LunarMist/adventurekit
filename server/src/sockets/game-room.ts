@@ -102,27 +102,28 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.listenEvent(esServer.processEvent.bind(esServer));
 
     // TODO: Make this logic more generic/re-usable
+    // TODO: Write to redis first, then to db async?
     esServer.addHandler(EventCategories.TokenChangeEvent, clientEvent => {
       const changeEvent = TokenProto.TokenChangeEvent.decode(clientEvent.dataUi8);
       console.log(changeEvent);
 
       getConnection().transaction(async entityManager => {
-        const newEvent = await Event.create(entityManager, this.currentGameRoomId, clientEvent.category, -1, clientEvent.dataBuffer);
+        const newEvent = await Event.create(entityManager, this.currentGameRoomId, clientEvent.category, -1, clientEvent.dataUi8);
         const currentAgg = await EventAggregate.getForUpdate(entityManager, this.currentGameRoomId, EventAggCategories.TokenSet);
         if (currentAgg === undefined) {
           const aggregator = new TokenAggregator(this.sessionUser.username);
           aggregator.agg(changeEvent);
-          await EventAggregate.create(entityManager, this.currentGameRoomId, EventAggCategories.TokenSet, newEvent.sequenceNumber, aggregator.dataBuffer);
+          await EventAggregate.create(entityManager, this.currentGameRoomId, EventAggCategories.TokenSet, newEvent.sequenceNumber, aggregator.dataUi8);
         } else {
           if (currentAgg.eventWatermark !== newEvent.sequenceNumber - 1) {
             throw Error(`Event aggregate ${currentAgg.id} is out of sync: Invalid watermark for create event: ${newEvent.id}`);
           }
-          const aggregator = new TokenAggregator(this.sessionUser.username, TokenProto.TokenSet.decode(currentAgg.getData()) as TokenProto.TokenSet);
+          const aggregator = new TokenAggregator(this.sessionUser.username, TokenProto.TokenSet.decode(currentAgg.getDataUi8()) as TokenProto.TokenSet);
           aggregator.agg(changeEvent);
-          await currentAgg.update(entityManager, newEvent.sequenceNumber, aggregator.dataBuffer);
+          await currentAgg.update(entityManager, newEvent.sequenceNumber, aggregator.dataUi8);
         }
 
-        return new ServerSentEvent(newEvent.sequenceNumber, clientEvent.messageId, newEvent.category, newEvent.getData());
+        return new ServerSentEvent(newEvent.sequenceNumber, clientEvent.messageId, newEvent.category, newEvent.getDataUi8());
       }).then(response => {
         const roomName = GameRoomSocketHandler.formatRoomName(this.currentGameRoomId);
         console.log(response);
@@ -134,12 +135,14 @@ export class GameRoomSocketHandler extends SocketHandler {
 
     this.listenEventAggRequest(async (category, ack) => {
       try {
+        // TODO: add white/blacklist for requested categories?
+        // TODO: Add a caching layer
         const agg = await EventAggregate.get(this.currentGameRoomId, category);
         if (agg === undefined) {
           ack({ status: true, data: null });
           return;
         }
-        ack({ status: true, data: agg.getData() });
+        ack({ status: true, data: agg.getDataUi8() });
       } catch (e) {
         console.error(e);
         ack({ status: false, data: null });

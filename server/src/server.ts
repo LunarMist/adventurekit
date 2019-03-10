@@ -58,6 +58,6 @@ async function run() {
 run().catch(err => {
   // Ensure we crash/terminate the process
   process.nextTick(() => {
-    throw new Error(err);
+    throw err;
   });
 });

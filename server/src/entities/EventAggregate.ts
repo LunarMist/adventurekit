@@ -26,13 +26,13 @@ export default class EventAggregate {
   eventWatermark: number;
 
   @Column({ type: 'bytea', nullable: false })
-  data: string;
+  data: Buffer;
 
-  getData(): Buffer {
-    return Buffer.from(this.data, 'hex');
+  getDataUi8(): Uint8Array {
+    return this.data;
   }
 
-  constructor(room: GameRoom | number, category: string, eventWatermark: number, data: Buffer) {
+  constructor(room: GameRoom | number, category: string, eventWatermark: number, data: Uint8Array) {
     if (room instanceof GameRoom) {
       this.roomId = room.id;
     } else {
@@ -40,11 +40,14 @@ export default class EventAggregate {
     }
     this.category = category;
     this.eventWatermark = eventWatermark;
-    // https://github.com/typeorm/typeorm/issues/2878#issuecomment-432725569
-    this.data = `\\x${data ? data.toString('hex') : ''}`;
+    if (data === undefined) {
+      this.data = Buffer.allocUnsafe(0);
+    } else {
+      this.data = Buffer.from(data.buffer, data.byteOffset, data.length);
+    }
   }
 
-  static async create(entityManager: EntityManager, room: GameRoom | number, category: string, eventWatermark: number, data: Buffer): Promise<EventAggregate> {
+  static async create(entityManager: EntityManager, room: GameRoom | number, category: string, eventWatermark: number, data: Uint8Array): Promise<EventAggregate> {
     const newAggregate = new EventAggregate(room, category, eventWatermark, data);
     return entityManager.save(newAggregate);
   }
@@ -67,9 +70,9 @@ export default class EventAggregate {
       .getOne();
   }
 
-  async update(entityManager: EntityManager, watermark: number, data: Buffer): Promise<EventAggregate> {
+  async update(entityManager: EntityManager, watermark: number, data: Uint8Array): Promise<EventAggregate> {
     this.eventWatermark = watermark;
-    this.data = `\\x${data ? data.toString('hex') : ''}`;
+    this.data = Buffer.from(data);
     await entityManager.update(EventAggregate, this.id, { eventWatermark: this.eventWatermark, data: this.data });
     return this;
   }

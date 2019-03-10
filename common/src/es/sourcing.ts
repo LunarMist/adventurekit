@@ -1,58 +1,56 @@
 // TODO: Use protobuf?
-// TODO: Find a way to skip needing to copy buffers for the methods in this class
 export class ClientSentEvent {
   readonly messageId: string;
   readonly category: string;
   readonly data: ArrayBuffer; // ArrayBuffer is required by socket.io to serde properly
 
-  constructor(messageId: string, category: string, data: Uint8Array | ArrayBuffer) {
+  constructor(messageId: string, category: string, data: Uint8Array | ArrayBuffer | Buffer) {
     this.messageId = messageId;
     this.category = category;
     // This copy is done because the underlying ArrayBuffer of the data object may be larger than the actual data
     // So we need to copy it
-    if (data instanceof ArrayBuffer) {
+    if (data instanceof Buffer) {
+      this.data = Uint8Array.from(data).buffer;
+    } else if (data instanceof Uint8Array) {
+      this.data = Uint8Array.from(data).buffer;
+    } else if (data instanceof ArrayBuffer) {
       this.data = data;
     } else {
-      this.data = Uint8Array.from(data).buffer;
+      throw Error('Unknown data type');
     }
   }
 
   get dataUi8(): Uint8Array {
     return new Uint8Array(this.data);
   }
-
-  get dataBuffer(): Buffer {
-    return Buffer.from(this.data);
-  }
 }
 
 // TODO: Use protobuf?
-// TODO: Find a way to skip needing to copy buffers for the methods in this class
 export class ServerSentEvent {
-  sequenceNumber: number;
-  messageId: string;
-  category: string;
-  data: ArrayBuffer; // ArrayBuffer is required by socket.io to serde properly
+  readonly sequenceNumber: number;
+  readonly messageId: string;
+  readonly category: string;
+  readonly data: ArrayBuffer; // ArrayBuffer is required by socket.io to serde properly
 
-  constructor(sequenceNumber: number, messageId: string, category: string, data: Uint8Array | ArrayBuffer) {
+  constructor(sequenceNumber: number, messageId: string, category: string, data: Uint8Array | ArrayBuffer | Buffer) {
     this.sequenceNumber = sequenceNumber;
     this.messageId = messageId;
     this.category = category;
     // This copy is done because the underlying ArrayBuffer of the data object may be larger than the actual data
     // So we need to copy it
-    if (data instanceof ArrayBuffer) {
+    if (data instanceof Buffer) {
+      this.data = Uint8Array.from(data).buffer;
+    } else if (data instanceof Uint8Array) {
+      this.data = Uint8Array.from(data).buffer;
+    } else if (data instanceof ArrayBuffer) {
       this.data = data;
     } else {
-      this.data = Uint8Array.from(data).buffer;
+      throw Error('Unknown data type');
     }
   }
 
   get dataUi8(): Uint8Array {
     return new Uint8Array(this.data);
-  }
-
-  get dataBuffer(): Buffer {
-    return Buffer.from(this.data);
   }
 }
 

@@ -3,6 +3,9 @@ import { Token, TokenChangeEvent, TokenChangeType, TokenSet } from '../proto/tok
 
 export const MAX_TOKEN_EDIT_OWNERS = 10;
 
+/**
+ * Aggregate {@link TokenChangeEvent} into {@link TokenSet}
+ */
 export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
   readonly accumulator: TokenSet;
 
@@ -23,19 +26,19 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
   }
 
   zero(): TokenSet {
-    return TokenSet.create({ nextTokenId: 1 }) as TokenSet;
+    const obj = { tokens: {}, nextTokenId: 1 };
+    const err = TokenSet.verify(obj);
+    if (err) {
+      throw Error('Unable to create zero() object for TokenAggregator; Invalid message.');
+    }
+    return TokenSet.create(obj) as TokenSet;
   }
 
   get dataUi8(): Uint8Array {
-    return new Uint8Array(TokenSet.encode(this.accumulator).finish());
-  }
-
-  get dataBuffer(): Buffer {
-    return Buffer.from(TokenSet.encode(this.accumulator).finish());
+    return TokenSet.encode(this.accumulator).finish();
   }
 
   protected processCreate(data: TokenChangeEvent) {
-    this.accumulator.tokens = this.accumulator.tokens || {};
     const newId = this.accumulator.nextTokenId;
     if (newId in this.accumulator.tokens) {
       throw Error(`Id ${newId} already exists in TokenSet. NextTokenID out of sync.`);
