@@ -1,13 +1,15 @@
+import { EventCategories } from 'rpgcore-common/es';
+import { TokenProto } from 'rpgcore-common/es-proto';
+
 import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 import * as ImGui from 'ImGui/imgui';
-import { ESProtoToken, EventCategories } from 'rpgcore-common';
 
 export class ManageTokensComponent extends WindowRenderComponent {
   protected readonly windowId: WindowId = WindowId.ManageTokens;
 
   init() {
     this.es.addHandler(EventCategories.TokenChangeEvent, serverEvent => {
-      const event = ESProtoToken.TokenChangeEvent.decode(serverEvent.dataUi8);
+      const event = TokenProto.TokenChangeEvent.decode(serverEvent.dataUi8);
       console.log(event);
       return true;
     });

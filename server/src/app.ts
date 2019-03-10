@@ -12,7 +12,7 @@ import SGMail from '@sendgrid/mail';
 import jwt, { VerifyErrors } from 'jsonwebtoken';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
 import * as util from 'util';
-import { LoginUtils } from 'rpgcore-common';
+import { LoginUtils } from 'rpgcore-common/utils';
 
 import config from './config/config';
 import User from './entities/User';

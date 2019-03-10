@@ -1,7 +1,7 @@
 import { Aggregator } from './base';
 import { Token, TokenChangeEvent, TokenChangeType, TokenSet } from '../proto/token';
 
-export const MAX_EDIT_OWNERS = 10;
+export const MAX_TOKEN_EDIT_OWNERS = 10;
 
 export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
   readonly accumulator: TokenSet;
@@ -31,7 +31,7 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
     if (newId in this.accumulator.tokens) {
       throw Error(`Id ${newId} already exists in TokenSet. NextTokenID out of sync.`);
     }
-    if (data.editOwners && data.editOwners.length > MAX_EDIT_OWNERS) {
+    if (data.editOwners && data.editOwners.length > MAX_TOKEN_EDIT_OWNERS) {
       throw Error(`Too many edit owners: ${data.editOwners.length}`);
     }
     const obj = { id: newId, label: data.label, url: data.url, editOwners: data.editOwners, x: data.x, y: data.y, z: data.z, width: data.width, height: data.height };
@@ -50,7 +50,7 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
       if (!this.isAuthorized(token)) {
         throw Error(`User not authorized for editing token: ${this.authUser}`);
       }
-      if (data.editOwners && data.editOwners.length > MAX_EDIT_OWNERS) {
+      if (data.editOwners && data.editOwners.length > MAX_TOKEN_EDIT_OWNERS) {
         throw Error(`Too many edit owners: ${data.editOwners.length}`);
       }
       token.label = data.label || token.label;

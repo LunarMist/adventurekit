@@ -1,6 +1,9 @@
-import { ClientSentEvent, ESProtoToken, EventCategories, InitState, NetEventType, ServerSentEvent } from 'rpgcore-common';
 import * as util from 'util';
 import { getConnection } from 'typeorm';
+import { ClientSentEvent, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
+import { TokenProto } from 'rpgcore-common/es-proto';
+import { NetEventType } from 'rpgcore-common/enums';
+import { InitState } from 'rpgcore-common/types';
 
 import { SocketHandler, SocketHandlerFactory } from './sockets';
 import GameRoom from '../entities/GameRoom';
@@ -97,17 +100,17 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.listenEvent(esServer.processEvent.bind(esServer));
 
     esServer.addHandler(EventCategories.TokenChangeEvent, clientEvent => {
-      const changeEvent = ESProtoToken.TokenChangeEvent.decode(clientEvent.dataUi8);
+      const changeEvent = TokenProto.TokenChangeEvent.decode(clientEvent.dataUi8);
       console.log(changeEvent);
 
       getConnection().transaction(async entityManager => {
         const esEvent = await Event.create(entityManager, this.currentGameRoomId, clientEvent.category, -1, clientEvent.dataBuffer);
         const response = new ServerSentEvent(esEvent.sequenceNumber, clientEvent.messageId, esEvent.category, esEvent.data);
-        if (changeEvent.changeType === ESProtoToken.TokenChangeType.CREATE) {
+        if (changeEvent.changeType === TokenProto.TokenChangeType.CREATE) {
           // TODO: Transform and Agg
-        } else if (changeEvent.changeType === ESProtoToken.TokenChangeType.UPDATE) {
+        } else if (changeEvent.changeType === TokenProto.TokenChangeType.UPDATE) {
           // TODO: Transform and Agg
-        } else if (changeEvent.changeType === ESProtoToken.TokenChangeType.DELETE) {
+        } else if (changeEvent.changeType === TokenProto.TokenChangeType.DELETE) {
           // TODO: Transform and Agg
         } else {
           throw Error(`Unknown changeType: ${changeEvent.changeType}`);

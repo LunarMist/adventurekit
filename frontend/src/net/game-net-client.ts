@@ -1,5 +1,8 @@
+import { ClientSentEvent, ServerSentEvent } from 'rpgcore-common/es';
+import { NetEventType } from 'rpgcore-common/enums';
+import { InitState } from 'rpgcore-common/types';
+
 import { NetClient } from 'Net/net-client';
-import { ClientSentEvent, InitState, NetEventType, ServerSentEvent } from 'rpgcore-common';
 
 /**
  * Used for sending all game-relevant messages between the client <--> server.

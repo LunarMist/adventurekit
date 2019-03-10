@@ -1,5 +1,5 @@
 import * as LocalForage from 'localforage';
-import { FontData } from 'rpgcore-common';
+import { FontData } from 'rpgcore-common/types';
 
 enum SettingsKey {
   ActiveFont = 'ActiveFont',

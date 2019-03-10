@@ -1,4 +1,4 @@
-import { UserProfile } from 'rpgcore-common';
+import { UserProfile } from 'rpgcore-common/types';
 
 /**
  * For in-memory game settings

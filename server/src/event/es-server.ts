@@ -1,4 +1,4 @@
-import { ClientSentEvent, EventCategories } from 'rpgcore-common';
+import { ClientSentEvent, EventCategories } from 'rpgcore-common/es';
 
 type ClientSentEventHandler = (clientEvent: ClientSentEvent) => boolean;
 

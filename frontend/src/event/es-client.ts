@@ -1,4 +1,5 @@
-import { ClientSentEvent, ESProtoToken, EventCategories, ServerSentEvent } from 'rpgcore-common';
+import { ClientSentEvent, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
+import { TokenProto } from 'rpgcore-common/es-proto';
 
 type ServerSentEventHandler = (serverEvent: ServerSentEvent) => boolean;
 
@@ -24,12 +25,12 @@ export class ESClient implements ServerSentEventProcessor {
   }
 
   buildTokenCreationRequest(label: string, url: string, editOwners: string[], x: number, y: number, z: number, width: number, height: number): ClientSentEvent {
-    const obj = { label, url, editOwners, x, y, z, width, height, changeType: ESProtoToken.TokenChangeType.CREATE };
-    const err = ESProtoToken.TokenChangeEvent.verify(obj);
+    const obj = { label, url, editOwners, x, y, z, width, height, changeType: TokenProto.TokenChangeType.CREATE };
+    const err = TokenProto.TokenChangeEvent.verify(obj);
     if (err) {
       throw Error(`Invalid message: ${err}`);
     }
-    const bytes = ESProtoToken.TokenChangeEvent.encode(obj).finish();
+    const bytes = TokenProto.TokenChangeEvent.encode(obj).finish();
     return new ClientSentEvent(this.nextMessageId(), EventCategories.TokenChangeEvent, bytes);
   }
 

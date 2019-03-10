@@ -1,9 +1,10 @@
+import { LoginUtils } from 'rpgcore-common/utils';
+
 import { GridPatternComponent } from 'GL/components/grid';
 import { RenderLoop } from 'GL/render';
 import { ServerStatusComponent } from 'GL/components/server-status';
 import { MenuComponent } from 'GL/components/menu';
 import * as ImGui from 'ImGui/imgui';
-import { LoginUtils } from 'rpgcore-common';
 import * as LoginApi from 'Api/login';
 
 export default function main(canvas: HTMLCanvasElement) {

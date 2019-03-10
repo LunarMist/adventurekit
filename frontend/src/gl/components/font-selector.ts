@@ -1,4 +1,4 @@
-import { FontData } from 'rpgcore-common';
+import { FontData } from 'rpgcore-common/types';
 
 import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 import * as ImGui from 'ImGui/imgui';

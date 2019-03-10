@@ -1,4 +1,4 @@
-import { FontData } from 'rpgcore-common';
+import { FontData } from 'rpgcore-common/types';
 
 import { IOLifeCycle } from 'IO/lifecycle';
 import * as ImGui from 'ImGui/imgui';
