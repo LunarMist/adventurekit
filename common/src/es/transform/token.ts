@@ -26,7 +26,16 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
     return TokenSet.create({ nextTokenId: 1 }) as TokenSet;
   }
 
+  get dataUi8(): Uint8Array {
+    return new Uint8Array(TokenSet.encode(this.accumulator).finish());
+  }
+
+  get dataBuffer(): Buffer {
+    return Buffer.from(TokenSet.encode(this.accumulator).finish());
+  }
+
   protected processCreate(data: TokenChangeEvent) {
+    this.accumulator.tokens = this.accumulator.tokens || {};
     const newId = this.accumulator.nextTokenId;
     if (newId in this.accumulator.tokens) {
       throw Error(`Id ${newId} already exists in TokenSet. NextTokenID out of sync.`);

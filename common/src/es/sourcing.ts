@@ -55,3 +55,5 @@ export class ServerSentEvent {
     return Buffer.from(this.data);
   }
 }
+
+export type EventAggResponse = { status: boolean; data: ArrayBuffer | null };

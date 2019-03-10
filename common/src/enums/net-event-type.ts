@@ -7,4 +7,5 @@ export enum NetEventType {
   CreateRoom = 'CreateRoom',
   InitState = 'InitState',
   ESEvent = 'ESEvent',
+  EventAggRequest = 'EventAggRequest',
 }

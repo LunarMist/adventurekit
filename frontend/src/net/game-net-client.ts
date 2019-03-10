@@ -1,4 +1,4 @@
-import { ClientSentEvent, ServerSentEvent } from 'rpgcore-common/es';
+import { ClientSentEvent, EventAggCategories, EventAggResponse, ServerSentEvent } from 'rpgcore-common/es';
 import { NetEventType } from 'rpgcore-common/enums';
 import { InitState } from 'rpgcore-common/types';
 
@@ -51,6 +51,10 @@ export class GameNetClient {
 
   sendEvent(clientEvent: ClientSentEvent) {
     this.client.sendSimpleMessage(NetEventType.ESEvent, clientEvent);
+  }
+
+  async sendEventAggRequest(category: EventAggCategories): Promise<EventAggResponse> {
+    return this.client.sendMessage<EventAggResponse>(NetEventType.EventAggRequest, category);
   }
 
   listenEvent(cb: (serverEvent: ServerSentEvent) => void) {

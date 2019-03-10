@@ -1,15 +1,17 @@
 import * as util from 'util';
 import { getConnection } from 'typeorm';
-import { ClientSentEvent, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
+import { ClientSentEvent, EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
 import { TokenProto } from 'rpgcore-common/es-proto';
 import { NetEventType } from 'rpgcore-common/enums';
 import { InitState } from 'rpgcore-common/types';
+import { TokenAggregator } from 'rpgcore-common/es-transform';
 
 import { SocketHandler, SocketHandlerFactory } from './sockets';
 import GameRoom from '../entities/GameRoom';
 import User from '../entities/User';
 import { ESServer } from '../event/es-server';
 import Event from '../entities/Event';
+import EventAggregate from '../entities/EventAggregate';
 
 /**
  * Game room socket.io handler.
@@ -99,23 +101,28 @@ export class GameRoomSocketHandler extends SocketHandler {
 
     this.listenEvent(esServer.processEvent.bind(esServer));
 
+    // TODO: Make this logic more generic/re-usable
     esServer.addHandler(EventCategories.TokenChangeEvent, clientEvent => {
       const changeEvent = TokenProto.TokenChangeEvent.decode(clientEvent.dataUi8);
       console.log(changeEvent);
 
       getConnection().transaction(async entityManager => {
-        const esEvent = await Event.create(entityManager, this.currentGameRoomId, clientEvent.category, -1, clientEvent.dataBuffer);
-        const response = new ServerSentEvent(esEvent.sequenceNumber, clientEvent.messageId, esEvent.category, esEvent.data);
-        if (changeEvent.changeType === TokenProto.TokenChangeType.CREATE) {
-          // TODO: Transform and Agg
-        } else if (changeEvent.changeType === TokenProto.TokenChangeType.UPDATE) {
-          // TODO: Transform and Agg
-        } else if (changeEvent.changeType === TokenProto.TokenChangeType.DELETE) {
-          // TODO: Transform and Agg
+        const newEvent = await Event.create(entityManager, this.currentGameRoomId, clientEvent.category, -1, clientEvent.dataBuffer);
+        const currentAgg = await EventAggregate.getForUpdate(entityManager, this.currentGameRoomId, EventAggCategories.TokenSet);
+        if (currentAgg === undefined) {
+          const aggregator = new TokenAggregator(this.sessionUser.username);
+          aggregator.agg(changeEvent);
+          await EventAggregate.create(entityManager, this.currentGameRoomId, EventAggCategories.TokenSet, newEvent.sequenceNumber, aggregator.dataBuffer);
         } else {
-          throw Error(`Unknown changeType: ${changeEvent.changeType}`);
+          if (currentAgg.eventWatermark !== newEvent.sequenceNumber - 1) {
+            throw Error(`Event aggregate ${currentAgg.id} is out of sync: Invalid watermark for create event: ${newEvent.id}`);
+          }
+          const aggregator = new TokenAggregator(this.sessionUser.username, TokenProto.TokenSet.decode(currentAgg.getData()) as TokenProto.TokenSet);
+          aggregator.agg(changeEvent);
+          await currentAgg.update(entityManager, newEvent.sequenceNumber, aggregator.dataBuffer);
         }
-        return response;
+
+        return new ServerSentEvent(newEvent.sequenceNumber, clientEvent.messageId, newEvent.category, newEvent.getData());
       }).then(response => {
         const roomName = GameRoomSocketHandler.formatRoomName(this.currentGameRoomId);
         console.log(response);
@@ -123,6 +130,20 @@ export class GameRoomSocketHandler extends SocketHandler {
       }).catch(console.error);
 
       return true;
+    });
+
+    this.listenEventAggRequest(async (category, ack) => {
+      try {
+        const agg = await EventAggregate.get(this.currentGameRoomId, category);
+        if (agg === undefined) {
+          ack({ status: true, data: null });
+          return;
+        }
+        ack({ status: true, data: agg.getData() });
+      } catch (e) {
+        console.error(e);
+        ack({ status: false, data: null });
+      }
     });
 
     // Last thing: Send over init state data
@@ -160,6 +181,10 @@ export class GameRoomSocketHandler extends SocketHandler {
 
   sendEvent(serverEvent: ServerSentEvent, room: string) {
     this.io.to(room).emit(NetEventType.ESEvent, serverEvent);
+  }
+
+  listenEventAggRequest(cb: (category: EventAggCategories, ack: (response: EventAggResponse) => void) => void) {
+    this.listenAuthenticated(NetEventType.EventAggRequest, cb);
   }
 
   /*** Helper functions ***/

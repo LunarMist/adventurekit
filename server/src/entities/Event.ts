@@ -29,17 +29,22 @@ export default class Event {
   source: number;
 
   @Column({ type: 'bytea', nullable: false })
-  data: Buffer;
+  data: string;
+
+  getData(): Buffer {
+    return Buffer.from(this.data, 'hex');
+  }
 
   constructor(room: GameRoom | number, category: string, source: number | -1, data: Buffer) {
     if (room instanceof GameRoom) {
-      this.roomId = this.room.id;
+      this.roomId = room.id;
     } else {
       this.roomId = room;
     }
     this.category = category;
     this.source = source;
-    this.data = data;
+    // https://github.com/typeorm/typeorm/issues/2878#issuecomment-432725569
+    this.data = `\\x${data ? data.toString('hex') : ''}`;
   }
 
   static async create(entityManager: EntityManager, room: GameRoom | number, category: string, source: number | -1, data: Buffer): Promise<Event> {

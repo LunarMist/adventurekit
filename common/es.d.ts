@@ -1,2 +1,2 @@
-export { ClientSentEvent, ServerSentEvent } from './build/types/es/sourcing';
-export { EventCategories } from './build/types/es/categories';
+export { ClientSentEvent, ServerSentEvent, EventAggResponse } from './build/types/es/sourcing';
+export { EventCategories, EventAggCategories } from './build/types/es/categories';

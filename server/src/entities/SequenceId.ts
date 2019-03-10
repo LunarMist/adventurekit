@@ -27,7 +27,7 @@ export default class SequenceId {
 
   constructor(room: GameRoom | number, category: string, nextSequenceId: number) {
     if (room instanceof GameRoom) {
-      this.roomId = this.room.id;
+      this.roomId = room.id;
     } else {
       this.roomId = room;
     }

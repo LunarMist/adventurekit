@@ -1,4 +1,6 @@
 import { FontData } from 'rpgcore-common/types';
+import { TokenProto } from 'rpgcore-common/es-proto';
+import { EventAggCategories } from 'rpgcore-common/es';
 
 import { IOLifeCycle } from 'IO/lifecycle';
 import * as ImGui from 'ImGui/imgui';
@@ -89,15 +91,12 @@ export class RenderLoop {
       console.log('Setting initial state');
       this.inMemoryGameSettings.userProfile = initState.userProfile;
       this.inMemoryGameSettings.roomId = initState.roomId;
+      this.requestEventAggData()
+        .catch(console.error);
     });
 
     // Init event sourcing
     this.gameNetClient.listenEvent(this.esClient.processEvent.bind(this.esClient));
-
-    // TODO: Re-enable for prod, or find a better way
-    // this.gameNetClient.listenDisconnect(() => {
-    //   location.replace('/login/'); // On disconnect, redirect to login page
-    // });
 
     this.resizeCanvas();
 
@@ -214,6 +213,20 @@ export class RenderLoop {
       // console.log("Adjusting canvas size");
     }
     // console.log(`${this.gl.canvas.clientWidth === window.innerWidth}, ${this.gl.canvas.clientHeight === window.innerHeight}`);
+  }
+
+  private async requestEventAggData() {
+    const aggResponse = await this.gameNetClient.sendEventAggRequest(EventAggCategories.TokenSet);
+    if (!aggResponse.status) {
+      throw new Error(`Unable to fetch agg for ${EventAggCategories.TokenSet}`);
+    }
+    if (aggResponse.data === null) {
+      console.warn('No token data available');
+      return;
+    }
+    const tokens = TokenProto.TokenSet.decode(new Uint8Array(aggResponse.data)) as TokenProto.TokenSet;
+    this.inMemoryGameSettings.aggData.tokens = tokens;
+    console.log(this.inMemoryGameSettings.aggData.tokens);
   }
 
   private renderMetricsComponent() {
