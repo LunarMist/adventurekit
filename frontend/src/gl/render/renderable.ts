@@ -2,7 +2,7 @@ import { IOEventDispatcher } from 'IO/event';
 import { IOState } from 'IO/state';
 import { GameNetClient } from 'Net/game-net-client';
 import PersistentGameSettings from 'Store/Persistent-game-settings';
-import InMemoryGameSettings from 'Store/In-memory-game-settings';
+import InMemorySharedStore from 'Store/In-memory-shared-store';
 import { GameMessagesBroker } from 'Message/game-messages';
 import { ESClient } from 'Event/es-client';
 
@@ -30,7 +30,7 @@ export interface GameContext {
   readonly broker: GameMessagesBroker;
   readonly store: {
     readonly p: PersistentGameSettings;
-    readonly mem: InMemoryGameSettings;
+    readonly mem: InMemorySharedStore;
   };
   readonly es: ESClient;
 }

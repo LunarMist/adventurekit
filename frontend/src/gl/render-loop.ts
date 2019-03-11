@@ -11,9 +11,9 @@ import { GameNetClient } from 'Net/game-net-client';
 import { SocketIONetClient } from 'Net/socketio-client';
 import { NetClient } from 'Net/net-client';
 import PersistentGameSettings from 'Store/Persistent-game-settings';
-import InMemoryGameSettings from 'Store/In-memory-game-settings';
+import InMemorySharedStore from 'Store/In-memory-shared-store';
 import { GameContext, RenderComponent } from 'GL/render/renderable';
-import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/font-selector';
+import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/window/font-selector';
 import { GameMessagesBroker } from 'Message/game-messages';
 import { ESClient } from 'Event/es-client';
 
@@ -26,7 +26,7 @@ export class RenderLoop {
   private readonly gameNetClient: GameNetClient;
   private readonly gameMessageBroker: GameMessagesBroker;
   private readonly persistentGameSettings: PersistentGameSettings;
-  private readonly inMemoryGameSettings: InMemoryGameSettings;
+  private readonly inMemorySharedStore: InMemorySharedStore;
   private readonly esClient: ESClient;
 
   private readonly gameContext: GameContext;
@@ -43,7 +43,7 @@ export class RenderLoop {
     this.netClient = new SocketIONetClient();
     this.gameNetClient = new GameNetClient(this.netClient);
     this.persistentGameSettings = new PersistentGameSettings();
-    this.inMemoryGameSettings = new InMemoryGameSettings();
+    this.inMemorySharedStore = new InMemorySharedStore();
     this.gameMessageBroker = new GameMessagesBroker();
     this.esClient = new ESClient(0);
 
@@ -56,7 +56,7 @@ export class RenderLoop {
     this.gameContext = {
       gl: newGl,
       net: this.gameNetClient,
-      store: { mem: this.inMemoryGameSettings, p: this.persistentGameSettings },
+      store: { mem: this.inMemorySharedStore, p: this.persistentGameSettings },
       broker: this.gameMessageBroker,
       io: { dispatcher: this.ioLifeCycle.dispatcher, state: this.ioLifeCycle.ioState },
       es: this.esClient,
@@ -89,8 +89,8 @@ export class RenderLoop {
     this.netClient.open();
     this.gameNetClient.listenInitState(initState => {
       console.log('Setting initial state');
-      this.inMemoryGameSettings.userProfile = initState.userProfile;
-      this.inMemoryGameSettings.roomId = initState.roomId;
+      this.inMemorySharedStore.userProfile = initState.userProfile;
+      this.inMemorySharedStore.roomId = initState.roomId;
       this.requestEventAggData()
         .catch(console.error);
     });
@@ -225,8 +225,8 @@ export class RenderLoop {
       return;
     }
     const tokens = TokenProto.TokenSet.decode(new Uint8Array(aggResponse.data)) as TokenProto.TokenSet;
-    this.inMemoryGameSettings.aggData.tokens = tokens;
-    console.log(this.inMemoryGameSettings.aggData.tokens);
+    this.inMemorySharedStore.aggData.tokens = tokens;
+    console.log(this.inMemorySharedStore.aggData.tokens);
   }
 
   private renderMetricsComponent() {
@@ -237,8 +237,8 @@ export class RenderLoop {
 
     const avgFrameTime = this.prevFrameTimes.reduce((a, b) => a + b) / this.prevFrameTimes.length;
 
-    ImGui.Text(`Logged in as: ${this.inMemoryGameSettings.userProfile.username}`);
-    ImGui.Text(`Joined room: ${this.inMemoryGameSettings.roomId}`);
+    ImGui.Text(`Logged in as: ${this.inMemorySharedStore.userProfile.username}`);
+    ImGui.Text(`Joined room: ${this.inMemorySharedStore.roomId}`);
     ImGui.Text(`Frame perf: ${avgFrameTime.toFixed(3)} ms`);
     ImGui.Text(`Application average ${(1000.0 / ImGui.GetIO().Framerate).toFixed(3)} ms/frame (${ImGui.GetIO().Framerate.toFixed(1)} FPS)`);
 

@@ -47,6 +47,8 @@ export class ESClient implements ServerSentEventProcessor {
     }
   }
 
+  // TODO: Event buffering and re-ordering
+  // TODO: Client-sided agg
   processEvent(serverEvent: ServerSentEvent): void {
     console.log(serverEvent);
 

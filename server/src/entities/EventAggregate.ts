@@ -72,7 +72,11 @@ export default class EventAggregate {
 
   async update(entityManager: EntityManager, watermark: number, data: Uint8Array): Promise<EventAggregate> {
     this.eventWatermark = watermark;
-    this.data = Buffer.from(data);
+    if (data === undefined) {
+      this.data = Buffer.allocUnsafe(0);
+    } else {
+      this.data = Buffer.from(data.buffer, data.byteOffset, data.length);
+    }
     await entityManager.update(EventAggregate, this.id, { eventWatermark: this.eventWatermark, data: this.data });
     return this;
   }

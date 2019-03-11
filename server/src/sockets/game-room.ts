@@ -103,6 +103,9 @@ export class GameRoomSocketHandler extends SocketHandler {
 
     // TODO: Make this logic more generic/re-usable
     // TODO: Write to redis first, then to db async?
+    // TODO: Hold currentGameRoomId constant
+    // TODO: currentGameRoomId checks
+    // TODO: ack event
     esServer.addHandler(EventCategories.TokenChangeEvent, clientEvent => {
       const changeEvent = TokenProto.TokenChangeEvent.decode(clientEvent.dataUi8);
       console.log(changeEvent);
@@ -137,6 +140,7 @@ export class GameRoomSocketHandler extends SocketHandler {
       try {
         // TODO: add white/blacklist for requested categories?
         // TODO: Add a caching layer
+        // TODO: currentGameRoomId checks
         const agg = await EventAggregate.get(this.currentGameRoomId, category);
         if (agg === undefined) {
           ack({ status: true, data: null });

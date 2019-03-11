@@ -3,9 +3,9 @@ import { UserProfile } from 'rpgcore-common/types';
 import { EventAggData } from 'Event/es-data';
 
 /**
- * For in-memory game settings
+ * For in-memory shared storage
  */
-export default class InMemoryGameSettings {
+export default class InMemorySharedStore {
   public userProfile: UserProfile;
   public roomId: number;
   public aggData: EventAggData;
