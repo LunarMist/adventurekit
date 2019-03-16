@@ -1,6 +1,6 @@
 import * as util from 'util';
 import { getConnection } from 'typeorm';
-import { ClientSentEvent, EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
+import { ClientSentEvent, DataPack, EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
 import { TokenProto } from 'rpgcore-common/es-proto';
 import { NetEventType } from 'rpgcore-common/enums';
 import { InitState } from 'rpgcore-common/types';
@@ -17,7 +17,7 @@ import EventAggregate from '../entities/EventAggregate';
  * Game room socket.io handler.
  */
 export class GameRoomSocketHandler extends SocketHandler {
-  private currentGameRoomId: number = -1;
+  private currentGameRoomId: number | undefined = undefined;
 
   async onConnection(): Promise<void> {
     console.log(`User connected: ${this.socket.id}`);
@@ -40,7 +40,7 @@ export class GameRoomSocketHandler extends SocketHandler {
     await this.joinDefaultRoom();
 
     this.listenChatMessage((message: string) => {
-      if (this.currentGameRoomId !== -1) {
+      if (this.currentGameRoomId !== undefined) {
         this.sendChatMessage(this.sessionUser.username, message, GameRoomSocketHandler.formatRoomName(this.currentGameRoomId));
       }
     });
@@ -102,21 +102,25 @@ export class GameRoomSocketHandler extends SocketHandler {
     this.listenEvent(esServer.processEvent.bind(esServer));
 
     // TODO: Make this logic more generic/re-usable
-    // TODO: Write to redis first, then to db async?
-    // TODO: Hold currentGameRoomId constant
-    // TODO: currentGameRoomId checks
-    // TODO: ack event
+    // TODO: Use kafka/kenisis/redis event streams or something
+    // TODO: ack event?
     esServer.addHandler(EventCategories.TokenChangeEvent, clientEvent => {
+      if (this.currentGameRoomId === undefined) {
+        return false;
+      }
+
+      const currentRoomId: number = this.currentGameRoomId;
+
       const changeEvent = TokenProto.TokenChangeEvent.decode(clientEvent.dataUi8);
       console.log(changeEvent);
 
       getConnection().transaction(async entityManager => {
-        const newEvent = await Event.create(entityManager, this.currentGameRoomId, clientEvent.category, -1, clientEvent.dataUi8);
-        const currentAgg = await EventAggregate.getForUpdate(entityManager, this.currentGameRoomId, EventAggCategories.TokenSet);
+        const newEvent = await Event.create(entityManager, currentRoomId, clientEvent.category, -1, clientEvent.dataUi8);
+        const currentAgg = await EventAggregate.getForUpdate(entityManager, currentRoomId, EventAggCategories.TokenSet);
         if (currentAgg === undefined) {
           const aggregator = new TokenAggregator(this.sessionUser.username);
           aggregator.agg(changeEvent);
-          await EventAggregate.create(entityManager, this.currentGameRoomId, EventAggCategories.TokenSet, newEvent.sequenceNumber, aggregator.dataUi8);
+          await EventAggregate.create(entityManager, currentRoomId, EventAggCategories.TokenSet, newEvent.sequenceNumber, aggregator.dataUi8);
         } else {
           if (currentAgg.eventWatermark !== newEvent.sequenceNumber - 1) {
             throw Error(`Event aggregate ${currentAgg.id} is out of sync: Invalid watermark for create event: ${newEvent.id}`);
@@ -126,9 +130,10 @@ export class GameRoomSocketHandler extends SocketHandler {
           await currentAgg.update(entityManager, newEvent.sequenceNumber, aggregator.dataUi8);
         }
 
-        return new ServerSentEvent(newEvent.sequenceNumber, clientEvent.messageId, newEvent.category, newEvent.getDataUi8());
+        // TODO: Add version to event and agg models
+        return new ServerSentEvent(newEvent.sequenceNumber, clientEvent.messageId, newEvent.category, 0, newEvent.getDataUi8());
       }).then(response => {
-        const roomName = GameRoomSocketHandler.formatRoomName(this.currentGameRoomId);
+        const roomName = GameRoomSocketHandler.formatRoomName(currentRoomId);
         console.log(response);
         this.sendEvent(response, roomName);
       }).catch(console.error);
@@ -138,23 +143,33 @@ export class GameRoomSocketHandler extends SocketHandler {
 
     this.listenEventAggRequest(async (category, ack) => {
       try {
-        // TODO: add white/blacklist for requested categories?
-        // TODO: Add a caching layer
-        // TODO: currentGameRoomId checks
-        const agg = await EventAggregate.get(this.currentGameRoomId, category);
-        if (agg === undefined) {
-          ack({ status: true, data: null });
+        if (this.currentGameRoomId === undefined) {
+          ack({ status: false, data: null });
           return;
         }
-        ack({ status: true, data: agg.getDataUi8() });
+        // TODO: Add a caching layer
+        if (category === EventAggCategories.TokenSet) {
+          const agg = await EventAggregate.get(this.currentGameRoomId, EventAggCategories.TokenSet);
+          if (agg === undefined) {
+            ack({ status: true, data: null });
+            return;
+          }
+          // TODO: Add version to event and agg models
+          ack({ status: true, data: new DataPack(agg.category, 0, agg.getDataUi8()) });
+        } else {
+          ack({ status: false, data: null });
+        }
       } catch (e) {
         console.error(e);
         ack({ status: false, data: null });
       }
     });
 
-    // Last thing: Send over init state data
-    this.sendInitState(this.getInitState());
+    // TODO: Better way
+    setTimeout(() => {
+      // Last thing: Send over init state data
+      this.sendInitState(this.getInitState());
+    }, 500);
   }
 
   /*** Socket functions ***/
@@ -181,8 +196,9 @@ export class GameRoomSocketHandler extends SocketHandler {
 
   listenEvent(cb: (clientEvent: ClientSentEvent) => void) {
     // We must explicitly create the instance, because socketio only creates an object of the same 'shape' as ClientSentEvent
+    // TODO: Better way than this
     this.listenAuthenticated(NetEventType.ESEvent, (c: ClientSentEvent) => {
-      cb(new ClientSentEvent(c.messageId, c.category, c.data));
+      cb(new ClientSentEvent(c.messageId, c.category, c.version, c.data));
     });
   }
 
@@ -213,7 +229,7 @@ export class GameRoomSocketHandler extends SocketHandler {
       userProfile: {
         username: this.sessionUser.username,
       },
-      roomId: this.currentGameRoomId,
+      roomId: this.currentGameRoomId || -1,
     };
   }
 

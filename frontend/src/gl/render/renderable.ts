@@ -4,7 +4,7 @@ import { GameNetClient } from 'Net/game-net-client';
 import PersistentGameSettings from 'Store/Persistent-game-settings';
 import InMemorySharedStore from 'Store/In-memory-shared-store';
 import { GameMessagesBroker } from 'Message/game-messages';
-import { ESClient } from 'Event/es-client';
+import { ESGameClient } from 'Event/es-client';
 
 export interface RenderLifecycle {
   init(): void;
@@ -32,7 +32,7 @@ export interface GameContext {
     readonly p: PersistentGameSettings;
     readonly mem: InMemorySharedStore;
   };
-  readonly es: ESClient;
+  readonly es: ESGameClient;
 }
 
 export class RenderComponent implements RenderLifecycle, GameContext {

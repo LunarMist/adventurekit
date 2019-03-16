@@ -1,4 +1,4 @@
-import { EventCategories } from 'rpgcore-common/es';
+import { EventAggCategories, EventCategories } from 'rpgcore-common/es';
 import { TokenProto } from 'rpgcore-common/es-proto';
 
 import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
@@ -8,9 +8,16 @@ export class ManageTokensComponent extends WindowRenderComponent {
   protected readonly windowId: WindowId = WindowId.ManageTokens;
 
   init() {
-    this.es.addHandler(EventCategories.TokenChangeEvent, serverEvent => {
+    this.es.p.addEventHandler(EventCategories.TokenChangeEvent, serverEvent => {
       const event = TokenProto.TokenChangeEvent.decode(serverEvent.dataUi8);
       console.log(event);
+      return true;
+    });
+    this.es.p.addAggHandler(EventAggCategories.TokenSet, eventAgg => {
+      if (eventAgg.data !== null) {
+        const agg = TokenProto.TokenSet.decode(eventAgg.data.dataUi8);
+        console.log(agg);
+      }
       return true;
     });
   }
@@ -26,8 +33,7 @@ export class ManageTokensComponent extends WindowRenderComponent {
     }
 
     if (ImGui.Button('Create Token')) {
-      const req = this.es.buildTokenCreationRequest('Test Label', 'Test url', ['Luney'], 11, 22, 33, 44, 55);
-      this.net.sendEvent(req);
+      this.es.sendTokenCreationRequest('Test Label', 'Test url', ['Luney'], 11, 22, 33, 44, 55);
     }
 
     ImGui.End();

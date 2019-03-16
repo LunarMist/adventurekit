@@ -1,57 +1,55 @@
-// TODO: Use protobuf?
-export class ClientSentEvent {
-  readonly messageId: string;
+type DataBuffer = Uint8Array | ArrayBuffer | Buffer;
+
+export class DataPack {
   readonly category: string;
+  readonly version: number;
   readonly data: ArrayBuffer; // ArrayBuffer is required by socket.io to serde properly
 
-  constructor(messageId: string, category: string, data: Uint8Array | ArrayBuffer | Buffer) {
-    this.messageId = messageId;
+  constructor(category: string, version: number, data: DataBuffer) {
     this.category = category;
-    // This copy is done because the underlying ArrayBuffer of the data object may be larger than the actual data
-    // So we need to copy it
-    if (data instanceof Buffer) {
-      this.data = Uint8Array.from(data).buffer;
-    } else if (data instanceof Uint8Array) {
-      this.data = Uint8Array.from(data).buffer;
-    } else if (data instanceof ArrayBuffer) {
-      this.data = data;
-    } else {
-      throw Error('Unknown data type');
-    }
+    this.version = version;
+    this.data = DataPack.toExactArrayBuffer(data);
   }
 
   get dataUi8(): Uint8Array {
     return new Uint8Array(this.data);
   }
+
+  private static toExactArrayBuffer(data: DataBuffer): ArrayBuffer {
+    // This copy is done because the underlying ArrayBuffer of the data object may be larger than the actual data
+    // So we need to copy it
+    // Order here is important, because of class hierarchy business
+    if (data instanceof Buffer) {
+      return Uint8Array.from(data).buffer;
+    }
+    if (data instanceof Uint8Array) {
+      return Uint8Array.from(data).buffer;
+    }
+    if (data instanceof ArrayBuffer) {
+      return data;
+    }
+    throw Error('Unknown data type');
+  }
 }
 
-// TODO: Use protobuf?
-export class ServerSentEvent {
+export class ClientSentEvent extends DataPack {
+  readonly messageId: string;
+
+  constructor(messageId: string, category: string, version: number, data: DataBuffer) {
+    super(category, version, data);
+    this.messageId = messageId;
+  }
+}
+
+export class ServerSentEvent extends DataPack {
   readonly sequenceNumber: number;
   readonly messageId: string;
-  readonly category: string;
-  readonly data: ArrayBuffer; // ArrayBuffer is required by socket.io to serde properly
 
-  constructor(sequenceNumber: number, messageId: string, category: string, data: Uint8Array | ArrayBuffer | Buffer) {
+  constructor(sequenceNumber: number, messageId: string, category: string, version: number, data: DataBuffer) {
+    super(category, version, data);
     this.sequenceNumber = sequenceNumber;
     this.messageId = messageId;
-    this.category = category;
-    // This copy is done because the underlying ArrayBuffer of the data object may be larger than the actual data
-    // So we need to copy it
-    if (data instanceof Buffer) {
-      this.data = Uint8Array.from(data).buffer;
-    } else if (data instanceof Uint8Array) {
-      this.data = Uint8Array.from(data).buffer;
-    } else if (data instanceof ArrayBuffer) {
-      this.data = data;
-    } else {
-      throw Error('Unknown data type');
-    }
-  }
-
-  get dataUi8(): Uint8Array {
-    return new Uint8Array(this.data);
   }
 }
 
-export type EventAggResponse = { status: boolean; data: ArrayBuffer | null };
+export type EventAggResponse = { status: boolean; data: DataPack | null };

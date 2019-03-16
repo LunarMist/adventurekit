@@ -1,6 +1,4 @@
 import { FontData } from 'rpgcore-common/types';
-import { TokenProto } from 'rpgcore-common/es-proto';
-import { EventAggCategories } from 'rpgcore-common/es';
 
 import { IOLifeCycle } from 'IO/lifecycle';
 import * as ImGui from 'ImGui/imgui';
@@ -15,7 +13,7 @@ import InMemorySharedStore from 'Store/In-memory-shared-store';
 import { GameContext, RenderComponent } from 'GL/render/renderable';
 import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/window/font-selector';
 import { GameMessagesBroker } from 'Message/game-messages';
-import { ESClient } from 'Event/es-client';
+import { ESGameClient } from 'Event/es-client';
 
 export class RenderLoop {
   private done: boolean = false;
@@ -27,7 +25,7 @@ export class RenderLoop {
   private readonly gameMessageBroker: GameMessagesBroker;
   private readonly persistentGameSettings: PersistentGameSettings;
   private readonly inMemorySharedStore: InMemorySharedStore;
-  private readonly esClient: ESClient;
+  private readonly esClient: ESGameClient;
 
   private readonly gameContext: GameContext;
   private readonly imGuiImplWebGl: ImGuiImplWebGl;
@@ -45,7 +43,7 @@ export class RenderLoop {
     this.persistentGameSettings = new PersistentGameSettings();
     this.inMemorySharedStore = new InMemorySharedStore();
     this.gameMessageBroker = new GameMessagesBroker();
-    this.esClient = new ESClient(0);
+    this.esClient = new ESGameClient(this.gameNetClient);
 
     // https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     const newGl = canvas.getContext('webgl', { alpha: false });
@@ -91,12 +89,9 @@ export class RenderLoop {
       console.log('Setting initial state');
       this.inMemorySharedStore.userProfile = initState.userProfile;
       this.inMemorySharedStore.roomId = initState.roomId;
-      this.requestEventAggData()
+      this.esClient.requestEventAggData()
         .catch(console.error);
     });
-
-    // Init event sourcing
-    this.gameNetClient.listenEvent(this.esClient.processEvent.bind(this.esClient));
 
     this.resizeCanvas();
 
@@ -213,20 +208,6 @@ export class RenderLoop {
       // console.log("Adjusting canvas size");
     }
     // console.log(`${this.gl.canvas.clientWidth === window.innerWidth}, ${this.gl.canvas.clientHeight === window.innerHeight}`);
-  }
-
-  private async requestEventAggData() {
-    const aggResponse = await this.gameNetClient.sendEventAggRequest(EventAggCategories.TokenSet);
-    if (!aggResponse.status) {
-      throw new Error(`Unable to fetch agg for ${EventAggCategories.TokenSet}`);
-    }
-    if (aggResponse.data === null) {
-      console.warn('No token data available');
-      return;
-    }
-    const tokens = TokenProto.TokenSet.decode(new Uint8Array(aggResponse.data)) as TokenProto.TokenSet;
-    this.inMemorySharedStore.aggData.tokens = tokens;
-    console.log(this.inMemorySharedStore.aggData.tokens);
   }
 
   private renderMetricsComponent() {
