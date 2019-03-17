@@ -25,6 +25,9 @@ export default class EventAggregate {
   @Column({ nullable: false })
   eventWatermark: number;
 
+  @Column({ nullable: false })
+  dataVersion: number;
+
   @Column({ type: 'bytea', nullable: false })
   data: Buffer;
 
@@ -32,7 +35,7 @@ export default class EventAggregate {
     return this.data;
   }
 
-  constructor(room: GameRoom | number, category: string, eventWatermark: number, data: Uint8Array) {
+  constructor(room: GameRoom | number, category: string, eventWatermark: number, dataVersion: number, data: Uint8Array) {
     if (room instanceof GameRoom) {
       this.roomId = room.id;
     } else {
@@ -40,6 +43,7 @@ export default class EventAggregate {
     }
     this.category = category;
     this.eventWatermark = eventWatermark;
+    this.dataVersion = dataVersion;
     if (data === undefined) {
       this.data = Buffer.allocUnsafe(0);
     } else {
@@ -47,8 +51,9 @@ export default class EventAggregate {
     }
   }
 
-  static async create(entityManager: EntityManager, room: GameRoom | number, category: string, eventWatermark: number, data: Uint8Array): Promise<EventAggregate> {
-    const newAggregate = new EventAggregate(room, category, eventWatermark, data);
+  static async create(entityManager: EntityManager, room: GameRoom | number, category: string,
+                      eventWatermark: number, dataVersion: number, data: Uint8Array): Promise<EventAggregate> {
+    const newAggregate = new EventAggregate(room, category, eventWatermark, dataVersion, data);
     return entityManager.save(newAggregate);
   }
 

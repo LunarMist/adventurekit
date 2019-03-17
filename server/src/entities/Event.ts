@@ -29,6 +29,9 @@ export default class Event {
   @Column({ nullable: false })
   source: number;
 
+  @Column({ nullable: false })
+  dataVersion: number;
+
   @Column({ type: 'bytea', nullable: false })
   data: Buffer;
 
@@ -36,7 +39,7 @@ export default class Event {
     return this.data;
   }
 
-  constructor(room: GameRoom | number, category: string, source: number | -1, data: Uint8Array) {
+  constructor(room: GameRoom | number, category: string, source: number | -1, dataVersion: number, data: Uint8Array) {
     if (room instanceof GameRoom) {
       this.roomId = room.id;
     } else {
@@ -44,6 +47,7 @@ export default class Event {
     }
     this.category = category;
     this.source = source;
+    this.dataVersion = dataVersion;
     if (data === undefined) {
       this.data = Buffer.allocUnsafe(0);
     } else {
@@ -51,8 +55,9 @@ export default class Event {
     }
   }
 
-  static async create(entityManager: EntityManager, room: GameRoom | number, category: string, source: number | -1, data: Uint8Array): Promise<Event> {
-    const newEvent = new Event(room, category, source, data);
+  static async create(entityManager: EntityManager, room: GameRoom | number, category: string,
+                      source: number | -1, dataVersion: number, data: Uint8Array): Promise<Event> {
+    const newEvent = new Event(room, category, source, dataVersion, data);
     return entityManager.save(newEvent);
   }
 }

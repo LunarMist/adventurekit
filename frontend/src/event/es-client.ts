@@ -44,7 +44,7 @@ class Processor {
   processEvent(serverEvent: ServerSentEvent): void {
     console.log(serverEvent);
 
-    if (serverEvent.messageId.startsWith(this.messageIdPrefix)) {
+    if (serverEvent.clientMessageId.startsWith(this.messageIdPrefix)) {
       console.log('Got self-sent event; Skipping handling');
       return;
     }

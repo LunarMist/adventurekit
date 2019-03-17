@@ -13,7 +13,7 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
     this.accumulator = accumulator ? accumulator : this.zero();
   }
 
-  agg(data: TokenChangeEvent): void {
+  agg(data: TokenChangeEvent): TokenAggregator {
     if (data.changeType === TokenChangeType.CREATE) {
       this.processCreate(data);
     } else if (data.changeType === TokenChangeType.UPDATE) {
@@ -23,6 +23,7 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
     } else {
       throw Error(`Unknown changeType: ${data.changeType}`);
     }
+    return this;
   }
 
   zero(): TokenSet {
