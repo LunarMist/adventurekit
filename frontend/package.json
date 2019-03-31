@@ -14,14 +14,14 @@
   "devDependencies": {
     "file-loader": "^2.0.0",
     "ts-loader": "^4.5.0",
-    "typescript": "^3.3.3333",
+    "typescript": "^3.4.1",
     "webpack": "^4.29.6",
-    "webpack-cli": "^3.2.3",
+    "webpack-cli": "^3.3.0",
     "webpack-manifest-plugin": "^2.0.4"
   },
   "dependencies": {
     "@types/emscripten": "0.0.31",
-    "@types/node": "^10.12.30",
+    "@types/node": "^10.14.4",
     "@types/pubsub-js": "^1.5.18",
     "@types/qs": "^6.5.2",
     "@types/socket.io-client": "^1.4.32",
@@ -29,7 +29,7 @@
     "localforage": "^1.7.3",
     "protobufjs": "^6.8.8",
     "pubsub-js": "^1.7.0",
-    "qs": "^6.6.0",
+    "qs": "^6.7.0",
     "socket.io": "^2.2.0"
   }
 }
