@@ -55,14 +55,14 @@ export class GameNetClient {
 
   async sendEventAggRequest(category: EventAggCategories): Promise<EventAggResponse> {
     const r = await this.client.sendMessage<EventAggResponse>(NetEventType.EventAggRequest, category);
-    // We must explicitly create the instance, because socketio only creates an object of the same 'shape' as DataPack
+    // We must explicitly create the instance, because socket.io only creates an object of the same 'shape' as DataPack
     // TODO: Better way than this
     return { status: r.status, data: r.data === null ? null : new DataPack(r.data.category, r.data.version, r.data.data) };
   }
 
   listenEvent(cb: (serverEvent: ServerSentEvent) => void) {
     this.client.listen(NetEventType.ESEvent, (s: ServerSentEvent) => {
-      // We must explicitly create the instance, because socketio only creates an object of the same 'shape' as ServerSentEvent
+      // We must explicitly create the instance, because socket.io only creates an object of the same 'shape' as ServerSentEvent
       // TODO: Better way than this
       cb(new ServerSentEvent(s.sequenceNumber, s.clientMessageId, s.category, s.version, s.data));
     });

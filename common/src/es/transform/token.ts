@@ -1,6 +1,8 @@
 import { Aggregator } from './base';
 import { Token, TokenChangeEvent, TokenChangeType, TokenSet } from '../proto/token';
 
+export const MAX_LABEL_LENGTH = 50;
+export const MAX_URL_LENGTH = 200;
 export const MAX_TOKEN_EDIT_OWNERS = 10;
 
 /**
@@ -44,6 +46,12 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
     if (newId in this.accumulator.tokens) {
       throw Error(`Id ${newId} already exists in TokenSet. NextTokenID out of sync.`);
     }
+    if (data.label && data.label.length > MAX_LABEL_LENGTH) {
+      throw Error('Label length too long');
+    }
+    if (data.url && data.url.length > MAX_URL_LENGTH) {
+      throw Error('Url length too long');
+    }
     if (data.editOwners && data.editOwners.length > MAX_TOKEN_EDIT_OWNERS) {
       throw Error(`Too many edit owners: ${data.editOwners.length}`);
     }
@@ -60,20 +68,32 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
     const targetId = data.id;
     if (targetId !== undefined && targetId in this.accumulator.tokens) {
       const token = this.accumulator.tokens[targetId];
+      const obj = { ...token };
       if (!this.isAuthorized(token)) {
         throw Error(`User not authorized for editing token: ${this.authUser}`);
+      }
+      if (data.label && data.label.length > MAX_LABEL_LENGTH) {
+        throw Error('Label length too long');
+      }
+      if (data.url && data.url.length > MAX_URL_LENGTH) {
+        throw Error('Url length too long');
       }
       if (data.editOwners && data.editOwners.length > MAX_TOKEN_EDIT_OWNERS) {
         throw Error(`Too many edit owners: ${data.editOwners.length}`);
       }
-      token.label = data.label || token.label;
-      token.url = data.url || token.url;
-      token.editOwners = data.editOwners || token.editOwners;
-      token.x = data.x || token.x;
-      token.y = data.y || token.y;
-      token.z = data.z || token.z;
-      token.width = data.width || token.width;
-      token.height = data.height || token.height;
+      obj.label = data.label || obj.label;
+      obj.url = data.url || obj.url;
+      obj.editOwners = data.editOwners || obj.editOwners;
+      obj.x = data.x || obj.x;
+      obj.y = data.y || obj.y;
+      obj.z = data.z || obj.z;
+      obj.width = data.width || obj.width;
+      obj.height = data.height || obj.height;
+      const err = Token.verify(obj);
+      if (err) {
+        throw Error(`Invalid message: ${err}`);
+      }
+      this.accumulator.tokens[targetId] = Token.create(obj) as Token;
     }
   }
 

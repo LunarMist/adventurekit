@@ -13,7 +13,7 @@ import InMemorySharedStore from 'Store/In-memory-shared-store';
 import { GameContext, RenderComponent } from 'GL/render/renderable';
 import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/window/font-selector';
 import { GameMessagesBroker } from 'Message/game-messages';
-import { ESGameClient } from 'Event/es-client';
+import { ESGameClient } from 'Event/es-game-client';
 
 export class RenderLoop {
   private done: boolean = false;

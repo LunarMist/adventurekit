@@ -2,14 +2,14 @@ import { NetEventType } from 'rpgcore-common/enums';
 import { InitState } from 'rpgcore-common/types';
 import { ClientSentEvent, EventAggCategories, EventAggResponse, ServerSentEvent } from 'rpgcore-common/es';
 
-import { NetServerSocket } from './net-server';
+import { AuthenticatedNetServerSocket } from './net-server';
 
 /**
  * Used for sending all game-relevant messages between the client <--> server.
- * Uses an underlying {@link NetServerSocket} for message transport.
+ * Uses an underlying {@link AuthenticatedNetServerSocket} for message transport.
  */
 export class GameNetSocket {
-  constructor(private readonly net: NetServerSocket) {
+  constructor(private readonly net: AuthenticatedNetServerSocket) {
 
   }
 
@@ -33,15 +33,15 @@ export class GameNetSocket {
     this.net.sendSimpleMessage(NetEventType.InitState, initState);
   }
 
-  listenEvent(cb: (clientEvent: ClientSentEvent) => void) {
-    // We must explicitly create the instance, because socketio only creates an object of the same 'shape' as ClientSentEvent
-    // TODO: Better way than this
+  listenClientSentEvent(cb: (clientEvent: ClientSentEvent) => void) {
+    // We must explicitly create the instance, because socket.io only creates an object of the same 'shape' as ClientSentEvent
+    // TODO: Better way than this?
     this.net.listenAuthenticated(NetEventType.ESEvent, (c: ClientSentEvent) => {
       cb(new ClientSentEvent(c.messageId, c.category, c.version, c.data));
     });
   }
 
-  sendEvent(room: string, serverEvent: ServerSentEvent) {
+  sendServerSentEvent(room: string, serverEvent: ServerSentEvent) {
     this.net.sendGroupMessage(NetEventType.ESEvent, room, serverEvent);
   }
 

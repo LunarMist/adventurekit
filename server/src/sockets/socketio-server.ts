@@ -1,15 +1,15 @@
 import http from 'http';
 import socketIo from 'socket.io';
 import socketIoRedis from 'socket.io-redis';
-
-import { ListenCallback, NetServer, NetServerSocket } from './net-server';
 import { RequestHandler } from 'express';
+
+import { AuthenticatedNetServerSocket, ListenCallback, NetServer, NetServerSocket } from './net-server';
 import { SessionizedSocket } from './sess-socket';
 
 /**
- * A socket.io implementation for {@link NetServerSocket} and {@link SessionizedSocket}
+ * A socket.io implementation for {@link AuthenticatedNetServerSocket} and {@link SessionizedSocket}
  */
-export abstract class SocketIONetServerSocket implements NetServerSocket, SessionizedSocket<any> {
+export abstract class SocketIONetServerSocket implements AuthenticatedNetServerSocket, SessionizedSocket<any> {
   private readonly socket: SocketIO.Socket;
   private readonly io: SocketIO.Server;
 
@@ -140,7 +140,7 @@ export class SocketIONetServer<T extends SocketIONetServerSocket> implements Net
       pingTimeout: 60000,
     });
 
-    // Configure socketio redis adapter
+    // Configure socket.io redis adapter
     this.io.adapter(socketIoRedis({
       host: this.redisAdapterHost,
       port: this.redisAdapterPort,

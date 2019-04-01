@@ -2,17 +2,17 @@ import { InitState } from 'rpgcore-common/types';
 
 import GameRoom from '../entities/GameRoom';
 import User from '../entities/User';
-import { ESGameServer } from '../event/es-server';
+import { ESGameServer } from '../event/es-game-server';
 import { GameNetSocket } from './game-net-socket';
 import { SessionizedSocket } from './sess-socket';
 
 export type SessionStoredUser = { id: number; username: string; email: string };
 
 /**
- * Game room socket.io handler.
+ * Game room socket handler.
  */
 export class GameRoomSocketHandler {
-  private esServer: ESGameServer;
+  private readonly esServer: ESGameServer;
 
   constructor(private readonly net: GameNetSocket, private readonly sess: SessionizedSocket<SessionStoredUser>) {
     this.esServer = new ESGameServer(net, sess);
@@ -97,18 +97,8 @@ export class GameRoomSocketHandler {
       }
     });
 
-    this.esServer.registerEventHandlers();
-
-    this.net.listenEvent(this.esServer.p.processEvent.bind(this.esServer.p));
-
-    this.net.listenEventAggRequest(async (category, ack) => {
-      try {
-        ack(await this.esServer.processEventAggRequest(category));
-      } catch (e) {
-        console.error(e);
-        ack({ status: false, data: null });
-      }
-    });
+    // Setup event sourcing
+    this.esServer.setup();
 
     // TODO: Better way
     setTimeout(() => {
@@ -145,6 +135,7 @@ export class GameRoomSocketHandler {
     if (!user.defaultRoom) {
       return;
     }
+    // TODO: Does user still have permissions to join the room? Some sort of auth
     // Join the room
     this.net.joinRoom(GameRoomSocketHandler.formatRoomName(user.defaultRoom.id));
     // Update current room

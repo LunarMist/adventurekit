@@ -1,5 +1,4 @@
-import { ClientSentEvent, EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
-import { TokenProto } from 'rpgcore-common/es-proto';
+import { EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
 
 import { GameNetClient } from 'Net/game-net-client';
 
@@ -88,7 +87,7 @@ class Processor {
   }
 }
 
-class ESClient {
+export class ESClient {
   private readonly messageIdPrefix: string;
   private prevSequenceId: number;
 
@@ -104,41 +103,5 @@ class ESClient {
   protected nextMessageId(): string {
     this.prevSequenceId += 1;
     return `${this.messageIdPrefix}-${this.prevSequenceId}`;
-  }
-}
-
-type EventAggData = {
-  tokens?: TokenProto.TokenSet;
-};
-
-export class ESGameClient extends ESClient {
-  public agg: EventAggData; // TODO: Agg on this data struct
-
-  constructor(netClient: GameNetClient) {
-    super(netClient);
-    this.agg = {};
-  }
-
-  sendTokenCreationRequest(label: string, url: string, editOwners: string[], x: number, y: number, z: number, width: number, height: number): void {
-    const obj = { label, url, editOwners, x, y, z, width, height, changeType: TokenProto.TokenChangeType.CREATE };
-    const err = TokenProto.TokenChangeEvent.verify(obj);
-    if (err) {
-      throw Error(`Invalid message: ${err}`);
-    }
-    const bytes = TokenProto.TokenChangeEvent.encode(obj).finish();
-    const event = new ClientSentEvent(this.nextMessageId(), EventCategories.TokenChangeEvent, 0, bytes);
-    this.netClient.sendEvent(event);
-    // TODO: Propagate/process client-sent event
-  }
-
-  async requestTokenSetAgg() {
-    const aggResponse = await this.netClient.sendEventAggRequest(EventAggCategories.TokenSet);
-    this.p.processAgg(aggResponse);
-  }
-
-  async requestEventAggData() {
-    await Promise.all([
-      this.requestTokenSetAgg(),
-    ]);
   }
 }

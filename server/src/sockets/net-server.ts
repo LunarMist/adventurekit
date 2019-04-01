@@ -1,11 +1,14 @@
-export type ListenCallback = (...data: any[]) => void;
-
 /**
  * A {@link NetServer} is responsible for handling connection requests and creating {@link NetServerSocket} instances
  */
 export interface NetServer {
   serve(): void;
 }
+
+/**
+ * Generic callback type
+ */
+export type ListenCallback = (...data: any[]) => void;
 
 /**
  * A {@link NetServerSocket} allows for simple event-based messages to be sent/received between the server and client
@@ -63,12 +66,17 @@ export interface NetServerSocket {
   listen(event: string, cb: ListenCallback): void;
 
   /**
-   * Special: We must support an authenticated listener
-   */
-  listenAuthenticated(event: string, cb: ListenCallback): void;
-
-  /**
    * Disconnect the client
    */
   disconnect(): void;
+}
+
+/**
+ * An authenticated version of {@link NetServerSocket}
+ */
+export interface AuthenticatedNetServerSocket extends NetServerSocket {
+  /**
+   * Special: We must support an authenticated listener
+   */
+  listenAuthenticated(event: string, cb: ListenCallback): void;
 }
