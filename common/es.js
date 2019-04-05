@@ -8,3 +8,6 @@ exports.DataPack = sourcing_1.DataPack;
 var categories_1 = require("./build/lib/es/categories");
 exports.EventCategories = categories_1.EventCategories;
 exports.EventAggCategories = categories_1.EventAggCategories;
+var const_1 = require("./build/lib/es/const");
+exports.SID_CLIENT_SENT = const_1.SID_CLIENT_SENT;
+exports.SID_FIRST = const_1.SID_FIRST;

@@ -23,8 +23,8 @@ export default class Event {
   category: string;
 
   @Generated() // To trick typeorm to include column in RETURNING list
-  @Column({ nullable: false })
-  sequenceNumber!: number;
+  @Column({ length: 30, nullable: false })
+  sequenceNumber!: string;
 
   @Column({ nullable: false })
   source: number;

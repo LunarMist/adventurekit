@@ -1,4 +1,4 @@
-import { DataPack, EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
+import { DataPack, EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent, SID_FIRST } from 'rpgcore-common/es';
 import { TokenProto } from 'rpgcore-common/es-proto';
 import { TokenAggregator } from 'rpgcore-common/es-transform';
 import { getConnection } from 'typeorm';
@@ -60,7 +60,8 @@ export class ESGameServer extends ESServer {
             .agg(changeEvent);
           await EventAggregate.create(entityManager, currentRoomId, EventAggCategories.TokenSet, newEvent.sequenceNumber, 0, aggregator.dataUi8);
         } else {
-          if (currentAgg.eventWatermark !== newEvent.sequenceNumber - 1) {
+          // For now, sequence numbers are numeric. In the future, they may have some other ordering type
+          if (Number(newEvent.sequenceNumber) <= Number(currentAgg.eventWatermark)) {
             throw Error(`Event aggregate ${currentAgg.id} is out of sync: Invalid watermark for create event: ${newEvent.id}`);
           }
           const aggregator = new TokenAggregator(this.sess.sessionUser.username, TokenProto.TokenSet.decode(currentAgg.getDataUi8()) as TokenProto.TokenSet);
@@ -68,7 +69,9 @@ export class ESGameServer extends ESServer {
           await currentAgg.update(entityManager, newEvent.sequenceNumber, aggregator.dataUi8);
         }
 
-        return new ServerSentEvent(newEvent.sequenceNumber.toString(), clientEvent.messageId, newEvent.category, newEvent.dataVersion, newEvent.getDataUi8());
+        // TODO: Won't always be this if we move to redis/whatever
+        const prevSequenceNumber: string = Number(newEvent.sequenceNumber) === 1 ? SID_FIRST : (Number(newEvent.sequenceNumber) - 1).toString();
+        return new ServerSentEvent(newEvent.sequenceNumber, prevSequenceNumber, clientEvent.messageId, newEvent.category, newEvent.dataVersion, newEvent.getDataUi8());
       }).then(response => {
         const roomName = GameRoomSocketHandler.formatRoomName(currentRoomId);
         console.log(response);

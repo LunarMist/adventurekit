@@ -24,12 +24,16 @@
     "@types/node": "^10.14.4",
     "@types/pubsub-js": "^1.5.18",
     "@types/qs": "^6.5.2",
+    "@types/rbush": "^2.0.2",
+    "@types/shortid": "0.0.29",
     "@types/socket.io-client": "^1.4.32",
     "axios": "^0.18.0",
     "localforage": "^1.7.3",
     "protobufjs": "^6.8.8",
     "pubsub-js": "^1.7.0",
     "qs": "^6.7.0",
+    "rbush": "^2.0.2",
+    "shortid": "^2.2.14",
     "socket.io": "^2.2.0"
   }
 }

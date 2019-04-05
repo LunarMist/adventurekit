@@ -43,11 +43,13 @@ export class ClientSentEvent extends DataPack {
 
 export class ServerSentEvent extends DataPack {
   readonly sequenceNumber: string;
+  readonly prevSequenceNumber: string;
   readonly clientMessageId: string;
 
-  constructor(sequenceNumber: string, clientMessageId: string, category: string, version: number, data: DataBuffer) {
+  constructor(sequenceNumber: string, prevSequenceNumber: string, clientMessageId: string, category: string, version: number, data: DataBuffer) {
     super(category, version, data);
     this.sequenceNumber = sequenceNumber;
+    this.prevSequenceNumber = prevSequenceNumber;
     this.clientMessageId = clientMessageId;
   }
 }
