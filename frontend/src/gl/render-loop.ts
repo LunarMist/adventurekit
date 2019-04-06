@@ -68,12 +68,13 @@ export class RenderLoop {
     }
   }
 
-  run(): void {
+  run(): RenderLoop {
     if (typeof (window) === 'undefined') {
       throw new Error('window must be defined');
     }
 
     window.requestAnimationFrame(() => this.init());
+    return this;
   }
 
   private async init() {
@@ -89,8 +90,10 @@ export class RenderLoop {
       console.log('Setting initial state');
       this.inMemorySharedStore.userProfile = initState.userProfile;
       this.inMemorySharedStore.roomId = initState.roomId;
-      this.esClient.requestEventAggData()
-        .catch(console.error);
+      if (initState.roomId !== -1) {
+        this.esClient.requestWorldState()
+          .catch(console.error);
+      }
     });
 
     this.resizeCanvas();

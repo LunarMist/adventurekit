@@ -54,4 +54,15 @@ export class ServerSentEvent extends DataPack {
   }
 }
 
-export type EventAggResponse = { status: boolean; data: DataPack | null };
+export class ServerSentAgg extends DataPack {
+  readonly watermark: string;
+
+  constructor(watermark: string, category: string, version: number, data: DataBuffer) {
+    super(category, version, data);
+    this.watermark = watermark;
+  }
+}
+
+export type EventAggResponse = { status: true; data: ServerSentAgg } | { status: false; data: null };
+
+export type MultiEventAggResponse = { status: true; data: ServerSentAgg[] } | { status: false; data: null };

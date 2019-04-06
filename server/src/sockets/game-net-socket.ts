@@ -1,6 +1,6 @@
 import { NetEventType } from 'rpgcore-common/enums';
 import { InitState } from 'rpgcore-common/types';
-import { ClientSentEvent, EventAggCategories, EventAggResponse, ServerSentEvent } from 'rpgcore-common/es';
+import { ClientSentEvent, EventAggCategories, EventAggResponse, MultiEventAggResponse, ServerSentEvent } from 'rpgcore-common/es';
 
 import { AuthenticatedNetServerSocket } from './net-server';
 
@@ -47,6 +47,10 @@ export class GameNetSocket {
 
   listenEventAggRequest(cb: (category: EventAggCategories, ack: (response: EventAggResponse) => void) => void) {
     this.net.listenAuthenticated(NetEventType.EventAggRequest, cb);
+  }
+
+  listenWorldStateRequest(cb: (ack: (response: MultiEventAggResponse) => void) => void) {
+    this.net.listenAuthenticated(NetEventType.WorldState, cb);
   }
 
   /** Some basic pass-through **/

@@ -1,4 +1,4 @@
-import { ClientSentEvent, DataPack, EventAggCategories, EventAggResponse, ServerSentEvent } from 'rpgcore-common/es';
+import { ClientSentEvent, EventAggCategories, EventAggResponse, MultiEventAggResponse, ServerSentAgg, ServerSentEvent } from 'rpgcore-common/es';
 import { NetEventType } from 'rpgcore-common/enums';
 import { InitState } from 'rpgcore-common/types';
 
@@ -57,7 +57,14 @@ export class GameNetClient {
     const r = await this.client.sendMessage<EventAggResponse>(NetEventType.EventAggRequest, category);
     // We must explicitly create the instance, because socket.io only creates an object of the same 'shape' as DataPack
     // TODO: Better way than this
-    return { status: r.status, data: r.data === null ? null : new DataPack(r.data.category, r.data.version, r.data.data) };
+    r.data = r.data === null ? null : new ServerSentAgg(r.data.watermark, r.data.category, r.data.version, r.data.data);
+    return r;
+  }
+
+  async sendWorldStateRequest(): Promise<MultiEventAggResponse> {
+    const r = await this.client.sendMessage<MultiEventAggResponse>(NetEventType.WorldState);
+    r.data = r.data === null ? null : r.data.map(v => new ServerSentAgg(v.watermark, v.category, v.version, v.data));
+    return r;
   }
 
   listenEvent(cb: (serverEvent: ServerSentEvent) => void) {

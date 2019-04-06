@@ -1,4 +1,4 @@
-import { DataPack, EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent, SID_FIRST } from 'rpgcore-common/es';
+import { EventAggCategories, EventAggResponse, EventCategories, MultiEventAggResponse, ServerSentAgg, ServerSentEvent, SID_FIRST } from 'rpgcore-common/es';
 import { TokenProto } from 'rpgcore-common/es-proto';
 import { TokenAggregator } from 'rpgcore-common/es-transform';
 import { getConnection } from 'typeorm';
@@ -30,6 +30,14 @@ export class ESGameServer extends ESServer {
     this.net.listenEventAggRequest(async (category, ack) => {
       try {
         ack(await this.processEventAggRequest(category));
+      } catch (e) {
+        console.error(e);
+        ack({ status: false, data: null });
+      }
+    });
+    this.net.listenWorldStateRequest(async ack => {
+      try {
+        ack(await this.processWorldState());
       } catch (e) {
         console.error(e);
         ack({ status: false, data: null });
@@ -92,11 +100,22 @@ export class ESGameServer extends ESServer {
       case EventAggCategories.TokenSet:
         const agg = await EventAggregate.get(this.currentGameRoomId, category);
         if (agg === undefined) {
-          return { status: true, data: null };
+          return { status: false, data: null };
         }
-        return { status: true, data: new DataPack(category, agg.dataVersion, agg.getDataUi8()) };
+        return { status: true, data: new ServerSentAgg(agg.eventWatermark, category, agg.dataVersion, agg.getDataUi8()) };
       default:
         return { status: false, data: null };
     }
+  }
+
+  async processWorldState(): Promise<MultiEventAggResponse> {
+    if (this.currentGameRoomId === undefined) {
+      return { status: false, data: null };
+    }
+    const aggs = await EventAggregate.getMany(this.currentGameRoomId);
+    return {
+      status: true,
+      data: aggs.map(v => new ServerSentAgg(v.eventWatermark, v.category, v.dataVersion, v.data)),
+    };
   }
 }

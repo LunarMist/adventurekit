@@ -8,4 +8,5 @@ export enum NetEventType {
   InitState = 'InitState',
   ESEvent = 'ESEvent',
   EventAggRequest = 'EventAggRequest',
+  WorldState = 'WorldState',
 }

@@ -17,7 +17,7 @@ export default function main(canvas: HTMLCanvasElement) {
     new ServerStatusComponent(), // Keep as last one so it's on top of everything
   ];
 
-  new RenderLoop(components, canvas).run();
+  return new RenderLoop(components, canvas).run();
 }
 
 export { ImGui };

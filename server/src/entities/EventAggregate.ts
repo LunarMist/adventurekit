@@ -85,4 +85,11 @@ export default class EventAggregate {
     await entityManager.update(EventAggregate, this.id, { eventWatermark: this.eventWatermark, data: this.data });
     return this;
   }
+
+  static async getMany(room: GameRoom | number): Promise<EventAggregate[]> {
+    return getRepository(EventAggregate)
+      .createQueryBuilder('agg')
+      .where('agg.roomId = :roomId', { roomId: room instanceof GameRoom ? room.id : room })
+      .getMany();
+  }
 }
