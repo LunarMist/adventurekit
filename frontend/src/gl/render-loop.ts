@@ -43,7 +43,7 @@ export class RenderLoop {
     this.persistentGameSettings = new PersistentGameSettings();
     this.inMemorySharedStore = new InMemorySharedStore();
     this.gameMessageBroker = new GameMessagesBroker();
-    this.esClient = new ESGameClient(this.gameNetClient);
+    this.esClient = new ESGameClient(this.gameNetClient, this.inMemorySharedStore);
 
     // https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     const newGl = canvas.getContext('webgl', { alpha: false });

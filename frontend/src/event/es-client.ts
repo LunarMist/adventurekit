@@ -1,16 +1,27 @@
-import { EventAggCategories, EventAggResponse, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
+import { EventAggCategories, EventCategories, ServerSentAgg, ServerSentEvent, SID_CLIENT_SENT } from 'rpgcore-common/es';
+import shortid from 'shortid';
 
 import { GameNetClient } from 'Net/game-net-client';
 
-type ServerSentEventHandler = (serverEvent: ServerSentEvent) => boolean;
-type EventAggResponseHandler = (eventAgg: EventAggResponse) => boolean;
+type ServerSentEventHandler = (serverEvent: ServerSentEvent) => void;
+type ServerSentAggHandler = (eventAgg: ServerSentAgg) => void;
 
-class Processor {
-  private eventHandlers: { [key: string]: ServerSentEventHandler[] } = {};
-  private aggHandlers: { [key: string]: EventAggResponseHandler[] } = {};
+export abstract class ESClient {
+  private readonly eventHandlers: { [key: string]: ServerSentEventHandler[] } = {};
+  private readonly aggHandlers: { [key: string]: ServerSentAggHandler[] } = {};
 
-  constructor(readonly messageIdPrefix: string) {
+  private readonly messageIdPrefix: string;
+  private lastSentClientSequenceId: number;
 
+  private clientSentEvents = new Map<string, ServerSentEvent>();
+
+  protected maxServerSequenceId: string;
+
+  constructor(protected readonly netClient: GameNetClient) {
+    this.messageIdPrefix = shortid.generate();
+    this.lastSentClientSequenceId = 0;
+    this.maxServerSequenceId = '-1';
+    this.netClient.listenEvent(e => this.processEvent(e));
   }
 
   addEventHandler(type: EventCategories, handler: ServerSentEventHandler): void {
@@ -26,12 +37,12 @@ class Processor {
     }
   }
 
-  addAggHandler(type: EventAggCategories, handler: EventAggResponseHandler): void {
+  addAggHandler(type: EventAggCategories, handler: ServerSentAggHandler): void {
     this.aggHandlers[type] = this.aggHandlers[type] || [];
     this.aggHandlers[type].push(handler);
   }
 
-  removeAggHandler(type: EventAggCategories, handler: EventAggResponseHandler): void {
+  removeAggHandler(type: EventAggCategories, handler: ServerSentAggHandler): void {
     this.aggHandlers[type] = this.aggHandlers[type] || [];
     const loc = this.aggHandlers[type].findIndex(v => v === handler);
     if (loc !== -1) {
@@ -39,69 +50,63 @@ class Processor {
     }
   }
 
-  // TODO: Event buffering and re-ordering
+  abstract reset(): void;
+
   processEvent(serverEvent: ServerSentEvent): void {
     console.log(serverEvent);
-
-    if (serverEvent.clientMessageId.startsWith(this.messageIdPrefix)) {
-      console.log('Got self-sent event; Skipping handling');
-      return;
-    }
 
     if (!(serverEvent.category in this.eventHandlers)) {
       console.warn(`No handlers for event category ${serverEvent.category}`);
       return;
     }
 
+    if (serverEvent.sequenceNumber === SID_CLIENT_SENT) {
+      this.clientSentEvents.set(serverEvent.clientMessageId, serverEvent);
+    } else {
+      const sep = serverEvent.clientMessageId.lastIndexOf('-');
+      const prefix = serverEvent.clientMessageId.substring(0, sep);
+      const seqId = Number(serverEvent.clientMessageId.substring(sep + 1));
+      if (prefix === this.messageIdPrefix) {
+        this.clientSentEvents.delete(serverEvent.clientMessageId);
+      }
+      if (this.clientSentEvents.size > 2) {
+        console.warn('Data out of sync - More than 2 unacked client messages');
+        this.reset();
+        return;
+      }
+      if (Number(serverEvent.prevSequenceNumber) > Number(this.maxServerSequenceId)) {
+        console.warn('Data out of sync - Broken sequence number sequence');
+        this.reset();
+        return;
+      }
+      this.maxServerSequenceId = serverEvent.sequenceNumber;
+      if (prefix === this.messageIdPrefix) {
+        return;
+      }
+    }
+
     const chain = this.eventHandlers[serverEvent.category];
     for (const handler of chain) {
-      if (handler(serverEvent)) {
-        break;
-      }
+      handler(serverEvent);
     }
   }
 
-  processAgg(eventAgg: EventAggResponse): void {
-    console.log(eventAgg);
+  processAgg(serverAgg: ServerSentAgg): void {
+    console.log(serverAgg);
 
-    if (!eventAgg.status) {
-      throw new Error('Unable to process aggregate');
-    }
-
-    if (eventAgg.data === null) {
-      console.warn('Agg payload is NULL');
+    if (!(serverAgg.category in this.aggHandlers)) {
+      console.warn(`No handlers for agg category ${serverAgg.category}`);
       return;
     }
 
-    if (!(eventAgg.data.category in this.aggHandlers)) {
-      console.warn(`No handlers for agg category ${eventAgg.data.category}`);
-      return;
-    }
-
-    const chain = this.aggHandlers[eventAgg.data.category];
+    const chain = this.aggHandlers[serverAgg.category];
     for (const handler of chain) {
-      if (handler(eventAgg)) {
-        break;
-      }
+      handler(serverAgg);
     }
-  }
-}
-
-export class ESClient {
-  private readonly messageIdPrefix: string;
-  private prevSequenceId: number;
-
-  public p: Processor;
-
-  constructor(protected readonly netClient: GameNetClient) {
-    this.messageIdPrefix = Math.random().toString(36);
-    this.prevSequenceId = 0;
-    this.p = new Processor(this.messageIdPrefix);
-    this.netClient.listenEvent(this.p.processEvent.bind(this.p));
   }
 
   protected nextMessageId(): string {
-    this.prevSequenceId += 1;
-    return `${this.messageIdPrefix}-${this.prevSequenceId}`;
+    this.lastSentClientSequenceId += 1;
+    return `${this.messageIdPrefix}-${this.lastSentClientSequenceId}`;
   }
 }

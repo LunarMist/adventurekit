@@ -1,5 +1,5 @@
-import { EventAggCategories, EventCategories } from 'rpgcore-common/es';
-import { TokenProto } from 'rpgcore-common/es-proto';
+import { LoginUtils } from 'rpgcore-common/utils';
+import { MAX_LABEL_LENGTH, MAX_TOKEN_EDIT_OWNERS, MAX_URL_LENGTH } from 'rpgcore-common/es-transform';
 
 import { WindowId, WindowRenderComponent } from 'GL/render/window-renderable';
 import * as ImGui from 'ImGui/imgui';
@@ -7,20 +7,9 @@ import * as ImGui from 'ImGui/imgui';
 export class ManageTokensComponent extends WindowRenderComponent {
   protected readonly windowId: WindowId = WindowId.ManageTokens;
 
-  init() {
-    this.es.p.addEventHandler(EventCategories.TokenChangeEvent, serverEvent => {
-      const event = TokenProto.TokenChangeEvent.decode(serverEvent.dataUi8);
-      console.log(event);
-      return true;
-    });
-    this.es.p.addAggHandler(EventAggCategories.TokenSet, eventAgg => {
-      if (eventAgg.data !== null) {
-        const agg = TokenProto.TokenSet.decode(eventAgg.data.dataUi8);
-        console.log(agg);
-      }
-      return true;
-    });
-  }
+  private readonly labelBuffer = new ImGui.ImStringBuffer(MAX_LABEL_LENGTH, 'Test Label');
+  private readonly urlBuffer = new ImGui.ImStringBuffer(MAX_URL_LENGTH, 'Test url');
+  private readonly editOwnersBuffer = new ImGui.ImStringBuffer((LoginUtils.MAX_USERNAME_LENGTH + 1) * MAX_TOKEN_EDIT_OWNERS, 'Luney');
 
   render() {
     if (!this.isVisible) {
@@ -32,8 +21,12 @@ export class ManageTokensComponent extends WindowRenderComponent {
       return;
     }
 
+    ImGui.InputText('Label', this.labelBuffer, this.labelBuffer.size);
+    ImGui.InputText('Url', this.urlBuffer, this.urlBuffer.size);
+    ImGui.InputText('Edit Owners (comma delim.)', this.editOwnersBuffer, this.editOwnersBuffer.size);
+
     if (ImGui.Button('Create Token')) {
-      this.es.sendTokenCreationRequest('Test Label', 'Test url', ['Luney'], 11, 22, 33, 44, 55);
+      this.es.sendTokenCreationRequest(this.labelBuffer.buffer, this.urlBuffer.buffer, this.editOwnersBuffer.buffer.split(','), 0, 0, 0, 50, 50);
     }
 
     ImGui.End();
