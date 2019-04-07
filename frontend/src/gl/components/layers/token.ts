@@ -35,13 +35,12 @@ export class TokenLayerComponent extends RenderComponent {
   }
 
   init(): void {
-    this.es.addEventHandler(EventCategories.TokenChangeEvent, serverEvent => {
-      const event = TokenProto.TokenChangeEvent.decode(serverEvent.dataUi8);
+    this.es.addEventListener(EventCategories.TokenChangeEvent, dataPack => {
+      const event = TokenProto.TokenChangeEvent.decode(dataPack.dataUi8);
       console.log(event);
     });
-    this.es.addAggHandler(EventAggCategories.TokenSet, eventAgg => {
-      const agg = TokenProto.TokenSet.decode(eventAgg.dataUi8);
-      console.log(agg);
+    this.es.addResyncListener(EventAggCategories.TokenSet, () => {
+      console.log(this.es.aggs.tokenSet);
     });
   }
 

@@ -1,21 +1,19 @@
-import { ClientSentEvent, EventAggCategories, EventCategories, ServerSentAgg, ServerSentEvent, SID_CLIENT_SENT } from 'rpgcore-common/es';
 import { TokenProto } from 'rpgcore-common/es-proto';
+import { ClientSentEvent, DataPack, EventAggCategories, EventCategories } from 'rpgcore-common/es';
 import { TokenAggregator } from 'rpgcore-common/es-transform';
 
-import { GameNetClient } from 'Net/game-net-client';
 import { ESClient } from 'Event/es-client';
+import { GameNetClient } from 'Net/game-net-client';
 import InMemorySharedStore from 'Store/In-memory-shared-store';
 
-type EventAggData = {
+type AggData = {
   tokenSet?: TokenProto.TokenSet;
 };
 
-export class ESGameClient extends ESClient {
-  public aggs: EventAggData; // TODO: Agg on this data struct
-
-  constructor(netClient: GameNetClient, readonly mem: InMemorySharedStore) {
-    super(netClient);
-    this.aggs = {};
+export class ESGameClient extends ESClient<AggData> {
+  constructor(readonly netClient: GameNetClient, readonly mem: InMemorySharedStore) {
+    super({});
+    this.netClient.listenEvent(e => this.pushEvent(e));
   }
 
   sendTokenCreationRequest(label: string, url: string, editOwners: string[], x: number, y: number, z: number, width: number, height: number): void {
@@ -26,8 +24,8 @@ export class ESGameClient extends ESClient {
     }
     const bytes = TokenProto.TokenChangeEvent.encode(obj).finish();
     const event = new ClientSentEvent(this.nextMessageId(), EventCategories.TokenChangeEvent, 0, bytes);
+    this.pushEvent(event);
     this.netClient.sendEvent(event);
-    this.propagateClientSentEvent(event);
   }
 
   sendTokenUpdateRequest(id: number,
@@ -45,8 +43,8 @@ export class ESGameClient extends ESClient {
     }
     const bytes = TokenProto.TokenChangeEvent.encode(obj).finish();
     const event = new ClientSentEvent(this.nextMessageId(), EventCategories.TokenChangeEvent, 0, bytes);
+    this.pushEvent(event);
     this.netClient.sendEvent(event);
-    this.propagateClientSentEvent(event);
   }
 
   sendTokenDeleteRequest(id: number) {
@@ -62,11 +60,11 @@ export class ESGameClient extends ESClient {
     }
     const bytes = TokenProto.TokenChangeEvent.encode(obj).finish();
     const event = new ClientSentEvent(this.nextMessageId(), EventCategories.TokenChangeEvent, 0, bytes);
+    this.pushEvent(event);
     this.netClient.sendEvent(event);
-    this.propagateClientSentEvent(event);
   }
 
-  async requestWorldState() {
+  async requestWorldState(): Promise<number> {
     const ws = await this.netClient.sendWorldStateRequest();
     console.log(ws);
 
@@ -75,46 +73,47 @@ export class ESGameClient extends ESClient {
     }
 
     for (const d of ws.data) {
-      this.processAgg2(d);
+      this.processAgg(d);
     }
 
     for (const d of ws.data) {
-      this.processAgg(d);
-    }
-  }
-
-  private propagateClientSentEvent(clientEvent: ClientSentEvent) {
-    const serverEvent = new ServerSentEvent(SID_CLIENT_SENT, SID_CLIENT_SENT, clientEvent.messageId, clientEvent.category, clientEvent.version, clientEvent.data);
-    this.processEvent(serverEvent);
-  }
-
-  reset(): void {
-    this.requestWorldState()
-      .catch(console.error);
-  }
-
-  processAgg2(serverAgg: ServerSentAgg): void {
-    switch (serverAgg.category) {
-      case EventAggCategories.TokenSet:
-        this.aggs.tokenSet = TokenProto.TokenSet.decode(serverAgg.dataUi8);
-        break;
-      default:
-        throw Error(`Unknown agg category: ${serverAgg.category}`);
+      this.notifyResyncListeners(d.category as EventAggCategories);
     }
 
-    // TODO: Does this go here?
-    this.maxServerSequenceId = Math.max(Number(this.maxServerSequenceId), Number(serverAgg.watermark)).toString();
+    const maxSequenceId = ws.data.map(v => Number(v.watermark)).reduce((a, b) => Math.max(a, b));
+    return maxSequenceId;
   }
 
-  processEvent2(serverEvent: ServerSentEvent): void {
-    switch (serverEvent.category) {
+  protected aggData(data: DataPack): void {
+    switch (data.category) {
       case EventCategories.TokenChangeEvent:
-        const changeEvent = TokenProto.TokenChangeEvent.decode(serverEvent.dataUi8);
+        const changeEvent = TokenProto.TokenChangeEvent.decode(data.dataUi8);
         new TokenAggregator(this.mem.userProfile.username, this.aggs.tokenSet)
           .agg(changeEvent);
         break;
       default:
-        throw Error(`Unknown event category: ${serverEvent.category}`);
+        throw Error(`Unknown event category: ${data.category}`);
     }
+  }
+
+  protected processAgg(dataPack: DataPack): void {
+    switch (dataPack.category) {
+      case EventAggCategories.TokenSet:
+        this.aggs.tokenSet = TokenProto.TokenSet.decode(dataPack.dataUi8);
+        break;
+      default:
+        throw Error(`Unknown agg category: ${dataPack.category}`);
+    }
+  }
+
+  protected syncAggs(): void {
+    this.requestWorldState()
+      .then(maxSeqId => {
+        this.finishSyncAggs(maxSeqId);
+      })
+      .catch(err => {
+        console.error('Unable to sync world state');
+        console.error(err);
+      });
   }
 }

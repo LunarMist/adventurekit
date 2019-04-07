@@ -92,6 +92,7 @@ export class RenderLoop {
       this.inMemorySharedStore.roomId = initState.roomId;
       if (initState.roomId !== -1) {
         this.esClient.requestWorldState()
+          .then(seqId => this.esClient.init(seqId))
           .catch(console.error);
       }
     });
@@ -135,6 +136,7 @@ export class RenderLoop {
     // Start-frame signal
     this.ioLifeCycle.startFrame(); // IO must be the first one
     this.startFrameImGui(time);
+    this.esClient.dispatchEvents();
     this.imGuiImplWebGl.startFrame();
     this.components.forEach(c => c.startFrame());
 

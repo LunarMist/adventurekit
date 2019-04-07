@@ -1,112 +1,148 @@
-import { EventAggCategories, EventCategories, ServerSentAgg, ServerSentEvent, SID_CLIENT_SENT } from 'rpgcore-common/es';
+import { ClientSentEvent, DataPack, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
 import shortid from 'shortid';
+import { EventAggCategories } from 'rpgcore-common/src/es/categories';
 
-import { GameNetClient } from 'Net/game-net-client';
+type EventListener = (dataPack: DataPack) => void;
+type ResyncListener = () => void;
 
-type ServerSentEventHandler = (serverEvent: ServerSentEvent) => void;
-type ServerSentAggHandler = (eventAgg: ServerSentAgg) => void;
-
-export abstract class ESClient {
-  private readonly eventHandlers: { [key: string]: ServerSentEventHandler[] } = {};
-  private readonly aggHandlers: { [key: string]: ServerSentAggHandler[] } = {};
-
+export abstract class ESClient<AGG> {
   private readonly messageIdPrefix: string;
   private lastSentClientSequenceId: number;
 
-  private clientSentEvents = new Map<string, ServerSentEvent>();
+  private eventQueue: (ServerSentEvent | ClientSentEvent)[] = [];
+  private clientSequenceIdProjectedMapping = new Map<number, number>();
+  private lastSeenServerSequenceId: number = -1;
+  private pauseEventDispatching: boolean = true;
 
-  protected maxServerSequenceId: string;
+  private readonly eventListeners: { [key: string]: EventListener[] } = {};
+  private readonly resyncListeners: { [key: string]: ResyncListener[] } = {};
 
-  constructor(protected readonly netClient: GameNetClient) {
+  protected constructor(public readonly aggs: AGG) {
     this.messageIdPrefix = shortid.generate();
     this.lastSentClientSequenceId = 0;
-    this.maxServerSequenceId = '-1';
-    this.netClient.listenEvent(e => this.processEvent(e));
   }
 
-  addEventHandler(type: EventCategories, handler: ServerSentEventHandler): void {
-    this.eventHandlers[type] = this.eventHandlers[type] || [];
-    this.eventHandlers[type].push(handler);
+  init(newLastSeenServerSequenceId: number) {
+    this.lastSeenServerSequenceId = newLastSeenServerSequenceId;
+    this.pauseEventDispatching = false;
   }
 
-  removeEventHandler(type: EventCategories, handler: ServerSentEventHandler): void {
-    this.eventHandlers[type] = this.eventHandlers[type] || [];
-    const loc = this.eventHandlers[type].findIndex(v => v === handler);
+  addEventListener(category: EventCategories, cb: EventListener): void {
+    this.eventListeners[category] = this.eventListeners[category] || [];
+    this.eventListeners[category].push(cb);
+  }
+
+  removeEventListener(category: EventCategories, cb: EventListener): void {
+    this.eventListeners[category] = this.eventListeners[category] || [];
+    const loc = this.eventListeners[category].findIndex(v => v === cb);
     if (loc !== -1) {
-      this.eventHandlers[type].splice(loc, 1);
+      this.eventListeners[category].splice(loc, 1);
     }
   }
 
-  addAggHandler(type: EventAggCategories, handler: ServerSentAggHandler): void {
-    this.aggHandlers[type] = this.aggHandlers[type] || [];
-    this.aggHandlers[type].push(handler);
+  addResyncListener(category: EventAggCategories, cb: ResyncListener): void {
+    this.resyncListeners[category] = this.resyncListeners[category] || [];
+    this.resyncListeners[category].push(cb);
   }
 
-  removeAggHandler(type: EventAggCategories, handler: ServerSentAggHandler): void {
-    this.aggHandlers[type] = this.aggHandlers[type] || [];
-    const loc = this.aggHandlers[type].findIndex(v => v === handler);
+  removeResyncListener(category: EventAggCategories, cb: ResyncListener): void {
+    this.resyncListeners[category] = this.resyncListeners[category] || [];
+    const loc = this.resyncListeners[category].findIndex(v => v === cb);
     if (loc !== -1) {
-      this.aggHandlers[type].splice(loc, 1);
+      this.resyncListeners[category].splice(loc, 1);
     }
   }
 
-  abstract reset(): void;
+  pushEvent(event: ServerSentEvent | ClientSentEvent): void {
+    this.eventQueue.push(event);
+  }
 
-  processEvent(serverEvent: ServerSentEvent): void {
-    console.log(serverEvent);
+  notifyResyncListeners(category: EventAggCategories) {
+    // Dispatch
+    const chain = this.resyncListeners[category] || [];
+    for (const handler of chain) {
+      handler();
+    }
+  }
 
-    if (!(serverEvent.category in this.eventHandlers)) {
-      console.warn(`No handlers for event category ${serverEvent.category}`);
+  dispatchEvents(): void {
+    if (this.pauseEventDispatching) {
       return;
     }
 
-    if (serverEvent.sequenceNumber === SID_CLIENT_SENT) {
-      this.clientSentEvents.set(serverEvent.clientMessageId, serverEvent);
-    } else {
-      const sep = serverEvent.clientMessageId.lastIndexOf('-');
-      const prefix = serverEvent.clientMessageId.substring(0, sep);
-      const seqId = Number(serverEvent.clientMessageId.substring(sep + 1));
-      if (prefix === this.messageIdPrefix) {
-        this.clientSentEvents.delete(serverEvent.clientMessageId);
-      }
-      if (this.clientSentEvents.size > 2) {
-        console.warn('Data out of sync - More than 2 unacked client messages');
-        this.reset();
-        return;
-      }
-      if (Number(serverEvent.prevSequenceNumber) > Number(this.maxServerSequenceId)) {
-        console.warn('Data out of sync - Broken sequence number sequence');
-        this.reset();
-        return;
-      }
-      this.maxServerSequenceId = serverEvent.sequenceNumber;
-      if (prefix === this.messageIdPrefix) {
-        return;
-      }
-    }
+    for (const event of this.eventQueue) {
+      if (event instanceof ClientSentEvent) {
+        // Save what we project this client sequence number should be
+        const { seqId } = this.breakdownMessageId(event.messageId);
+        this.clientSequenceIdProjectedMapping.set(seqId, this.lastSeenServerSequenceId + 1);
+      } else {
+        // If we see something old, ignore it
+        if (Number(event.sequenceNumber) <= this.lastSeenServerSequenceId) {
+          continue;
+        }
 
-    const chain = this.eventHandlers[serverEvent.category];
-    for (const handler of chain) {
-      handler(serverEvent);
+        // If the sequence numbers are not...sequential, then reset
+        if (Number(event.sequenceNumber) !== this.lastSeenServerSequenceId + 1) {
+          console.warn(`Expected server id ${this.lastSeenServerSequenceId + 1} but got ${Number(event.sequenceNumber)} -- resync`);
+          this.resync();
+          return;
+        }
+
+        const { prefix, seqId } = this.breakdownMessageId(event.clientMessageId);
+
+        // Do not dispatch client-sent messages
+        if (prefix === this.messageIdPrefix) {
+          const projectedId = this.clientSequenceIdProjectedMapping.get(seqId);
+          if (projectedId === undefined) {
+            console.warn(`Could not find server projected sequence id for client sequence id: ${seqId}`);
+          } else {
+            if (Number(event.sequenceNumber) !== projectedId) {
+              console.warn(`Expected client projected id ${projectedId} but got ${Number(event.sequenceNumber)} -- resync`);
+              this.resync();
+              return;
+            }
+          }
+          this.clientSequenceIdProjectedMapping.delete(seqId);
+          continue;
+        }
+      }
+
+      // Yay, we can agg the data now
+      this.aggData(event);
+
+      // Dispatch
+      const chain = this.eventListeners[event.category] || [];
+      for (const handler of chain) {
+        handler(event);
+      }
     }
   }
 
-  processAgg(serverAgg: ServerSentAgg): void {
-    console.log(serverAgg);
+  protected abstract aggData(data: DataPack): void;
 
-    if (!(serverAgg.category in this.aggHandlers)) {
-      console.warn(`No handlers for agg category ${serverAgg.category}`);
-      return;
-    }
+  protected abstract syncAggs(): void;
 
-    const chain = this.aggHandlers[serverAgg.category];
-    for (const handler of chain) {
-      handler(serverAgg);
-    }
+  protected finishSyncAggs(newLastSeenServerSequenceId: number): void {
+    this.pauseEventDispatching = false;
+    this.lastSeenServerSequenceId = newLastSeenServerSequenceId;
   }
 
   protected nextMessageId(): string {
     this.lastSentClientSequenceId += 1;
     return `${this.messageIdPrefix}-${this.lastSentClientSequenceId}`;
+  }
+
+  private resync(): void {
+    this.pauseEventDispatching = true;
+    this.eventQueue = [];
+    this.clientSequenceIdProjectedMapping.clear();
+    this.syncAggs();
+  }
+
+  private breakdownMessageId(messageId: string) {
+    const sep = messageId.lastIndexOf('-');
+    const prefix = messageId.substring(0, sep);
+    const seqId = Number(messageId.substring(sep + 1));
+    return { prefix, seqId };
   }
 }
