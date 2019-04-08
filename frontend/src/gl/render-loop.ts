@@ -87,7 +87,7 @@ export class RenderLoop {
     // Init net
     this.netClient.open();
     this.gameNetClient.listenInitState(initState => {
-      console.log('Setting initial state');
+      console.log('Setting initial state:', initState);
       this.inMemorySharedStore.userProfile = initState.userProfile;
       this.inMemorySharedStore.roomId = initState.roomId;
       if (initState.roomId !== -1) {

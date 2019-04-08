@@ -22,7 +22,7 @@ export class ESServer {
   }
 
   processEvent(clientEvent: ClientSentEvent): void {
-    console.log(clientEvent);
+    console.log('ESServer.processEvent:', clientEvent);
 
     if (!(clientEvent.category in this.handlers)) {
       console.warn(`No handlers for event category ${clientEvent.category}`);

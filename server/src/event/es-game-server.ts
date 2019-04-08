@@ -1,4 +1,4 @@
-import { EventAggCategories, EventAggResponse, EventCategories, MultiEventAggResponse, ServerSentAgg, ServerSentEvent, SID_FIRST } from 'rpgcore-common/es';
+import { EventAggCategories, EventAggResponse, EventCategories, MultiEventAggResponse, NumericSid, ServerSentAgg, ServerSentEvent, SID_FIRST } from 'rpgcore-common/es';
 import { TokenProto } from 'rpgcore-common/es-proto';
 import { TokenAggregator } from 'rpgcore-common/es-transform';
 import { getConnection } from 'typeorm';
@@ -68,8 +68,8 @@ export class ESGameServer extends ESServer {
             .agg(changeEvent);
           await EventAggregate.create(entityManager, currentRoomId, EventAggCategories.TokenSet, newEvent.sequenceNumber, 0, aggregator.dataUi8);
         } else {
-          // For now, sequence numbers are numeric. In the future, they may have some other ordering type
-          if (Number(newEvent.sequenceNumber) <= Number(currentAgg.eventWatermark)) {
+          // For now, sequence numbers are numeric. In the future, they may have some other format type
+          if (new NumericSid(currentAgg.eventWatermark).comesAfter(new NumericSid(newEvent.sequenceNumber))) {
             throw Error(`Event aggregate ${currentAgg.id} is out of sync: Invalid watermark for create event: ${newEvent.id}`);
           }
           const aggregator = new TokenAggregator(this.sess.sessionUser.username, TokenProto.TokenSet.decode(currentAgg.getDataUi8()) as TokenProto.TokenSet);

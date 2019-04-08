@@ -13,3 +13,5 @@ exports.EventAggCategories = categories_1.EventAggCategories;
 var const_1 = require("./build/lib/es/const");
 exports.SID_CLIENT_SENT = const_1.SID_CLIENT_SENT;
 exports.SID_FIRST = const_1.SID_FIRST;
+var sid_1 = require("./build/lib/es/sid");
+exports.NumericSid = sid_1.NumericSid;

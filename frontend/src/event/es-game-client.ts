@@ -1,5 +1,5 @@
 import { TokenProto } from 'rpgcore-common/es-proto';
-import { ClientSentEvent, DataPack, EventAggCategories, EventCategories } from 'rpgcore-common/es';
+import { ClientSentEvent, DataPack, EventAggCategories, EventCategories, NumericSid } from 'rpgcore-common/es';
 import { TokenAggregator } from 'rpgcore-common/es-transform';
 
 import { ESClient } from 'Event/es-client';
@@ -64,9 +64,9 @@ export class ESGameClient extends ESClient<AggData> {
     this.netClient.sendEvent(event);
   }
 
-  async requestWorldState(): Promise<number> {
+  async requestWorldState(): Promise<string> {
     const ws = await this.netClient.sendWorldStateRequest();
-    console.log(ws);
+    console.log('Requested world state:', ws);
 
     if (!ws.status || ws.data === null) {
       throw new Error('Unable to process world state response');
@@ -80,11 +80,11 @@ export class ESGameClient extends ESClient<AggData> {
       this.notifyResyncListeners(d.category as EventAggCategories);
     }
 
-    const maxSequenceId = ws.data.map(v => Number(v.watermark)).reduce((a, b) => Math.max(a, b));
-    return maxSequenceId;
+    const maxSequenceId = NumericSid.max(...ws.data.map(v => new NumericSid(v.watermark))).val;
+    return maxSequenceId.toString();
   }
 
-  protected aggData(data: DataPack): void {
+  protected aggEventData(data: DataPack): void {
     switch (data.category) {
       case EventCategories.TokenChangeEvent:
         const changeEvent = TokenProto.TokenChangeEvent.decode(data.dataUi8);

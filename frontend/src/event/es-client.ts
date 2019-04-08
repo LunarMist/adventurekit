@@ -1,17 +1,16 @@
-import { ClientSentEvent, DataPack, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
+import { ClientSentEvent, DataPack, EventAggCategories, EventCategories, NumericSid, ServerSentEvent } from 'rpgcore-common/es';
 import shortid from 'shortid';
-import { EventAggCategories } from 'rpgcore-common/src/es/categories';
 
 type EventListener = (dataPack: DataPack) => void;
 type ResyncListener = () => void;
 
 export abstract class ESClient<AGG> {
-  private readonly messageIdPrefix: string;
-  private lastSentClientSequenceId: number;
+  private messageIdPrefix: string;
+  private lastSentClientSequenceId: number = 0;
 
   private eventQueue: (ServerSentEvent | ClientSentEvent)[] = [];
-  private clientSequenceIdProjectedMapping = new Map<number, number>();
-  private lastSeenServerSequenceId: number = -1;
+  private clientSidToPrevServerSidMap = new Map<number, string>();
+  private lastSeenServerSequenceId: string = 'BLAH';
   private pauseEventDispatching: boolean = true;
 
   private readonly eventListeners: { [key: string]: EventListener[] } = {};
@@ -19,11 +18,16 @@ export abstract class ESClient<AGG> {
 
   protected constructor(public readonly aggs: AGG) {
     this.messageIdPrefix = shortid.generate();
-    this.lastSentClientSequenceId = 0;
   }
 
-  init(newLastSeenServerSequenceId: number) {
-    this.lastSeenServerSequenceId = newLastSeenServerSequenceId;
+  // Must be called before any events can be processed
+  init(lastSeenServerSequenceId: string) {
+    this.messageIdPrefix = shortid.generate();
+    this.lastSentClientSequenceId = 0;
+
+    this.eventQueue = [];
+    this.clientSidToPrevServerSidMap.clear();
+    this.lastSeenServerSequenceId = lastSeenServerSequenceId;
     this.pauseEventDispatching = false;
   }
 
@@ -54,6 +58,7 @@ export abstract class ESClient<AGG> {
   }
 
   pushEvent(event: ServerSentEvent | ClientSentEvent): void {
+    console.log('Pushed event:', event);
     this.eventQueue.push(event);
   }
 
@@ -61,7 +66,11 @@ export abstract class ESClient<AGG> {
     // Dispatch
     const chain = this.resyncListeners[category] || [];
     for (const handler of chain) {
-      handler();
+      try {
+        handler();
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
 
@@ -71,19 +80,26 @@ export abstract class ESClient<AGG> {
     }
 
     for (const event of this.eventQueue) {
+      console.log('Dispatching', event);
+
       if (event instanceof ClientSentEvent) {
         // Save what we project this client sequence number should be
         const { seqId } = this.breakdownMessageId(event.messageId);
-        this.clientSequenceIdProjectedMapping.set(seqId, this.lastSeenServerSequenceId + 1);
+        this.clientSidToPrevServerSidMap.set(seqId, this.lastSeenServerSequenceId);
+        console.log(`\tProcessing client-event. Mapping ${seqId} (local) to ${this.lastSeenServerSequenceId + 1} (server, expected)`);
       } else {
+        console.log('\tProcessing server-event');
+
         // If we see something old, ignore it
-        if (Number(event.sequenceNumber) <= this.lastSeenServerSequenceId) {
+        // TODO: Define a sid ordering type/function
+        if (new NumericSid(this.lastSeenServerSequenceId).comesAfter(new NumericSid(event.sequenceNumber))) {
+          console.log(`\tIgnoring older message. Last server sid is ${this.lastSeenServerSequenceId} while event has ${event.sequenceNumber}`);
           continue;
         }
 
         // If the sequence numbers are not...sequential, then reset
-        if (Number(event.sequenceNumber) !== this.lastSeenServerSequenceId + 1) {
-          console.warn(`Expected server id ${this.lastSeenServerSequenceId + 1} but got ${Number(event.sequenceNumber)} -- resync`);
+        if (event.prevSequenceNumber !== this.lastSeenServerSequenceId) {
+          console.warn(`\tExpected server id ${this.lastSeenServerSequenceId + 1} but got ${event.sequenceNumber} -- resync`);
           this.resync();
           return;
         }
@@ -92,39 +108,58 @@ export abstract class ESClient<AGG> {
 
         // Do not dispatch client-sent messages
         if (prefix === this.messageIdPrefix) {
-          const projectedId = this.clientSequenceIdProjectedMapping.get(seqId);
-          if (projectedId === undefined) {
-            console.warn(`Could not find server projected sequence id for client sequence id: ${seqId}`);
+          console.log('\tProcessing server-event that was sent by this client (self-sent)');
+          const prevServerSid = this.clientSidToPrevServerSidMap.get(seqId);
+          if (prevServerSid === undefined) {
+            console.warn(`\tCould not find server projected prev sequence id for client sequence id: ${seqId}`);
           } else {
-            if (Number(event.sequenceNumber) !== projectedId) {
-              console.warn(`Expected client projected id ${projectedId} but got ${Number(event.sequenceNumber)} -- resync`);
+            if (prevServerSid !== event.prevSequenceNumber) {
+              console.warn(`\tExpected client prev projected id ${prevServerSid} but got ${event.sequenceNumber} -- resync`);
               this.resync();
               return;
             }
           }
-          this.clientSequenceIdProjectedMapping.delete(seqId);
+          this.clientSidToPrevServerSidMap.delete(seqId);
+          this.lastSeenServerSequenceId = event.sequenceNumber;
+          console.log('\tLast server sid', this.lastSeenServerSequenceId);
           continue;
         }
+
+        this.lastSeenServerSequenceId = event.sequenceNumber;
       }
 
+      console.log('\tLast server sid', this.lastSeenServerSequenceId);
+
       // Yay, we can agg the data now
-      this.aggData(event);
+      this.aggEventData(event);
 
       // Dispatch
       const chain = this.eventListeners[event.category] || [];
       for (const handler of chain) {
-        handler(event);
+        try {
+          handler(event);
+        } catch (e) {
+          console.error(e);
+        }
       }
     }
+
+    this.eventQueue = [];
   }
 
-  protected abstract aggData(data: DataPack): void;
+  protected abstract aggEventData(data: DataPack): void;
 
   protected abstract syncAggs(): void;
 
-  protected finishSyncAggs(newLastSeenServerSequenceId: number): void {
+  // Must be called after sync to re-enable dispatching
+  protected finishSyncAggs(lastSeenServerSequenceId: string): void {
+    this.messageIdPrefix = shortid.generate();
+    this.lastSentClientSequenceId = 0;
+
+    this.eventQueue = this.eventQueue.filter(e => e instanceof ServerSentEvent); // Only keep Server-sent events
+    this.clientSidToPrevServerSidMap.clear();
+    this.lastSeenServerSequenceId = lastSeenServerSequenceId;
     this.pauseEventDispatching = false;
-    this.lastSeenServerSequenceId = newLastSeenServerSequenceId;
   }
 
   protected nextMessageId(): string {
@@ -134,8 +169,6 @@ export abstract class ESClient<AGG> {
 
   private resync(): void {
     this.pauseEventDispatching = true;
-    this.eventQueue = [];
-    this.clientSequenceIdProjectedMapping.clear();
     this.syncAggs();
   }
 
