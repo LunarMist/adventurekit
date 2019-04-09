@@ -1,5 +1,5 @@
 import { TokenProto } from 'rpgcore-common/es-proto';
-import { ClientSentEvent, DataPack, EventAggCategories, EventCategories, NumericSid } from 'rpgcore-common/es';
+import { ClientSentEvent, DataPack, EventAggCategories, EventCategories, NumericSid, SID_FIRST } from 'rpgcore-common/es';
 import { TokenAggregator } from 'rpgcore-common/es-transform';
 
 import { ESClient } from 'Event/es-client';
@@ -7,12 +7,15 @@ import { GameNetClient } from 'Net/game-net-client';
 import InMemorySharedStore from 'Store/In-memory-shared-store';
 
 type AggData = {
-  tokenSet?: TokenProto.TokenSet;
+  tokenSet: TokenProto.TokenSet;
 };
 
-export class ESGameClient extends ESClient<AggData> {
+export class ESGameClient extends ESClient {
+  public aggs: AggData;
+
   constructor(readonly netClient: GameNetClient, readonly mem: InMemorySharedStore) {
-    super({});
+    super();
+    this.aggs = this.getZeroAggs();
     this.netClient.listenEvent(e => this.pushEvent(e));
   }
 
@@ -72,16 +75,26 @@ export class ESGameClient extends ESClient<AggData> {
       throw new Error('Unable to process world state response');
     }
 
+    // Reset aggs and update with fetched data
+    this.aggs = this.getZeroAggs();
     for (const d of ws.data) {
       this.processAgg(d);
     }
 
-    for (const d of ws.data) {
-      this.notifyResyncListeners(d.category as EventAggCategories);
-    }
+    // Notify everything
+    this.notifyAllResyncListeners();
 
+    if (ws.data.length === 0) {
+      return SID_FIRST;
+    }
     const maxSequenceId = NumericSid.max(...ws.data.map(v => new NumericSid(v.watermark))).val;
     return maxSequenceId.toString();
+  }
+
+  private getZeroAggs() {
+    return {
+      tokenSet: new TokenAggregator(this.mem.userProfile.username).zero(),
+    };
   }
 
   protected aggEventData(data: DataPack): void {
@@ -114,6 +127,13 @@ export class ESGameClient extends ESClient<AggData> {
       .catch(err => {
         console.error('Unable to sync world state');
         console.error(err);
+
+        // Try again, but only if we are connected still
+        if (this.netClient.isConnected()) {
+          setTimeout(() => {
+            this.syncAggs();
+          }, 3000);
+        }
       });
   }
 }

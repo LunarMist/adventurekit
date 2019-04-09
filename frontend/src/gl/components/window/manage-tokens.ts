@@ -26,7 +26,9 @@ export class ManageTokensComponent extends WindowRenderComponent {
     ImGui.InputText('Edit Owners (comma delim.)', this.editOwnersBuffer, this.editOwnersBuffer.size);
 
     if (ImGui.Button('Create Token')) {
-      this.es.sendTokenCreationRequest(this.labelBuffer.buffer, this.urlBuffer.buffer, this.editOwnersBuffer.buffer.split(','), 0, 0, 0, 50, 50);
+      const randX = Math.random() * (100 - (-100)) - 100;
+      const randY = Math.random() * (100 - (-100)) - 100;
+      this.es.sendTokenCreationRequest(this.labelBuffer.buffer, this.urlBuffer.buffer, this.editOwnersBuffer.buffer.split(','), randX, randY, 0, 50, 50);
     }
 
     ImGui.End();

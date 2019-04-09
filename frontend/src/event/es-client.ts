@@ -1,22 +1,22 @@
-import { ClientSentEvent, DataPack, EventAggCategories, EventCategories, NumericSid, ServerSentEvent } from 'rpgcore-common/es';
+import { ClientSentEvent, DataPack, EventAggCategories, EventCategories, NumericSid, ServerSentEvent, SID_FIRST } from 'rpgcore-common/es';
 import shortid from 'shortid';
 
 type EventListener = (dataPack: DataPack) => void;
 type ResyncListener = () => void;
 
-export abstract class ESClient<AGG> {
+export abstract class ESClient {
   private messageIdPrefix: string;
   private lastSentClientSequenceId: number = 0;
 
   private eventQueue: (ServerSentEvent | ClientSentEvent)[] = [];
   private clientSidToPrevServerSidMap = new Map<number, string>();
-  private lastSeenServerSequenceId: string = 'BLAH';
+  private lastSeenServerSequenceId: string = SID_FIRST;
   private pauseEventDispatching: boolean = true;
 
   private readonly eventListeners: { [key: string]: EventListener[] } = {};
   private readonly resyncListeners: { [key: string]: ResyncListener[] } = {};
 
-  protected constructor(public readonly aggs: AGG) {
+  protected constructor() {
     this.messageIdPrefix = shortid.generate();
   }
 
@@ -74,32 +74,45 @@ export abstract class ESClient<AGG> {
     }
   }
 
+  notifyAllResyncListeners() {
+    for (const category in this.resyncListeners) {
+      this.notifyResyncListeners(category as EventAggCategories);
+    }
+  }
+
   dispatchEvents(): void {
     if (this.pauseEventDispatching) {
       return;
     }
 
-    for (const event of this.eventQueue) {
+    while (this.eventQueue.length > 0) {
+      const event = this.eventQueue.shift();
+      if (event === undefined) {
+        continue;
+      }
       console.log('Dispatching', event);
 
       if (event instanceof ClientSentEvent) {
-        // Save what we project this client sequence number should be
+        // Save what the 'prev' sequence id of the relevant server sequence id should be (when we eventually get it)
+        // Assume that this event is the immediate next event that is processed by the server
+        // This should be good enough in a slow-moving event stream and where latency is low-ish
+        // TODO: Make this more intelligent; Perform event playback/rewinding, or check agg hashes instead of expected seq ids
         const { seqId } = this.breakdownMessageId(event.messageId);
         this.clientSidToPrevServerSidMap.set(seqId, this.lastSeenServerSequenceId);
-        console.log(`\tProcessing client-event. Mapping ${seqId} (local) to ${this.lastSeenServerSequenceId + 1} (server, expected)`);
+        console.log(`\tProcessing client-event. Mapping ${seqId} (local) to ${this.lastSeenServerSequenceId} (server, prev, expected)`);
       } else {
         console.log('\tProcessing server-event');
 
         // If we see something old, ignore it
-        // TODO: Define a sid ordering type/function
         if (new NumericSid(this.lastSeenServerSequenceId).comesAfter(new NumericSid(event.sequenceNumber))) {
           console.log(`\tIgnoring older message. Last server sid is ${this.lastSeenServerSequenceId} while event has ${event.sequenceNumber}`);
           continue;
         }
 
         // If the sequence numbers are not...sequential, then reset
+        // TODO: Make this more intelligent; Try to request only the missing events
         if (event.prevSequenceNumber !== this.lastSeenServerSequenceId) {
-          console.warn(`\tExpected server id ${this.lastSeenServerSequenceId + 1} but got ${event.sequenceNumber} -- resync`);
+          console.warn(`\tExpected prev server id ${this.lastSeenServerSequenceId} but got prev id ${event.sequenceNumber} -- resync`);
           this.resync();
           return;
         }
@@ -109,12 +122,12 @@ export abstract class ESClient<AGG> {
         // Do not dispatch client-sent messages
         if (prefix === this.messageIdPrefix) {
           console.log('\tProcessing server-event that was sent by this client (self-sent)');
-          const prevServerSid = this.clientSidToPrevServerSidMap.get(seqId);
-          if (prevServerSid === undefined) {
-            console.warn(`\tCould not find server projected prev sequence id for client sequence id: ${seqId}`);
+          const expectedPrevSid = this.clientSidToPrevServerSidMap.get(seqId);
+          if (expectedPrevSid === undefined) {
+            console.warn(`\tCould not find server prev sequence id for client sequence id: ${seqId}`);
           } else {
-            if (prevServerSid !== event.prevSequenceNumber) {
-              console.warn(`\tExpected client prev projected id ${prevServerSid} but got ${event.sequenceNumber} -- resync`);
+            if (expectedPrevSid !== event.prevSequenceNumber) {
+              console.warn(`\tExpected client prev id ${expectedPrevSid} but got ${event.prevSequenceNumber} -- resync`);
               this.resync();
               return;
             }
@@ -143,8 +156,6 @@ export abstract class ESClient<AGG> {
         }
       }
     }
-
-    this.eventQueue = [];
   }
 
   protected abstract aggEventData(data: DataPack): void;
