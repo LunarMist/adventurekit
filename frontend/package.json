@@ -12,6 +12,7 @@
   "author": "Jeremy Simpson",
   "license": "MIT",
   "devDependencies": {
+    "copy-webpack-plugin": "^5.0.2",
     "file-loader": "^2.0.0",
     "ts-loader": "^4.5.0",
     "typescript": "^3.4.3",
