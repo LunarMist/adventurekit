@@ -14,7 +14,7 @@
   "main": "build/lib/main.js",
   "types": "build/types/main.d.ts",
   "devDependencies": {
-    "typescript": "^3.4.1"
+    "typescript": "^3.4.3"
   },
   "dependencies": {
     "protobufjs": "^6.8.8"
