@@ -47,8 +47,8 @@ export enum TokenChangeType {
 
 @Type.d()
 export class TokenChangeEvent extends Message<TokenChangeEvent> {
-  @Field.d(1, 'uint32', 'optional')
-  public id?: number;
+  @Field.d(1, 'uint32', 'required')
+  public id!: number;
 
   @Field.d(2, TokenChangeType, 'required', TokenChangeType.CREATE)
   public changeType!: TokenChangeType;

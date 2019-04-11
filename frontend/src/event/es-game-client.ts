@@ -20,7 +20,7 @@ export class ESGameClient extends ESClient {
   }
 
   sendTokenCreationRequest(label: string, url: string, editOwners: string[], x: number, y: number, z: number, width: number, height: number): void {
-    const obj = { label, url, editOwners, x, y, z, width, height, changeType: TokenProto.TokenChangeType.CREATE };
+    const obj = { label, url, editOwners, x, y, z, width, height, changeType: TokenProto.TokenChangeType.CREATE, id: this.aggs.tokenSet.nextTokenId };
     const err = TokenProto.TokenChangeEvent.verify(obj);
     if (err) {
       throw Error(`Invalid message: ${err}`);

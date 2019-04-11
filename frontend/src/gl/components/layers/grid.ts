@@ -2,6 +2,7 @@ import * as GLUtils from 'GL/utils';
 import { MouseCodes } from 'IO/codes';
 import * as IOEvent from 'IO/event';
 import { RenderComponent } from 'GL/render/renderable';
+import { TokenLayerComponent } from 'GL/components/layers/token';
 
 // TODO: Rewrite more efficiently
 // Should not need to be a full-screen fragment shader
@@ -12,6 +13,14 @@ export class GridPatternComponent extends RenderComponent {
   private readonly tileSize = [50.0, 50.0]; // [width, height]
   private gridOffset = [0.0, 0.0]; // [x, y]
   private prevPointerXY = { x: 0.0, y: 0.0 };
+
+  private readonly tokenLayerComponent: TokenLayerComponent;
+
+  constructor() {
+    super();
+    this.tokenLayerComponent = new TokenLayerComponent();
+    this.children.push(this.tokenLayerComponent);
+  }
 
   init(): void {
     this.io.dispatcher.addHandler(IOEvent.EventType.PointerDown, event => {
@@ -31,10 +40,11 @@ export class GridPatternComponent extends RenderComponent {
       return false;
     });
 
-    this.initFromLostContext();
+    this.initGL();
+    super.init();
   }
 
-  initFromLostContext(): void {
+  initGL(): void {
     const vs = `
       attribute vec4 aVertexPosition;
       void main() {
@@ -87,6 +97,11 @@ export class GridPatternComponent extends RenderComponent {
     this.program = GLUtils.createProgramFromSrc(this.gl, vs, fs);
   }
 
+  initFromLostContext(): void {
+    this.initGL();
+    super.initFromLostContext();
+  }
+
   render(): void {
     if (this.program === null) {
       return;
@@ -117,11 +132,13 @@ export class GridPatternComponent extends RenderComponent {
     this.gl.uniform2fv(gridSelection, gridSel);
 
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, this.vertices.length / 2);
+    super.render();
   }
 
   destroy(): void {
     this.gl.deleteProgram(this.program);
     this.program = null;
+    super.destroy();
   }
 
   private divToInf(i: number, div: number): number {

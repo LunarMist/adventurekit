@@ -46,6 +46,12 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
     if (newId in this.accumulator.tokens) {
       throw Error(`Id ${newId} already exists in TokenSet. NextTokenID out of sync.`);
     }
+    if (!data.id) {
+      throw Error('Id needs to be set');
+    }
+    if (data.id !== newId) {
+      throw Error(`Id in data (${data.id}) does not match expected id ${newId}`);
+    }
     if (data.label && data.label.length > MAX_LABEL_LENGTH) {
       throw Error('Label length too long');
     }

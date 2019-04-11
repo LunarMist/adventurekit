@@ -7,8 +7,8 @@ import * as ImGui from 'ImGui/imgui';
 export class ManageTokensComponent extends WindowRenderComponent {
   protected readonly windowId: WindowId = WindowId.ManageTokens;
 
-  private readonly labelBuffer = new ImGui.ImStringBuffer(MAX_LABEL_LENGTH, 'Test Label');
-  private readonly urlBuffer = new ImGui.ImStringBuffer(MAX_URL_LENGTH, 'Test url');
+  private readonly labelBuffer = new ImGui.ImStringBuffer(MAX_LABEL_LENGTH, 'Twilight');
+  private readonly urlBuffer = new ImGui.ImStringBuffer(MAX_URL_LENGTH, 'http://localhost:9000/static/bundle/glob/images/twilight.jpg');
   private readonly editOwnersBuffer = new ImGui.ImStringBuffer((LoginUtils.MAX_USERNAME_LENGTH + 1) * MAX_TOKEN_EDIT_OWNERS, 'Luney');
 
   render() {
@@ -26,8 +26,8 @@ export class ManageTokensComponent extends WindowRenderComponent {
     ImGui.InputText('Edit Owners (comma delim.)', this.editOwnersBuffer, this.editOwnersBuffer.size);
 
     if (ImGui.Button('Create Token')) {
-      const randX = Math.random() * (100 - (-100)) - 100;
-      const randY = Math.random() * (100 - (-100)) - 100;
+      const randX = Math.random() * (this.gl.canvas.width - 100) + 100;
+      const randY = Math.random() * (this.gl.canvas.height - 100) + 100;
       this.es.sendTokenCreationRequest(this.labelBuffer.buffer, this.urlBuffer.buffer, this.editOwnersBuffer.buffer.split(','), randX, randY, 0, 50, 50);
     }
 
