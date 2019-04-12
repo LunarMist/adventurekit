@@ -8,6 +8,7 @@ import * as GLUtils from 'GL/utils';
 import RBush = rbush.RBush;
 import BBox = rbush.BBox;
 
+// (x,y) is bottom-left
 class TokenItem implements BBox {
   token: TokenProto.Token;
   minX: number;
@@ -53,6 +54,8 @@ const tokenTextureFragmentShaderSrc = `
 export class TokenLayerComponent extends RenderComponent {
   private readonly rtree: RBush<TokenItem>;
   private viewport: BBox;
+  // (x,y) is bottom-left
+  private offset: { x: number; y: number };
   private visibleItems: TokenItem[] = [];
 
   // Gl stuff
@@ -71,6 +74,7 @@ export class TokenLayerComponent extends RenderComponent {
     super();
     this.rtree = rbush();
     this.viewport = { minX: -10000, maxX: 10000, minY: -10000, maxY: 10000 };
+    this.offset = { x: 0, y: 0 };
     this.refreshVisibleItems();
   }
 
@@ -110,7 +114,7 @@ export class TokenLayerComponent extends RenderComponent {
     this.initGL();
   }
 
-  initGL() {
+  private initGL() {
     this.programHandle = GLUtils.createProgramFromSrc(this.gl, tokenTextureVertexShaderSrc, tokenTextureFragmentShaderSrc);
 
     if (this.programHandle !== null) {
@@ -201,7 +205,8 @@ export class TokenLayerComponent extends RenderComponent {
     this.gl.vertexAttribPointer(this.texcoordLocation, 2, this.gl.FLOAT, false, 0, 0);
 
     let matrix = m4.ortho(0, this.gl.canvas.width, this.gl.canvas.height, 0, -1, 1);
-    matrix = m4.translate(matrix, [item.token.x, item.token.y, 0]);
+    // Since +y is downward, we need to invert the y axis
+    matrix = m4.translate(matrix, [item.token.x + this.offset.x, this.gl.canvas.height - item.token.height - item.token.y + this.offset.y, 0]);
     matrix = m4.scale(matrix, [item.token.width, item.token.height, 1]);
 
     this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
@@ -261,9 +266,6 @@ export class TokenLayerComponent extends RenderComponent {
     // Refresh visibility list
     this.refreshVisibleItems();
 
-    // Refresh visibility list
-    this.refreshVisibleItems();
-
     // Load textures for visible items
     this.loadVisibleTextures();
   }
@@ -272,6 +274,17 @@ export class TokenLayerComponent extends RenderComponent {
   // This makes rendering faster at the expense of memory, since a tree search is not always needed every frame
   private refreshVisibleItems(): void {
     this.visibleItems = this.rtree.search(this.viewport);
+  }
+
+  public adjustViewport(viewport: BBox, offset: { x: number; y: number }): void {
+    this.viewport = viewport;
+    this.offset = offset;
+
+    // Refresh visibility list
+    this.refreshVisibleItems();
+
+    // Load textures for visible items
+    this.loadVisibleTextures();
   }
 
   private loadVisibleTextures(forceReload: boolean = false) {

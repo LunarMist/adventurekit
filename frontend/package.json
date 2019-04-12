@@ -28,6 +28,7 @@
     "@types/rbush": "^2.0.2",
     "@types/shortid": "0.0.29",
     "@types/socket.io-client": "^1.4.32",
+    "@types/webgl2": "0.0.4",
     "axios": "^0.18.0",
     "localforage": "^1.7.3",
     "protobufjs": "^6.8.8",

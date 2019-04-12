@@ -31,17 +31,32 @@ export class GridPatternComponent extends RenderComponent {
 
     this.io.dispatcher.addHandler(IOEvent.EventType.PointerMove, event => {
       if (this.io.state.pointerDown[MouseCodes.LeftButton]) {
-        this.gridOffset[0] += (this.prevPointerXY.x - event.offsetX);
-        this.gridOffset[1] -= (this.prevPointerXY.y - event.offsetY);
+        this.gridOffset[0] += (event.offsetX - this.prevPointerXY.x);
+        this.gridOffset[1] += (event.offsetY - this.prevPointerXY.y);
         this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
+        this.adjustTokenViewport();
         return true;
       }
       this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
       return false;
     });
 
+    this.io.dispatcher.addHandler(IOEvent.EventType.Resized, event => {
+      this.adjustTokenViewport();
+      return false;
+    });
+
     this.initGL();
     super.init();
+  }
+
+  adjustTokenViewport() {
+    this.tokenLayerComponent.adjustViewport({
+      minX: -this.gridOffset[0],
+      maxX: -this.gridOffset[0] + this.gl.canvas.width,
+      minY: this.gridOffset[1],
+      maxY: this.gridOffset[1] + this.gl.canvas.height,
+    }, { x: this.gridOffset[0], y: this.gridOffset[1] });
   }
 
   initGL(): void {

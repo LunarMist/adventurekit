@@ -17,6 +17,7 @@ import { ESGameClient } from 'Event/es-game-client';
 import { WebGLDebugUtils } from 'GL/debug/webgl-debug';
 
 const GL_DEBUG_ENABLED = false;
+const GL_DEBUG_LOG_CALLS = false;
 
 export class RenderLoop {
   private done: boolean = false;
@@ -50,7 +51,7 @@ export class RenderLoop {
 
     // https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     const g = canvas.getContext('webgl', { alpha: false });
-    const newGl = GL_DEBUG_ENABLED ? WebGLDebugUtils.makeDebugContext(g) : g;
+    const newGl = GL_DEBUG_ENABLED ? (GL_DEBUG_LOG_CALLS ? WebGLDebugUtils.makeDebugContext(g, console.error, console.log) : WebGLDebugUtils.makeDebugContext(g)) : g;
     if (newGl === null) {
       throw Error('Gl context cannot be null');
     }
@@ -117,7 +118,7 @@ export class RenderLoop {
     console.log('RenderLoop.initFromLostContext()');
 
     const g = this.canvas.getContext('webgl', { alpha: false });
-    const newGl = GL_DEBUG_ENABLED ? WebGLDebugUtils.makeDebugContext(g) : g;
+    const newGl = GL_DEBUG_ENABLED ? (GL_DEBUG_LOG_CALLS ? WebGLDebugUtils.makeDebugContext(g, console.error, console.log) : WebGLDebugUtils.makeDebugContext(g)) : g;
     if (newGl === null) {
       throw Error('Gl context cannot be null');
     } else {
