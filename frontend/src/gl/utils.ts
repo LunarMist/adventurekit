@@ -1,3 +1,5 @@
+import { BufferInfo, ProgramInfo } from 'twgl.js';
+
 export function compileShader(gl: WebGLRenderingContext, shaderSource: string, shaderType: number): WebGLShader | null {
   const shader = gl.createShader(shaderType);
   if (shader === null) {
@@ -40,4 +42,19 @@ export function createProgramFromSrc(gl: WebGLRenderingContext, vertexShaderSrc:
   const fs = compileShader(gl, fragmentShaderSrc, gl.FRAGMENT_SHADER);
   // TODO: Do I need to unlink and destroy shaders? How about on lost context?
   return createProgram(gl, vs, fs);
+}
+
+export function deleteProgramInfo(gl: WebGLRenderingContext, programInfo: ProgramInfo | null) {
+  if (programInfo) {
+    gl.deleteProgram(programInfo.program);
+  }
+}
+
+export function deleteBufferInfo(gl: WebGLRenderingContext, bufferInfo: BufferInfo | null) {
+  if (bufferInfo && bufferInfo.attribs) {
+    Object.values(bufferInfo.attribs).forEach(v => gl.deleteBuffer(v.buffer));
+    if (bufferInfo.indices) {
+      gl.deleteBuffer(bufferInfo.indices);
+    }
+  }
 }

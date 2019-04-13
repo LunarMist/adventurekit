@@ -1,6 +1,6 @@
 import { TokenProto } from 'rpgcore-common/es-proto';
 import { EventAggCategories, EventCategories } from 'rpgcore-common/es';
-import { m4 } from 'twgl.js';
+import * as twgl from 'twgl.js';
 import rbush from 'rbush';
 
 import { RenderComponent } from 'GL/render/renderable';
@@ -8,7 +8,12 @@ import * as GLUtils from 'GL/utils';
 import RBush = rbush.RBush;
 import BBox = rbush.BBox;
 
-// (x,y) is bottom-left
+/**
+ * A {@link TokenItem} is used by an rtree for bounding box spacial information.
+ * The bounding box is rooted at the bottom left, and we assume a cartesian coordinate system.
+ * This is important, because for webgl rendering, we flip the ortho matrix on the y axis (which normally has origin at top left).
+ * This ensures that we naturally line up the bounding boxes roots without the need to offset height.
+ */
 class TokenItem implements BBox {
   token: TokenProto.Token;
   minX: number;
@@ -51,31 +56,29 @@ const tokenTextureFragmentShaderSrc = `
   }
 `;
 
+const GRID_LEAD_MARGIN = 300;
+
+/**
+ * Important notes:
+ *  - Expects a cartesian coordinate system (where +x and +y is left and up, respectively)
+ *  - Bounding boxes are rooted at bottom left
+ */
 export class TokenLayerComponent extends RenderComponent {
   private readonly rtree: RBush<TokenItem>;
-  private viewport: BBox;
-  // (x,y) is bottom-left
-  private offset: { x: number; y: number };
+  private viewport: BBox; // rooted at bottom-left
+  private gridOffset: { x: number; y: number };
   private visibleItems: TokenItem[] = [];
 
-  // Gl stuff
-  private programHandle: WebGLProgram | null = null;
+  // GL stuff
   private tokenTextures = new Map<string, WebGLTexture | null>();
-
-  private positionLocation: GLint = -1;
-  private texcoordLocation: GLint = -1;
-  private matrixLocation: WebGLUniformLocation | null = null;
-  private textureLocation: WebGLUniformLocation | null = null;
-
-  private positionBuffer: WebGLBuffer | null = null;
-  private texcoordBuffer: WebGLBuffer | null = null;
+  private programInfo: twgl.ProgramInfo | null = null;
+  private bufferInfo: twgl.BufferInfo | null = null;
 
   constructor() {
     super();
     this.rtree = rbush();
     this.viewport = { minX: -10000, maxX: 10000, minY: -10000, maxY: 10000 };
-    this.offset = { x: 0, y: 0 };
-    this.refreshVisibleItems();
+    this.gridOffset = { x: 0, y: 0 };
   }
 
   init(): void {
@@ -86,6 +89,7 @@ export class TokenLayerComponent extends RenderComponent {
       console.log('\t', this.es.aggs.tokenSet);
 
       if (!event.id) {
+        console.warn('Could not find token id in event data');
         return;
       }
       const token = this.es.aggs.tokenSet.tokens[event.id];
@@ -115,38 +119,16 @@ export class TokenLayerComponent extends RenderComponent {
   }
 
   private initGL() {
-    this.programHandle = GLUtils.createProgramFromSrc(this.gl, tokenTextureVertexShaderSrc, tokenTextureFragmentShaderSrc);
+    this.programInfo = twgl.createProgramInfo(this.gl, [tokenTextureVertexShaderSrc, tokenTextureFragmentShaderSrc]);
 
-    if (this.programHandle !== null) {
-      this.positionLocation = this.gl.getAttribLocation(this.programHandle, 'a_position');
-      this.texcoordLocation = this.gl.getAttribLocation(this.programHandle, 'a_texcoord');
-      this.matrixLocation = this.gl.getUniformLocation(this.programHandle, 'u_matrix');
-      this.textureLocation = this.gl.getUniformLocation(this.programHandle, 'u_texture');
-    }
-
-    // Create a buffer.
-    this.positionBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
-      0, 0,
-      0, 1,
-      1, 0,
-      1, 0,
-      0, 1,
-      1, 1,
-    ]), this.gl.STATIC_DRAW);
-
-    // Create a buffer for texture coords
-    this.texcoordBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texcoordBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
-      0, 0,
-      0, 1,
-      1, 0,
-      1, 0,
-      0, 1,
-      1, 1,
-    ]), this.gl.STATIC_DRAW);
+    this.bufferInfo = twgl.createBufferInfoFromArrays(this.gl, {
+      a_position: {
+        numComponents: 2, data: new Float32Array([0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1]),
+      },
+      a_texcoord: {
+        numComponents: 2, data: new Float32Array([0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0]),
+      },
+    });
   }
 
   initFromLostContext(): void {
@@ -155,22 +137,14 @@ export class TokenLayerComponent extends RenderComponent {
   }
 
   destroy(): void {
-    this.gl.deleteProgram(this.programHandle);
-    this.programHandle = null;
-
     this.tokenTextures.forEach(v => this.gl.deleteTexture(v));
     this.tokenTextures.clear();
 
-    this.positionLocation = -1;
-    this.texcoordLocation = -1;
-    this.matrixLocation = null;
-    this.textureLocation = null;
+    GLUtils.deleteProgramInfo(this.gl, this.programInfo);
+    this.programInfo = null;
 
-    this.gl.deleteBuffer(this.positionBuffer);
-    this.positionBuffer = null;
-
-    this.gl.deleteBuffer(this.texcoordBuffer);
-    this.texcoordBuffer = null;
+    GLUtils.deleteBufferInfo(this.gl, this.bufferInfo);
+    this.bufferInfo = null;
   }
 
   render(): void {
@@ -185,7 +159,20 @@ export class TokenLayerComponent extends RenderComponent {
   }
 
   private drawToken(item: TokenItem, texture: WebGLTexture | null) {
-    this.gl.activeTexture(this.gl.TEXTURE0);
+    if (!this.programInfo || !this.bufferInfo) {
+      throw Error('Program info or buffer info is null');
+    }
+
+    const ortho = twgl.m4.ortho(0, this.gl.canvas.width, this.gl.canvas.height, 0, -1, 1);
+    // Webgl has the origin at the top-left and +y goes down
+    // Thus, to flip the y axis to get it into our coordinate system, we scale y by -1
+    // This has the effect of flipping all vertices, so be sure to change the vertices/uv coordinates as appropriate
+    const scale = twgl.m4.scale(twgl.m4.identity(), [1, -1, 1]);
+    let matrix = twgl.m4.multiply(scale, ortho);
+    matrix = twgl.m4.translate(matrix, [item.token.x + this.gridOffset.x, item.token.y + this.gridOffset.y, 0]);
+    // The square we use is a unit box, so we can scale it directly to get the desired size
+    matrix = twgl.m4.scale(matrix, [item.token.width, item.token.height, 1]);
+
     this.gl.enable(this.gl.BLEND);
     this.gl.blendEquation(this.gl.FUNC_ADD);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
@@ -193,25 +180,15 @@ export class TokenLayerComponent extends RenderComponent {
     this.gl.disable(this.gl.DEPTH_TEST);
     this.gl.disable(this.gl.SCISSOR_TEST);
 
-    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-    this.gl.useProgram(this.programHandle);
+    this.gl.useProgram(this.programInfo.program);
 
-    // Setup the attributes to pull data from our buffers
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    this.gl.enableVertexAttribArray(this.positionLocation);
-    this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texcoordBuffer);
-    this.gl.enableVertexAttribArray(this.texcoordLocation);
-    this.gl.vertexAttribPointer(this.texcoordLocation, 2, this.gl.FLOAT, false, 0, 0);
+    twgl.setBuffersAndAttributes(this.gl, this.programInfo, this.bufferInfo);
+    twgl.setUniforms(this.programInfo, {
+      u_matrix: matrix,
+      u_texture: texture,
+    });
 
-    let matrix = m4.ortho(0, this.gl.canvas.width, this.gl.canvas.height, 0, -1, 1);
-    // Since +y is downward, we need to invert the y axis
-    matrix = m4.translate(matrix, [item.token.x + this.offset.x, this.gl.canvas.height - item.token.height - item.token.y + this.offset.y, 0]);
-    matrix = m4.scale(matrix, [item.token.width, item.token.height, 1]);
-
-    this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
-    this.gl.uniform1i(this.textureLocation, 0);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+    twgl.drawBufferInfo(this.gl, this.bufferInfo);
   }
 
   private processAgg(tokenSet: TokenProto.TokenSet) {
@@ -241,7 +218,7 @@ export class TokenLayerComponent extends RenderComponent {
 
     // Load single texture
     if (!this.tokenTextures.has(token.url)) {
-      this.tokenTextures.set(token.url, this.loadTexture(token.url));
+      this.loadTexture(token.url, this.tokenTextures);
     }
   }
 
@@ -255,7 +232,7 @@ export class TokenLayerComponent extends RenderComponent {
 
     // Load single texture
     if (!this.tokenTextures.has(token.url)) {
-      this.tokenTextures.set(token.url, this.loadTexture(token.url));
+      this.loadTexture(token.url, this.tokenTextures);
     }
   }
 
@@ -276,12 +253,25 @@ export class TokenLayerComponent extends RenderComponent {
     this.visibleItems = this.rtree.search(this.viewport);
   }
 
-  public adjustViewport(viewport: BBox, offset: { x: number; y: number }): void {
-    this.viewport = viewport;
-    this.offset = offset;
+  public adjustViewport(gridOffsetX: number, gridOffsetY: number, width: number, height: number): void {
+    // The viewport moves in the OPPOSITE direction of the grid
+    // The viewport is rooted at the bottom-left
+    // Also give some lead room to allow for the textures to be pre-fetched and pre-loaded by the time they come into sight
+    this.viewport = {
+      minX: -gridOffsetX - GRID_LEAD_MARGIN,
+      maxX: -gridOffsetX + width + GRID_LEAD_MARGIN,
+      minY: -gridOffsetY - GRID_LEAD_MARGIN,
+      maxY: -gridOffsetY + height + GRID_LEAD_MARGIN,
+    };
+    this.gridOffset = {
+      x: gridOffsetX,
+      y: gridOffsetY,
+    };
 
     // Refresh visibility list
     this.refreshVisibleItems();
+
+    console.log(this.viewport, this.gridOffset, this.visibleItems);
 
     // Load textures for visible items
     this.loadVisibleTextures();
@@ -302,7 +292,7 @@ export class TokenLayerComponent extends RenderComponent {
         newTexturesMap.set(item.token.url, existingTexture);
       } else {
         // We have to load it
-        newTexturesMap.set(item.token.url, this.loadTexture(item.token.url));
+        this.loadTexture(item.token.url, newTexturesMap);
       }
     });
 
@@ -313,38 +303,19 @@ export class TokenLayerComponent extends RenderComponent {
     this.tokenTextures = newTexturesMap;
   }
 
-  private loadTexture(src: string, texture: WebGLTexture | null = null): WebGLTexture | null {
-    const newTexture = texture || this.gl.createTexture();
-    this.gl.bindTexture(this.gl.TEXTURE_2D, newTexture);
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
-
-    const image = new Image();
-    image.onload = e => {
-      this.gl.bindTexture(this.gl.TEXTURE_2D, newTexture);
-      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
-
-      // WebGL has different requirements for power of 2 images vs non power of 2 images
-      if (this.isPowerOf2(image.width) && this.isPowerOf2(image.height)) {
-        this.gl.generateMipmap(this.gl.TEXTURE_2D);
-      } else {
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+  private loadTexture(src: string, map: Map<string, WebGLTexture | null>) {
+    const newTexture = twgl.createTexture(this.gl, { src }, err => {
+      if (err) {
+        console.warn(`Unable to load image at ${src}. Using placeholder image.`);
+        twgl.createTexture(this.gl, { src: this.placeholderImageB64 }, (err, defaultTexture) => {
+          if (err) {
+            throw Error('Unable to load placeholder image');
+          }
+          map.set(src, defaultTexture);
+        });
       }
-    };
-    image.onerror = e => {
-      console.warn(`Unable to load image at ${src}. Using placeholder image.`);
-      if (src === this.placeholderImageB64) {
-        throw Error('Unable to load place image');
-      }
-      this.loadTexture(this.placeholderImageB64, newTexture);
-    };
-    image.src = src;
-    return newTexture;
-  }
-
-  private isPowerOf2(value: number) {
-    return (value & (value - 1)) === 0;
+    });
+    map.set(src, newTexture);
   }
 
   // tslint:disable-next-line:max-line-length

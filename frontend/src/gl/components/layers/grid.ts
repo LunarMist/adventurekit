@@ -1,20 +1,73 @@
-import * as GLUtils from 'GL/utils';
-import { MouseCodes } from 'IO/codes';
+import * as twgl from 'twgl.js';
+
+import { KeyCodes, MouseCodes } from 'IO/codes';
 import * as IOEvent from 'IO/event';
+import * as GLUtils from 'GL/utils';
 import { RenderComponent } from 'GL/render/renderable';
 import { TokenLayerComponent } from 'GL/components/layers/token';
+
+const gridVertexShaderSrc = `
+  attribute vec4 a_position;
+  void main() {
+    gl_Position = a_position;
+  }
+`;
+
+const gridFragmentShaderSrc = `
+  precision mediump float;
+
+  uniform vec2 u_tilesize; // [width, height]
+  uniform vec2 u_gridoffset; // [x, y]
+  uniform vec2 u_gridsel; // [x, y]
+  vec4 bgColor = vec4(1.0, 1.0, 1.0, 1.0);
+  vec4 lineColor = vec4(0.0, 0.0, 0.0, 0.5);
+  vec4 selectedColor = vec4(0.0, 1.0, 0.0, 0.5);
+
+  void main() {
+    float x = gl_FragCoord.x + u_gridoffset[0];
+    float y = gl_FragCoord.y + u_gridoffset[1];
+    int xMod = int(mod(x, u_tilesize[0]));
+    int yMod = int(mod(y, u_tilesize[1]));
+
+    float columnId = u_gridsel[0];
+    float rowId = u_gridsel[1];
+
+    // [x1, x2, y1, y2]
+    vec4 box = vec4(
+      columnId * u_tilesize[0] - u_gridoffset[0],
+      (columnId + 1.0) * u_tilesize[0] - u_gridoffset[0],
+      rowId * u_tilesize[1] - u_gridoffset[1],
+      (rowId + 1.0) * u_tilesize[1] - u_gridoffset[1]
+    );
+
+    bool selected = gl_FragCoord.x >= box[0]
+      && gl_FragCoord.x <= box[1]
+      && gl_FragCoord.y >= box[2]
+      && gl_FragCoord.y <= box[3];
+
+    if (selected) {
+      gl_FragColor = selectedColor;
+    } else if (xMod == 0 || yMod == 0) {
+      gl_FragColor = lineColor;
+    } else {
+      gl_FragColor = bgColor;
+    }
+  }
+`;
 
 // TODO: Rewrite more efficiently
 // Should not need to be a full-screen fragment shader
 // Use lines instead
 export class GridPatternComponent extends RenderComponent {
-  private program: WebGLProgram | null = null;
-  private readonly vertices = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
   private readonly tileSize = [50.0, 50.0]; // [width, height]
   private gridOffset = [0.0, 0.0]; // [x, y]
   private prevPointerXY = { x: 0.0, y: 0.0 };
 
   private readonly tokenLayerComponent: TokenLayerComponent;
+
+  // GL stuff
+  private programInfo: twgl.ProgramInfo | null = null;
+  private bufferInfo: twgl.BufferInfo | null = null;
 
   constructor() {
     super();
@@ -32,7 +85,7 @@ export class GridPatternComponent extends RenderComponent {
     this.io.dispatcher.addHandler(IOEvent.EventType.PointerMove, event => {
       if (this.io.state.pointerDown[MouseCodes.LeftButton]) {
         this.gridOffset[0] += (event.offsetX - this.prevPointerXY.x);
-        this.gridOffset[1] += (event.offsetY - this.prevPointerXY.y);
+        this.gridOffset[1] -= (event.offsetY - this.prevPointerXY.y);
         this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
         this.adjustTokenViewport();
         return true;
@@ -41,75 +94,47 @@ export class GridPatternComponent extends RenderComponent {
       return false;
     });
 
+    this.io.dispatcher.addHandler(IOEvent.EventType.KeyDown, event => {
+      if (event.keyCode === KeyCodes.RightArrow) {
+        this.gridOffset[0] -= 5;
+      } else if (event.keyCode === KeyCodes.LeftArrow) {
+        this.gridOffset[0] += 5;
+      } else if (event.keyCode === KeyCodes.UpArrow) {
+        this.gridOffset[1] -= 5;
+      } else if (event.keyCode === KeyCodes.DownArrow) {
+        this.gridOffset[1] += 5;
+      }
+      if (event.keyCode === KeyCodes.RightArrow || event.keyCode === KeyCodes.LeftArrow
+        || event.keyCode === KeyCodes.UpArrow || event.keyCode === KeyCodes.DownArrow) {
+        this.adjustTokenViewport();
+        return true;
+      }
+      return false;
+    });
+
     this.io.dispatcher.addHandler(IOEvent.EventType.Resized, event => {
       this.adjustTokenViewport();
       return false;
     });
+
+    this.adjustTokenViewport();
 
     this.initGL();
     super.init();
   }
 
   adjustTokenViewport() {
-    this.tokenLayerComponent.adjustViewport({
-      minX: -this.gridOffset[0],
-      maxX: -this.gridOffset[0] + this.gl.canvas.width,
-      minY: this.gridOffset[1],
-      maxY: this.gridOffset[1] + this.gl.canvas.height,
-    }, { x: this.gridOffset[0], y: this.gridOffset[1] });
+    this.tokenLayerComponent.adjustViewport(this.gridOffset[0], this.gridOffset[1], this.gl.canvas.width, this.gl.canvas.height);
   }
 
   initGL(): void {
-    const vs = `
-      attribute vec4 aVertexPosition;
-      void main() {
-        gl_Position = aVertexPosition;
-      }
-    `;
+    this.programInfo = twgl.createProgramInfo(this.gl, [gridVertexShaderSrc, gridFragmentShaderSrc]);
 
-    const fs = `
-      precision mediump float;
-
-      uniform vec2 tileSize; // [width, height]
-      uniform vec2 gridOffset; // [x, y]
-      uniform vec2 gridSelection; // [x, y]
-      vec4 bgColor = vec4(1.0, 1.0, 1.0, 1.0);
-      vec4 lineColor = vec4(0.0, 0.0, 0.0, 0.5);
-      vec4 selectedColor = vec4(0.0, 1.0, 0.0, 0.5);
-
-      void main() {
-        float x = gl_FragCoord.x + gridOffset[0];
-        float y = gl_FragCoord.y + gridOffset[1];
-        int xMod = int(mod(x, tileSize[0]));
-        int yMod = int(mod(y, tileSize[1]));
-
-        float columnId = gridSelection[0];
-        float rowId = gridSelection[1];
-
-        // [x1, x2, y1, y2]
-        vec4 box = vec4(
-          columnId * tileSize[0] - gridOffset[0],
-          (columnId + 1.0) * tileSize[0] - gridOffset[0],
-          rowId * tileSize[1] - gridOffset[1],
-          (rowId + 1.0) * tileSize[1] - gridOffset[1]
-        );
-
-        bool selected = gl_FragCoord.x >= box[0]
-          && gl_FragCoord.x <= box[1]
-          && gl_FragCoord.y >= box[2]
-          && gl_FragCoord.y <= box[3];
-
-        if (selected) {
-          gl_FragColor = selectedColor;
-        } else if (xMod == 0 || yMod == 0) {
-          gl_FragColor = lineColor;
-        } else {
-          gl_FragColor = bgColor;
-        }
-      }
-    `;
-
-    this.program = GLUtils.createProgramFromSrc(this.gl, vs, fs);
+    this.bufferInfo = twgl.createBufferInfoFromArrays(this.gl, {
+      a_position: {
+        numComponents: 2, data: new Float32Array([1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0]),
+      },
+    });
   }
 
   initFromLostContext(): void {
@@ -118,41 +143,36 @@ export class GridPatternComponent extends RenderComponent {
   }
 
   render(): void {
-    if (this.program === null) {
-      return;
+    if (!this.programInfo || !this.bufferInfo) {
+      throw Error('Program info or buffer info is null');
     }
 
     const scaleFactor = window.devicePixelRatio || 1;
-
-    this.gl.useProgram(this.program);
-
-    const vertexBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertexBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.vertices), this.gl.STATIC_DRAW);
-
-    const aVertexPosition = this.gl.getAttribLocation(this.program, 'aVertexPosition');
-    this.gl.enableVertexAttribArray(aVertexPosition);
-    this.gl.vertexAttribPointer(aVertexPosition, 2, this.gl.FLOAT, false, 0, 0);
-
-    const tileSize = this.gl.getUniformLocation(this.program, 'tileSize');
-    this.gl.uniform2fv(tileSize, this.tileSize);
-
-    const gridOffset = this.gl.getUniformLocation(this.program, 'gridOffset');
-    const gridOff = [(this.gridOffset[0] * scaleFactor) % this.tileSize[0], (this.gridOffset[1] * scaleFactor) % this.tileSize[1]];
-    this.gl.uniform2fv(gridOffset, gridOff);
-
-    const gridSelection = this.gl.getUniformLocation(this.program, 'gridSelection');
+    const gridOff = [(-this.gridOffset[0] * scaleFactor) % this.tileSize[0], (-this.gridOffset[1] * scaleFactor) % this.tileSize[1]];
     const selXY = [this.io.state.pointerX * scaleFactor, (this.gl.canvas.clientHeight - this.io.state.pointerY) * scaleFactor];
     const gridSel = [this.divToInf(selXY[0] + gridOff[0], this.tileSize[0]), this.divToInf(selXY[1] + gridOff[1], this.tileSize[1])];
-    this.gl.uniform2fv(gridSelection, gridSel);
 
-    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, this.vertices.length / 2);
+    this.gl.useProgram(this.programInfo.program);
+
+    twgl.setBuffersAndAttributes(this.gl, this.programInfo, this.bufferInfo);
+    twgl.setUniforms(this.programInfo, {
+      u_tilesize: this.tileSize,
+      u_gridoffset: gridOff,
+      u_gridsel: gridSel,
+    });
+
+    twgl.drawBufferInfo(this.gl, this.bufferInfo, this.gl.TRIANGLE_STRIP);
+
     super.render();
   }
 
   destroy(): void {
-    this.gl.deleteProgram(this.program);
-    this.program = null;
+    GLUtils.deleteProgramInfo(this.gl, this.programInfo);
+    this.programInfo = null;
+
+    GLUtils.deleteBufferInfo(this.gl, this.bufferInfo);
+    this.bufferInfo = null;
+
     super.destroy();
   }
 
