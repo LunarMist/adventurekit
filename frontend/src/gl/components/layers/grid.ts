@@ -79,13 +79,30 @@ export class GridPatternComponent extends RenderComponent {
     this.io.dispatcher.addHandler(IOEvent.EventType.PointerDown, event => {
       // For touch events: To prevent jank, reset the prev xy
       this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
+      if (this.tokenLayerComponent.pickStart(event.offsetX, event.offsetY)) {
+        return true;
+      }
+      return false;
+    });
+
+    this.io.dispatcher.addHandler(IOEvent.EventType.PointerUp, event => {
+      if (this.tokenLayerComponent.pickEnd()) {
+        return true;
+      }
       return false;
     });
 
     this.io.dispatcher.addHandler(IOEvent.EventType.PointerMove, event => {
+      const dx = (event.offsetX - this.prevPointerXY.x);
+      // dy is inverted because +y is down (instead of up)
+      const dy = -(event.offsetY - this.prevPointerXY.y);
+      if (this.tokenLayerComponent.pickDrag(dx, dy)) {
+        this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
+        return true;
+      }
       if (this.io.state.pointerDown[MouseCodes.LeftButton]) {
-        this.gridOffset[0] += (event.offsetX - this.prevPointerXY.x);
-        this.gridOffset[1] -= (event.offsetY - this.prevPointerXY.y);
+        this.gridOffset[0] += dx;
+        this.gridOffset[1] += dy;
         this.prevPointerXY = { x: event.offsetX, y: event.offsetY };
         this.adjustTokenViewport();
         return true;

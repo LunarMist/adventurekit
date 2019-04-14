@@ -1,4 +1,5 @@
 import { FontData } from 'rpgcore-common/types';
+import * as URI from 'urijs';
 
 import { IOLifeCycle } from 'IO/lifecycle';
 import * as ImGui from 'ImGui/imgui';
@@ -95,10 +96,31 @@ export class RenderLoop {
       console.log('Setting initial state:', initState);
       this.inMemorySharedStore.userProfile = initState.userProfile;
       this.inMemorySharedStore.roomId = initState.roomId;
-      if (initState.roomId !== -1) {
-        this.esClient.requestWorldState()
-          .then(seqId => this.esClient.init(seqId))
-          .catch(console.error);
+
+      // Check if we have a room name encoded in the parameters
+      // TODO: Do we allow passwords in query params?
+      const queryParams = URI.parseQuery(URI.parse(window.location.href).query);
+      if ('room' in queryParams) {
+        const roomID = Number(queryParams['room']);
+        this.gameNetClient.sendJoinRoomRequest(roomID, '')
+          .then((status: boolean) => {
+            if (status) {
+              this.inMemorySharedStore.roomId = roomID;
+              this.esClient.requestWorldState()
+                .then(seqId => this.esClient.init(seqId))
+                .catch(console.error);
+            } else {
+              // TODO: Don't do this
+              alert('Invalid room id or room requires a password');
+            }
+          });
+      } else {
+        // Request world state normally
+        if (initState.roomId !== -1) {
+          this.esClient.requestWorldState()
+            .then(seqId => this.esClient.init(seqId))
+            .catch(console.error);
+        }
       }
     });
 
@@ -230,7 +252,9 @@ export class RenderLoop {
     const avgFrameTime = this.prevFrameTimes.reduce((a, b) => a + b) / this.prevFrameTimes.length;
 
     ImGui.Text(`Logged in as: ${this.inMemorySharedStore.userProfile.username}`);
-    ImGui.Text(`Joined room: ${this.inMemorySharedStore.roomId}`);
+    if (ImGui.Button(`Joined room: ${this.inMemorySharedStore.roomId}`)) {
+      ImGui.SetClipboardText(this.inMemorySharedStore.roomId.toString());
+    }
     ImGui.Text(`Frame perf: ${avgFrameTime.toFixed(3)} ms`);
     ImGui.Text(`Application average ${(1000.0 / ImGui.GetIO().Framerate).toFixed(3)} ms/frame (${ImGui.GetIO().Framerate.toFixed(1)} FPS)`);
 

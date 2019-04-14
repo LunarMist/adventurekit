@@ -28,31 +28,69 @@ class TokenItem implements BBox {
     this.minY = this.token.y;
     this.maxY = this.token.y + this.token.height;
   }
+
+  hasSameId(other: TokenProto.Token | TokenItem | null): boolean {
+    if (other === null) {
+      return false;
+    }
+    if (other instanceof TokenItem) {
+      return this.token.id === other.token.id;
+    }
+    return this.token.id === other.id;
+  }
+
+  static compareTo(a: TokenItem, b: TokenItem): number {
+    if (a.token.z < b.token.z) {
+      return 1;
+    }
+    if (a.token.z > b.token.z) {
+      return -1;
+    }
+    return a.token.id - b.token.id;
+  }
+
+  static idEquals(a: TokenItem, b: TokenItem): boolean {
+    return a.hasSameId(b);
+  }
 }
 
 const tokenTextureVertexShaderSrc = `
   attribute vec4 a_position;
   attribute vec2 a_texcoord;
-
   uniform mat4 u_matrix;
-
   varying vec2 v_texcoord;
 
   void main() {
-     gl_Position = u_matrix * a_position;
-     v_texcoord = a_texcoord;
+    gl_Position = u_matrix * a_position;
+    v_texcoord = a_texcoord;
   }
 `;
 
 const tokenTextureFragmentShaderSrc = `
-  precision mediump float;
-
+  precision highp float;
   varying vec2 v_texcoord;
-
   uniform sampler2D u_texture;
 
   void main() {
-     gl_FragColor = texture2D(u_texture, v_texcoord);
+    gl_FragColor = texture2D(u_texture, v_texcoord);
+  }
+`;
+
+const highlightVertexShaderSrc = `
+  attribute vec4 a_position;
+  uniform mat4 u_matrix;
+
+  void main() {
+    gl_Position = u_matrix * a_position;
+  }
+`;
+
+const highlightFragmentShaderSrc = `
+  precision highp float;
+  uniform vec4 u_color;
+
+  void main() {
+    gl_FragColor = u_color;
   }
 `;
 
@@ -69,10 +107,15 @@ export class TokenLayerComponent extends RenderComponent {
   private gridOffset: { x: number; y: number };
   private visibleItems: TokenItem[] = [];
 
+  private pickedItem: TokenItem | null = null;
+
   // GL stuff
   private tokenTextures = new Map<string, WebGLTexture | null>();
   private programInfo: twgl.ProgramInfo | null = null;
   private bufferInfo: twgl.BufferInfo | null = null;
+
+  private highlightProgramInfo: twgl.ProgramInfo | null = null;
+  private highlightBufferInfo: twgl.BufferInfo | null = null;
 
   constructor() {
     super();
@@ -120,13 +163,19 @@ export class TokenLayerComponent extends RenderComponent {
 
   private initGL() {
     this.programInfo = twgl.createProgramInfo(this.gl, [tokenTextureVertexShaderSrc, tokenTextureFragmentShaderSrc]);
-
     this.bufferInfo = twgl.createBufferInfoFromArrays(this.gl, {
       a_position: {
         numComponents: 2, data: new Float32Array([0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1]),
       },
       a_texcoord: {
         numComponents: 2, data: new Float32Array([0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0]),
+      },
+    });
+
+    this.highlightProgramInfo = twgl.createProgramInfo(this.gl, [highlightVertexShaderSrc, highlightFragmentShaderSrc]);
+    this.highlightBufferInfo = twgl.createBufferInfoFromArrays(this.gl, {
+      a_position: {
+        numComponents: 2, data: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
       },
     });
   }
@@ -145,6 +194,12 @@ export class TokenLayerComponent extends RenderComponent {
 
     GLUtils.deleteBufferInfo(this.gl, this.bufferInfo);
     this.bufferInfo = null;
+
+    GLUtils.deleteProgramInfo(this.gl, this.highlightProgramInfo);
+    this.highlightProgramInfo = null;
+
+    GLUtils.deleteBufferInfo(this.gl, this.highlightBufferInfo);
+    this.highlightBufferInfo = null;
   }
 
   render(): void {
@@ -163,13 +218,17 @@ export class TokenLayerComponent extends RenderComponent {
       throw Error('Program info or buffer info is null');
     }
 
+    if (!this.highlightProgramInfo || !this.highlightBufferInfo) {
+      throw Error('Highlight program info or buffer info is null');
+    }
+
     const ortho = twgl.m4.ortho(0, this.gl.canvas.width, this.gl.canvas.height, 0, -1, 1);
     // Webgl has the origin at the top-left and +y goes down
     // Thus, to flip the y axis to get it into our coordinate system, we scale y by -1
     // This has the effect of flipping all vertices, so be sure to change the vertices/uv coordinates as appropriate
     const scale = twgl.m4.scale(twgl.m4.identity(), [1, -1, 1]);
-    let matrix = twgl.m4.multiply(scale, ortho);
-    matrix = twgl.m4.translate(matrix, [item.token.x + this.gridOffset.x, item.token.y + this.gridOffset.y, 0]);
+    const scaledOrtho = twgl.m4.multiply(scale, ortho);
+    let matrix = twgl.m4.translate(scaledOrtho, [item.token.x + this.gridOffset.x, item.token.y + this.gridOffset.y, 0]);
     // The square we use is a unit box, so we can scale it directly to get the desired size
     matrix = twgl.m4.scale(matrix, [item.token.width, item.token.height, 1]);
 
@@ -189,6 +248,19 @@ export class TokenLayerComponent extends RenderComponent {
     });
 
     twgl.drawBufferInfo(this.gl, this.bufferInfo);
+
+    // Draw border!
+    if (item.hasSameId(this.pickedItem)) {
+      this.gl.useProgram(this.highlightProgramInfo.program);
+
+      twgl.setBuffersAndAttributes(this.gl, this.highlightProgramInfo, this.highlightBufferInfo);
+      twgl.setUniforms(this.highlightProgramInfo, {
+        u_matrix: matrix,
+        u_color: [1, 0, 0, 1],
+      });
+
+      twgl.drawBufferInfo(this.gl, this.highlightBufferInfo, this.gl.LINE_LOOP);
+    }
   }
 
   private processAgg(tokenSet: TokenProto.TokenSet) {
@@ -224,7 +296,7 @@ export class TokenLayerComponent extends RenderComponent {
 
   private updateToken(token: TokenProto.Token) {
     // Remove and reinsert
-    this.rtree.remove(new TokenItem(token), (a, b) => a.token.id === b.token.id);
+    this.rtree.remove(new TokenItem(token), TokenItem.idEquals);
     this.rtree.insert(new TokenItem(token));
 
     // Refresh visibility list
@@ -238,7 +310,7 @@ export class TokenLayerComponent extends RenderComponent {
 
   private removeToken(token: TokenProto.Token) {
     // Remove from rtree
-    this.rtree.remove(new TokenItem(token), (a, b) => a.token.id === b.token.id);
+    this.rtree.remove(new TokenItem(token), TokenItem.idEquals);
 
     // Refresh visibility list
     this.refreshVisibleItems();
@@ -249,8 +321,62 @@ export class TokenLayerComponent extends RenderComponent {
 
   // We cache the list of visible items
   // This makes rendering faster at the expense of memory, since a tree search is not always needed every frame
+  // Ensure we sort on z order.
   private refreshVisibleItems(): void {
-    this.visibleItems = this.rtree.search(this.viewport);
+    this.visibleItems = this.rtree.search(this.viewport)
+      .sort(TokenItem.compareTo)
+      .reverse();
+  }
+
+  public pickStart(mouseX: number, mouseY: number): boolean {
+    const pickedItems = this.rtree.search({
+      minX: -this.gridOffset.x + mouseX,
+      maxX: -this.gridOffset.x + mouseX,
+      minY: -this.gridOffset.y + this.gl.canvas.height - mouseY,
+      maxY: -this.gridOffset.y + this.gl.canvas.height - mouseY,
+    });
+
+    if (pickedItems.length > 0) {
+      this.pickedItem = pickedItems.sort(TokenItem.compareTo)[0];
+      // Bring token to front
+      this.pickedItem.token.z = this.visibleItems.map(t => t.token.z).reduce((a, b) => Math.max(a, b)) + 1;
+      // We have to resort visible items
+      this.visibleItems = this.visibleItems.sort(TokenItem.compareTo).reverse();
+      return true;
+    }
+    return false;
+  }
+
+  public pickDrag(dx: number, dy: number): boolean {
+    if (this.pickedItem !== null) {
+      // Remove, update, reinsert
+      // Assume the new item ALWAYS stays visible in the viewport
+      this.rtree.remove(this.pickedItem, TokenItem.idEquals);
+      this.pickedItem.token.x += dx;
+      this.pickedItem.token.y += dy;
+      this.pickedItem = new TokenItem(this.pickedItem.token);
+      this.rtree.insert(this.pickedItem);
+      return true;
+    }
+    return false;
+  }
+
+  public pickEnd(): boolean {
+    if (this.pickedItem !== null) {
+      this.es.sendTokenUpdateRequest(this.pickedItem.token.id, { x: this.pickedItem.token.x, y: this.pickedItem.token.y, z: this.pickedItem.token.z });
+      this.pickedItem = null;
+      return true;
+    }
+    return false;
+  }
+
+  public pickDelete(): boolean {
+    if (this.pickedItem !== null) {
+      this.es.sendTokenDeleteRequest(this.pickedItem.token.id);
+      this.pickedItem = null;
+      return true;
+    }
+    return false;
   }
 
   public adjustViewport(gridOffsetX: number, gridOffsetY: number, width: number, height: number): void {
@@ -271,7 +397,7 @@ export class TokenLayerComponent extends RenderComponent {
     // Refresh visibility list
     this.refreshVisibleItems();
 
-    console.log(this.viewport, this.gridOffset, this.visibleItems);
+    // console.log(this.viewport, this.gridOffset, this.visibleItems);
 
     // Load textures for visible items
     this.loadVisibleTextures();

@@ -28,7 +28,9 @@ export class ManageTokensComponent extends WindowRenderComponent {
     if (ImGui.Button('Create Token')) {
       const randX = Math.random() * (this.gl.canvas.width - 100) + 100;
       const randY = Math.random() * (this.gl.canvas.height - 100) + 100;
-      this.es.sendTokenCreationRequest(this.labelBuffer.buffer, this.urlBuffer.buffer, this.editOwnersBuffer.buffer.split(','), randX, randY, 0, 50, 50);
+      const randW = Math.random() * (256 - 50) + 50;
+      const randH = Math.random() * (256 - 50) + 50;
+      this.es.sendTokenCreationRequest(this.labelBuffer.buffer, this.urlBuffer.buffer, this.editOwnersBuffer.buffer.split(','), randX, randY, 0, randW, randH);
     }
 
     ImGui.End();
