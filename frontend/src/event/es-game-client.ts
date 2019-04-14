@@ -39,7 +39,7 @@ export class ESGameClient extends ESClient {
       return;
     }
 
-    const obj = { ...this.aggs.tokenSet.tokens[id], ...opts, changeType: TokenProto.TokenChangeType.UPDATE };
+    const obj = { id, ...opts, changeType: TokenProto.TokenChangeType.UPDATE };
     const err = TokenProto.TokenChangeEvent.verify(obj);
     if (err) {
       throw Error(`Invalid message: ${err}`);
