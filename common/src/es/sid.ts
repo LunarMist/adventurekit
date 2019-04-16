@@ -2,7 +2,7 @@
  * Base sequence id utility class
  */
 abstract class Sid<T> {
-  constructor(readonly val: T) {
+  protected constructor(readonly val: T) {
 
   }
 

@@ -8,8 +8,8 @@ export class ManageTokensComponent extends WindowRenderComponent {
   protected readonly windowId: WindowId = WindowId.ManageTokens;
 
   private readonly labelBuffer = new ImGui.ImStringBuffer(MAX_LABEL_LENGTH, 'Twilight');
-  private readonly urlBuffer = new ImGui.ImStringBuffer(MAX_URL_LENGTH, 'http://localhost:9000/static/bundle/glob/images/twilight.jpg');
-  private readonly editOwnersBuffer = new ImGui.ImStringBuffer((LoginUtils.MAX_USERNAME_LENGTH + 1) * MAX_TOKEN_EDIT_OWNERS, 'Luney');
+  private readonly urlBuffer = new ImGui.ImStringBuffer(MAX_URL_LENGTH, '/static/bundle/glob/images/twilight.jpg');
+  private readonly editOwnersBuffer = new ImGui.ImStringBuffer((LoginUtils.MAX_USERNAME_LENGTH + 1) * MAX_TOKEN_EDIT_OWNERS, '*');
 
   render() {
     if (!this.isVisible) {
@@ -28,9 +28,8 @@ export class ManageTokensComponent extends WindowRenderComponent {
     if (ImGui.Button('Create Token')) {
       const randX = Math.random() * (this.gl.canvas.width - 100) + 100;
       const randY = Math.random() * (this.gl.canvas.height - 100) + 100;
-      const randW = Math.random() * (256 - 50) + 50;
-      const randH = Math.random() * (256 - 50) + 50;
-      this.es.sendTokenCreationRequest(this.labelBuffer.buffer, this.urlBuffer.buffer, this.editOwnersBuffer.buffer.split(','), randX, randY, 0, randW, randH);
+      const randWH = Math.random() * (256 - 50) + 50;
+      this.es.sendTokenCreationRequest(this.labelBuffer.buffer, this.urlBuffer.buffer, this.editOwnersBuffer.buffer.split(','), randX, randY, 0, randWH, randWH);
     }
 
     ImGui.End();

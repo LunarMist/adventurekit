@@ -98,7 +98,8 @@ export class RenderLoop {
       this.inMemorySharedStore.roomId = initState.roomId;
 
       // Check if we have a room name encoded in the parameters
-      // TODO: Do we allow passwords in query params?
+      // TODO: Do we allow passwords in query params? Or prompt for it?
+      // TODO: Ensure the room id parameter is persisted with login redirects
       const queryParams = URI.parseQuery(URI.parse(window.location.href).query);
       if ('room' in queryParams) {
         const roomID = Number(queryParams['room']);

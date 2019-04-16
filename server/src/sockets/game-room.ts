@@ -42,6 +42,7 @@ export class GameRoomSocketHandler {
 
     // Join the default room
     // This should be one of the first things done
+    // TODO: Move this to a client-side request/localstorage thing
     await this.joinDefaultRoom();
 
     this.net.listenChatMessage((message: string) => {
