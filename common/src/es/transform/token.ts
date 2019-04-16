@@ -58,12 +58,6 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
     if (data.url && data.url.length > MAX_URL_LENGTH) {
       throw Error('Url length too long');
     }
-    // Always add self as un-deletable edit owner
-    if (data.editOwners) {
-      if (data.editOwners.findIndex(value => value === this.authUser) === -1) {
-        data.editOwners.push(this.authUser);
-      }
-    }
     if (data.editOwners && data.editOwners.length > MAX_TOKEN_EDIT_OWNERS) {
       throw Error(`Too many edit owners: ${data.editOwners.length}`);
     }
@@ -99,10 +93,6 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
       obj.label = data.label || obj.label;
       obj.url = data.url || obj.url;
       if (data.editOwners && data.editOwners.length > 0) {
-        // Always add self as un-deletable edit owner
-        if (data.editOwners.findIndex(value => value === this.authUser) === -1) {
-          data.editOwners.push(this.authUser);
-        }
         obj.editOwners = data.editOwners;
       }
       obj.x = data.x || obj.x;
@@ -110,6 +100,9 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
       obj.z = data.z || obj.z;
       obj.width = data.width || obj.width;
       obj.height = data.height || obj.height;
+      if (obj.editOwners.length === 0) {
+        throw Error('Must have at least one edit owner');
+      }
       const err = Token.verify(obj);
       if (err) {
         throw Error(`Invalid message: ${err}`);
@@ -130,6 +123,12 @@ export class TokenAggregator implements Aggregator<TokenChangeEvent, TokenSet> {
   }
 
   private isAuthorized(data: Token) {
+    if (this.authUser === '*') {
+      return true;
+    }
+    if (data.editOwners.includes('*')) {
+      return true;
+    }
     return data.editOwners.includes(this.authUser);
   }
 }

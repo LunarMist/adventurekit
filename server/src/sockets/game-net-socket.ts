@@ -53,6 +53,10 @@ export class GameNetSocket {
     this.net.listenAuthenticated(NetEventType.WorldState, cb);
   }
 
+  listenClientReady(cb: () => void) {
+    this.net.listenAuthenticated(NetEventType.ClientReady, cb);
+  }
+
   /** Some basic pass-through **/
 
   get socketId(): string {

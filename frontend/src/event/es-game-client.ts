@@ -4,7 +4,6 @@ import { TokenAggregator } from 'rpgcore-common/es-transform';
 
 import { ESClient } from 'Event/es-client';
 import { GameNetClient } from 'Net/game-net-client';
-import InMemorySharedStore from 'Store/In-memory-shared-store';
 
 type AggData = {
   tokenSet: TokenProto.TokenSet;
@@ -13,7 +12,7 @@ type AggData = {
 export class ESGameClient extends ESClient {
   public aggs: AggData;
 
-  constructor(readonly netClient: GameNetClient, readonly mem: InMemorySharedStore) {
+  constructor(readonly netClient: GameNetClient) {
     super();
     this.aggs = this.getZeroAggs();
     this.netClient.listenEvent(e => this.pushEvent(e));
@@ -93,7 +92,7 @@ export class ESGameClient extends ESClient {
 
   private getZeroAggs() {
     return {
-      tokenSet: new TokenAggregator(this.mem.userProfile.username).zero(),
+      tokenSet: new TokenAggregator('*').zero(),
     };
   }
 
@@ -101,7 +100,7 @@ export class ESGameClient extends ESClient {
     switch (data.category) {
       case EventCategories.TokenChangeEvent:
         const changeEvent = TokenProto.TokenChangeEvent.decode(data.dataUi8);
-        new TokenAggregator(this.mem.userProfile.username, this.aggs.tokenSet)
+        new TokenAggregator('*', this.aggs.tokenSet)
           .agg(changeEvent);
         break;
       default:

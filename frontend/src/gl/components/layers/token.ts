@@ -127,7 +127,22 @@ export class TokenLayerComponent extends RenderComponent {
   init(): void {
     this.es.addEventListener(EventCategories.TokenChangeEvent, dataPack => {
       const event = TokenProto.TokenChangeEvent.decode(dataPack.dataUi8);
-      console.log('Token event listener:');
+      console.log('Token event listener (pre):');
+      console.log('\t', event);
+      console.log('\t', this.es.aggs.tokenSet);
+
+      if (!event.id) {
+        console.warn('Could not find token id in event data');
+        return;
+      }
+      const token = this.es.aggs.tokenSet.tokens[event.id];
+
+      if (event.changeType === TokenProto.TokenChangeType.UPDATE) {
+        this.updateTokenPre(token);
+      }
+    }, dataPack => {
+      const event = TokenProto.TokenChangeEvent.decode(dataPack.dataUi8);
+      console.log('Token event listener (post):');
       console.log('\t', event);
       console.log('\t', this.es.aggs.tokenSet);
 
@@ -142,7 +157,7 @@ export class TokenLayerComponent extends RenderComponent {
           this.addNewToken(token);
           break;
         case TokenProto.TokenChangeType.UPDATE:
-          this.updateToken(token);
+          this.updateTokenPost(token);
           break;
         case TokenProto.TokenChangeType.DELETE:
           this.removeToken(token);
@@ -294,9 +309,13 @@ export class TokenLayerComponent extends RenderComponent {
     }
   }
 
-  private updateToken(token: TokenProto.Token) {
-    // Remove and reinsert
+  private updateTokenPre(token: TokenProto.Token) {
+    // Remove
     this.rtree.remove(new TokenItem(token), TokenItem.idEquals);
+  }
+
+  private updateTokenPost(token: TokenProto.Token) {
+    // reinsert
     this.rtree.insert(new TokenItem(token));
 
     // Refresh visibility list
@@ -334,7 +353,7 @@ export class TokenLayerComponent extends RenderComponent {
       maxX: -this.gridOffset.x + mouseX,
       minY: -this.gridOffset.y + this.gl.canvas.height - mouseY,
       maxY: -this.gridOffset.y + this.gl.canvas.height - mouseY,
-    });
+    }).filter(v => v.token.editOwners.includes('*') || v.token.editOwners.includes(this.store.mem.userProfile.username));
 
     if (pickedItems.length > 0) {
       this.pickedItem = pickedItems.sort(TokenItem.compareTo)[0];

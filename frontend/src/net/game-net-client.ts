@@ -74,4 +74,8 @@ export class GameNetClient {
       cb(new ServerSentEvent(s.sequenceNumber, s.prevSequenceNumber, s.clientMessageId, s.category, s.version, s.data));
     });
   }
+
+  sendClientReady() {
+    this.client.sendSimpleMessage(NetEventType.ClientReady);
+  }
 }

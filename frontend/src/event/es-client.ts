@@ -4,6 +4,13 @@ import shortid from 'shortid';
 type EventListener = (dataPack: DataPack) => void;
 type ResyncListener = () => void;
 
+type EventListenerPair = { pre: EventListener; post: EventListener };
+
+// tslint:disable-next-line
+export const EventListenerNoop = (dataPack: DataPack) => {
+  // Nothing
+};
+
 export abstract class ESClient {
   private messageIdPrefix: string;
   private lastSentClientSequenceId: number = 0;
@@ -13,7 +20,7 @@ export abstract class ESClient {
   private lastSeenServerSequenceId: string = SID_FIRST;
   private pauseEventDispatching: boolean = true;
 
-  private readonly eventListeners: { [key: string]: EventListener[] } = {};
+  private readonly eventListeners: { [key: string]: EventListenerPair[] } = {};
   private readonly resyncListeners: { [key: string]: ResyncListener[] } = {};
 
   protected constructor() {
@@ -31,14 +38,14 @@ export abstract class ESClient {
     this.pauseEventDispatching = false;
   }
 
-  addEventListener(category: EventCategories, cb: EventListener): void {
+  addEventListener(category: EventCategories, pre: EventListener, post: EventListener): void {
     this.eventListeners[category] = this.eventListeners[category] || [];
-    this.eventListeners[category].push(cb);
+    this.eventListeners[category].push({ pre, post });
   }
 
-  removeEventListener(category: EventCategories, cb: EventListener): void {
+  removeEventListener(category: EventCategories, pre: EventListener, post: EventListener): void {
     this.eventListeners[category] = this.eventListeners[category] || [];
-    const loc = this.eventListeners[category].findIndex(v => v === cb);
+    const loc = this.eventListeners[category].findIndex(v => v.pre === pre && v.post === post);
     if (loc !== -1) {
       this.eventListeners[category].splice(loc, 1);
     }
@@ -143,14 +150,24 @@ export abstract class ESClient {
 
       console.log('\tLast server sid', this.lastSeenServerSequenceId);
 
+      const chain = this.eventListeners[event.category] || [];
+
+      // Dispatch pre handlers
+      for (const handlers of chain) {
+        try {
+          handlers.pre(event);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
       // Yay, we can agg the data now
       this.aggEventData(event);
 
-      // Dispatch
-      const chain = this.eventListeners[event.category] || [];
-      for (const handler of chain) {
+      // Dispatch post handlers
+      for (const handlers of chain) {
         try {
-          handler(event);
+          handlers.post(event);
         } catch (e) {
           console.error(e);
         }

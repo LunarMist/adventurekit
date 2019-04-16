@@ -48,7 +48,7 @@ export class RenderLoop {
     this.persistentGameSettings = new PersistentGameSettings();
     this.inMemorySharedStore = new InMemorySharedStore();
     this.gameMessageBroker = new GameMessagesBroker();
-    this.esClient = new ESGameClient(this.gameNetClient, this.inMemorySharedStore);
+    this.esClient = new ESGameClient(this.gameNetClient);
 
     // https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
     const g = canvas.getContext('webgl', { alpha: false });
@@ -132,6 +132,10 @@ export class RenderLoop {
       c.bindContext(this.gameContext);
       c.init();
     });
+
+    // At this point, we assume everything that is callback/event based has been set up
+    // So signal to the server we are ready
+    this.gameNetClient.sendClientReady();
 
     window.requestAnimationFrame(t => this.loop(t));
   }

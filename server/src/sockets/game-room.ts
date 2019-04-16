@@ -26,6 +26,12 @@ export class GameRoomSocketHandler {
       console.error(error);
     });
 
+    let clientIsReady = false;
+    // Let the client flag asap if it is ready
+    this.net.listenClientReady(() => {
+      clientIsReady = true;
+    });
+
     // Important: Ensure we are authenticated!
     if (!this.sess.authenticated) {
       // TODO: Relay back some type of message/alert?
@@ -100,11 +106,27 @@ export class GameRoomSocketHandler {
     // Setup event sourcing
     this.esServer.setup();
 
-    // TODO: Better way
+    // TODO: This is ugly af
+    // Last thing: Send over init state data
+    // Wait one second for the client to possibly get ready
     setTimeout(() => {
-      // Last thing: Send over init state data
-      this.net.sendInitState(this.getInitState());
-    }, 500);
+      // If the client has been flagged as ready, then send the init state immediately
+      // Otherwise, wait 2 seconds (arbitrarily), and then send it
+      if (clientIsReady) {
+        console.log('Sending init state: Client is ready');
+        this.net.sendInitState(this.getInitState());
+      } else {
+        console.log('Sending init state: Delayed');
+        setTimeout(() => {
+          if (clientIsReady) {
+            console.log('Client signaled ready in past 2 seconds');
+          } else {
+            console.log('Client not signaled ready. Sending anyways');
+          }
+          this.net.sendInitState(this.getInitState());
+        }, 2000);
+      }
+    }, 1000);
   }
 
   /*** Helper functions ***/
