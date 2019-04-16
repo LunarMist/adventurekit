@@ -1,4 +1,5 @@
 import { FontData } from 'rpgcore-common/types';
+import * as URI from 'urijs';
 
 import { IOLifeCycle } from 'IO/lifecycle';
 import * as ImGui from 'ImGui/imgui';
@@ -9,11 +10,15 @@ import { GameNetClient } from 'Net/game-net-client';
 import { SocketIONetClient } from 'Net/socketio-client';
 import { NetClient } from 'Net/net-client';
 import PersistentGameSettings from 'Store/Persistent-game-settings';
-import InMemoryGameSettings from 'Store/In-memory-game-settings';
+import InMemorySharedStore from 'Store/In-memory-shared-store';
 import { GameContext, RenderComponent } from 'GL/render/renderable';
-import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/font-selector';
+import { DEFAULT_ACTIVE_FONT, FontSelectorComponent } from 'GL/components/window/font-selector';
 import { GameMessagesBroker } from 'Message/game-messages';
-import { ESClient } from 'Event/es-client';
+import { ESGameClient } from 'Event/es-game-client';
+import { WebGLDebugUtils } from 'GL/debug/webgl-debug';
+
+const GL_DEBUG_ENABLED = false;
+const GL_DEBUG_LOG_CALLS = false;
 
 export class RenderLoop {
   private done: boolean = false;
@@ -24,8 +29,8 @@ export class RenderLoop {
   private readonly gameNetClient: GameNetClient;
   private readonly gameMessageBroker: GameMessagesBroker;
   private readonly persistentGameSettings: PersistentGameSettings;
-  private readonly inMemoryGameSettings: InMemoryGameSettings;
-  private readonly esClient: ESClient;
+  private readonly inMemorySharedStore: InMemorySharedStore;
+  private readonly esClient: ESGameClient;
 
   private readonly gameContext: GameContext;
   private readonly imGuiImplWebGl: ImGuiImplWebGl;
@@ -41,12 +46,13 @@ export class RenderLoop {
     this.netClient = new SocketIONetClient();
     this.gameNetClient = new GameNetClient(this.netClient);
     this.persistentGameSettings = new PersistentGameSettings();
-    this.inMemoryGameSettings = new InMemoryGameSettings();
+    this.inMemorySharedStore = new InMemorySharedStore();
     this.gameMessageBroker = new GameMessagesBroker();
-    this.esClient = new ESClient(0);
+    this.esClient = new ESGameClient(this.gameNetClient);
 
     // https://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png
-    const newGl = canvas.getContext('webgl', { alpha: false });
+    const g = canvas.getContext('webgl', { alpha: false });
+    const newGl = GL_DEBUG_ENABLED ? (GL_DEBUG_LOG_CALLS ? WebGLDebugUtils.makeDebugContext(g, console.error, console.log) : WebGLDebugUtils.makeDebugContext(g)) : g;
     if (newGl === null) {
       throw Error('Gl context cannot be null');
     }
@@ -54,7 +60,7 @@ export class RenderLoop {
     this.gameContext = {
       gl: newGl,
       net: this.gameNetClient,
-      store: { mem: this.inMemoryGameSettings, p: this.persistentGameSettings },
+      store: { mem: this.inMemorySharedStore, p: this.persistentGameSettings },
       broker: this.gameMessageBroker,
       io: { dispatcher: this.ioLifeCycle.dispatcher, state: this.ioLifeCycle.ioState },
       es: this.esClient,
@@ -68,12 +74,13 @@ export class RenderLoop {
     }
   }
 
-  run(): void {
+  run(): RenderLoop {
     if (typeof (window) === 'undefined') {
       throw new Error('window must be defined');
     }
 
     window.requestAnimationFrame(() => this.init());
+    return this;
   }
 
   private async init() {
@@ -86,18 +93,37 @@ export class RenderLoop {
     // Init net
     this.netClient.open();
     this.gameNetClient.listenInitState(initState => {
-      console.log('Setting initial state');
-      this.inMemoryGameSettings.userProfile = initState.userProfile;
-      this.inMemoryGameSettings.roomId = initState.roomId;
+      console.log('Setting initial state:', initState);
+      this.inMemorySharedStore.userProfile = initState.userProfile;
+      this.inMemorySharedStore.roomId = initState.roomId;
+
+      // Check if we have a room name encoded in the parameters
+      // TODO: Do we allow passwords in query params? Or prompt for it?
+      // TODO: Ensure the room id parameter is persisted with login redirects
+      const queryParams = URI.parseQuery(URI.parse(window.location.href).query);
+      if ('room' in queryParams) {
+        const roomID = Number(queryParams['room']);
+        this.gameNetClient.sendJoinRoomRequest(roomID, '')
+          .then((status: boolean) => {
+            if (status) {
+              this.inMemorySharedStore.roomId = roomID;
+              this.esClient.requestWorldState()
+                .then(seqId => this.esClient.init(seqId))
+                .catch(console.error);
+            } else {
+              // TODO: Don't do this
+              alert('Invalid room id or room requires a password');
+            }
+          });
+      } else {
+        // Request world state normally
+        if (initState.roomId !== -1) {
+          this.esClient.requestWorldState()
+            .then(seqId => this.esClient.init(seqId))
+            .catch(console.error);
+        }
+      }
     });
-
-    // Init event sourcing
-    this.gameNetClient.listenEvent(this.esClient.processEvent.bind(this.esClient));
-
-    // TODO: Re-enable for prod, or find a better way
-    // this.gameNetClient.listenDisconnect(() => {
-    //   location.replace('/login/'); // On disconnect, redirect to login page
-    // });
 
     this.resizeCanvas();
 
@@ -108,13 +134,18 @@ export class RenderLoop {
       c.init();
     });
 
+    // At this point, we assume everything that is callback/event based has been set up
+    // So signal to the server we are ready
+    this.gameNetClient.sendClientReady();
+
     window.requestAnimationFrame(t => this.loop(t));
   }
 
   private initFromLostContext() {
     console.log('RenderLoop.initFromLostContext()');
 
-    const newGl = this.canvas.getContext('webgl', { alpha: false });
+    const g = this.canvas.getContext('webgl', { alpha: false });
+    const newGl = GL_DEBUG_ENABLED ? (GL_DEBUG_LOG_CALLS ? WebGLDebugUtils.makeDebugContext(g, console.error, console.log) : WebGLDebugUtils.makeDebugContext(g)) : g;
     if (newGl === null) {
       throw Error('Gl context cannot be null');
     } else {
@@ -138,6 +169,7 @@ export class RenderLoop {
     // Start-frame signal
     this.ioLifeCycle.startFrame(); // IO must be the first one
     this.startFrameImGui(time);
+    this.esClient.dispatchEvents();
     this.imGuiImplWebGl.startFrame();
     this.components.forEach(c => c.startFrame());
 
@@ -224,8 +256,10 @@ export class RenderLoop {
 
     const avgFrameTime = this.prevFrameTimes.reduce((a, b) => a + b) / this.prevFrameTimes.length;
 
-    ImGui.Text(`Logged in as: ${this.inMemoryGameSettings.userProfile.username}`);
-    ImGui.Text(`Joined room: ${this.inMemoryGameSettings.roomId}`);
+    ImGui.Text(`Logged in as: ${this.inMemorySharedStore.userProfile.username}`);
+    if (ImGui.Button(`Joined room: ${this.inMemorySharedStore.roomId}`)) {
+      ImGui.SetClipboardText(this.inMemorySharedStore.roomId.toString());
+    }
     ImGui.Text(`Frame perf: ${avgFrameTime.toFixed(3)} ms`);
     ImGui.Text(`Application average ${(1000.0 / ImGui.GetIO().Framerate).toFixed(3)} ms/frame (${ImGui.GetIO().Framerate.toFixed(1)} FPS)`);
 

@@ -10,16 +10,16 @@ export class EventSourcingSeqId1551852570091 implements MigrationInterface {
         nextSeqId int;
         rowId     int;
       BEGIN
-        -- Create sequence id row if it does not currently exist for the given (room, category)
-        INSERT INTO sequence_id("roomId", "category", "nextSequenceId")
-        VALUES (NEW."roomId", NEW."category", 1)
+        -- Create sequence id row if it does not currently exist for the given (room)
+        INSERT INTO sequence_id("roomId", "nextSequenceId")
+        VALUES (NEW."roomId", 1)
         ON CONFLICT DO NOTHING;
 
         -- Fetch the sequence id
         SELECT "id", "nextSequenceId" INTO rowId, nextSeqId
         FROM sequence_id
         WHERE "roomId" = NEW."roomId"
-          AND "category" = NEW."category" FOR UPDATE;
+        FOR UPDATE;
 
         -- Set the column
         NEW."sequenceNumber" = nextSeqId;

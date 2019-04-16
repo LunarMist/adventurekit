@@ -16,6 +16,7 @@ import { LoginUtils } from 'rpgcore-common/utils';
 
 import config from './config/config';
 import User from './entities/User';
+import { SessionStoredUser } from './sockets/game-room';
 
 // tslint:disable-next-line:variable-name
 const SessionRedisStore = connectRedis(expressSession);
@@ -45,7 +46,7 @@ SGMail.setApiKey(config.secret.sendgrid.apiKey);
 
 /*** Configure passport ***/
 
-function createSessionStoredUser(user: User) {
+function createSessionStoredUser(user: User): SessionStoredUser {
   return { id: user.id, username: user.username, email: user.email };
 }
 

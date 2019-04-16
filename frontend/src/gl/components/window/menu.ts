@@ -1,14 +1,14 @@
-import { AboutComponent } from 'GL/components/about';
-import { IOStateUIComponent } from 'GL/components/iostate';
-import { LostContextComponent } from 'GL/components/lost-context';
-import { SessionComponent } from 'GL/components/session';
-import { DemoUIComponent } from 'GL/components/demo';
-import { RoomComponent } from 'GL/components/room';
-import { ChatWindowComponent } from 'GL/components/chat-client';
+import { AboutComponent } from 'GL/components/window/about';
+import { IOStateUIComponent } from 'GL/components/window/iostate';
+import { LostContextComponent } from 'GL/components/window/lost-context';
+import { SessionComponent } from 'GL/components/window/session';
+import { DemoUIComponent } from 'GL/components/window/demo';
+import { RoomComponent } from 'GL/components/window/room';
+import { ChatWindowComponent } from 'GL/components/window/chat-client';
+import { FontSelectorComponent } from 'GL/components/window/font-selector';
+import { ManageTokensComponent } from 'GL/components/window/manage-tokens';
 import * as ImGui from 'ImGui/imgui';
 import { RenderComponent } from 'GL/render/renderable';
-import { FontSelectorComponent } from 'GL/components/font-selector';
-import { ManageTokensComponent } from 'GL/components/manage-tokens';
 
 export class MenuComponent extends RenderComponent {
   private readonly aboutComponent: AboutComponent;

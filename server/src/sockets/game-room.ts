@@ -1,49 +1,58 @@
-import * as util from 'util';
-import { getConnection } from 'typeorm';
-import { ClientSentEvent, EventCategories, ServerSentEvent } from 'rpgcore-common/es';
-import { TokenProto } from 'rpgcore-common/es-proto';
-import { NetEventType } from 'rpgcore-common/enums';
 import { InitState } from 'rpgcore-common/types';
 
-import { SocketHandler, SocketHandlerFactory } from './sockets';
 import GameRoom from '../entities/GameRoom';
 import User from '../entities/User';
-import { ESServer } from '../event/es-server';
-import Event from '../entities/Event';
+import { ESGameServer } from '../event/es-game-server';
+import { GameNetSocket } from './game-net-socket';
+import { SessionizedSocket } from './sess-socket';
+
+export type SessionStoredUser = { id: number; username: string; email: string };
 
 /**
- * Game room socket.io handler.
+ * Game room socket handler.
  */
-export class GameRoomSocketHandler extends SocketHandler {
-  private currentGameRoomId: number = -1;
+export class GameRoomSocketHandler {
+  private readonly esServer: ESGameServer;
+
+  constructor(private readonly net: GameNetSocket, private readonly sess: SessionizedSocket<SessionStoredUser>) {
+    this.esServer = new ESGameServer(net, sess);
+  }
 
   async onConnection(): Promise<void> {
-    console.log(`User connected: ${this.socket.id}`);
+    console.log(`User connected: ${this.net.socketId}`);
 
     // First thing: Register error handler
-    this.socket.on('error', error => {
+    this.net.listenError(error => {
       console.error(error);
     });
 
+    let clientIsReady = false;
+    // Let the client flag asap if it is ready
+    this.net.listenClientReady(() => {
+      clientIsReady = true;
+    });
+
     // Important: Ensure we are authenticated!
-    if (!this.isAuthenticated()) {
+    if (!this.sess.authenticated) {
       // TODO: Relay back some type of message/alert?
-      console.log(`User not authenticated: ${this.socket.id}. Disconnecting...`);
-      this.disconnect();
+      console.log(`User not authenticated: ${this.net.socketId}. Disconnecting...`);
+      this.net.disconnect();
       return;
     }
 
     // Join the default room
     // This should be one of the first things done
+    // TODO: Move this to a client-side request/localstorage thing
     await this.joinDefaultRoom();
 
-    this.listenChatMessage((message: string) => {
-      if (this.currentGameRoomId !== -1) {
-        this.sendChatMessage(this.sessionUser.username, message, GameRoomSocketHandler.formatRoomName(this.currentGameRoomId));
+    this.net.listenChatMessage((message: string) => {
+      if (this.esServer.currentGameRoomId !== undefined) {
+        const roomName = GameRoomSocketHandler.formatRoomName(this.esServer.currentGameRoomId);
+        this.net.sendChatMessage(roomName, this.sess.sessionUser.username, message);
       }
     });
 
-    this.listenJoinRoomRequest(async (roomId, password, ack) => {
+    this.net.listenJoinRoomRequest(async (roomId, password, ack) => {
       try {
         const room = await GameRoom.validate(roomId, password);
         if (room === undefined) {
@@ -58,21 +67,21 @@ export class GameRoomSocketHandler extends SocketHandler {
 
         // Modify db
         await user.setDefaultRoom(room);
-        await room.addMember(this.sessionUser.id);
+        await room.addMember(this.sess.sessionUser.id);
 
         // Leave old rooms
-        const promises = Object.keys(this.socket.rooms)
-          .filter(r => r !== this.socket.id)
-          .map(r => this.leaveRoom(r));
+        const promises = Object.keys(this.net.rooms)
+          .filter(r => r !== this.net.socketId)
+          .map(r => this.net.leaveRoom(r));
 
         // Wait to leave all the rooms
         // TODO: Do I really need/want to wait?
         await Promise.all(promises);
 
         // Join new room
-        await this.joinRoom(GameRoomSocketHandler.formatRoomName(room.id));
+        this.net.joinRoom(GameRoomSocketHandler.formatRoomName(room.id));
         // Update
-        this.currentGameRoomId = room.id;
+        this.esServer.currentGameRoomId = room.id;
         ack(true);
       } catch (e) {
         console.error(e);
@@ -80,7 +89,7 @@ export class GameRoomSocketHandler extends SocketHandler {
       }
     });
 
-    this.listenCreateRoomRequest(async (password, ack) => {
+    this.net.listenCreateRoomRequest(async (password, ack) => {
       try {
         const user: User | undefined = await this.getCurrentUser();
         if (user === undefined) {
@@ -95,93 +104,48 @@ export class GameRoomSocketHandler extends SocketHandler {
       }
     });
 
-    const esServer = new ESServer();
+    // Setup event sourcing
+    this.esServer.setup();
 
-    this.listenEvent(esServer.processEvent.bind(esServer));
-
-    esServer.addHandler(EventCategories.TokenChangeEvent, clientEvent => {
-      const changeEvent = TokenProto.TokenChangeEvent.decode(clientEvent.dataUi8);
-      console.log(changeEvent);
-
-      getConnection().transaction(async entityManager => {
-        const esEvent = await Event.create(entityManager, this.currentGameRoomId, clientEvent.category, -1, clientEvent.dataBuffer);
-        const response = new ServerSentEvent(esEvent.sequenceNumber, clientEvent.messageId, esEvent.category, esEvent.data);
-        if (changeEvent.changeType === TokenProto.TokenChangeType.CREATE) {
-          // TODO: Transform and Agg
-        } else if (changeEvent.changeType === TokenProto.TokenChangeType.UPDATE) {
-          // TODO: Transform and Agg
-        } else if (changeEvent.changeType === TokenProto.TokenChangeType.DELETE) {
-          // TODO: Transform and Agg
-        } else {
-          throw Error(`Unknown changeType: ${changeEvent.changeType}`);
-        }
-        return response;
-      }).then(response => {
-        const roomName = GameRoomSocketHandler.formatRoomName(this.currentGameRoomId);
-        console.log(response);
-        this.sendEvent(response, roomName);
-      }).catch(console.error);
-
-      return true;
-    });
-
+    // TODO: This is ugly af
     // Last thing: Send over init state data
-    this.sendInitState(this.getInitState());
-  }
-
-  /*** Socket functions ***/
-
-  listenChatMessage(cb: (message: string) => void) {
-    this.listenAuthenticated(NetEventType.ChatMessage, cb);
-  }
-
-  sendChatMessage(speaker: string, message: string, room: string) {
-    this.io.to(room).emit(NetEventType.ChatMessage, speaker, message);
-  }
-
-  listenJoinRoomRequest(cb: (roomId: number, password: string, ack: (status: boolean) => void) => void) {
-    this.listenAuthenticated(NetEventType.JoinRoom, cb);
-  }
-
-  listenCreateRoomRequest(cb: (password: string, ack: (roomId: number) => void) => void) {
-    this.listenAuthenticated(NetEventType.CreateRoom, cb);
-  }
-
-  sendInitState(initState: InitState) {
-    this.socket.emit(NetEventType.InitState, initState);
-  }
-
-  listenEvent(cb: (clientEvent: ClientSentEvent) => void) {
-    // We must explicitly create the instance, because socketio only creates an object of the same 'shape' as ClientSentEvent
-    this.listenAuthenticated(NetEventType.ESEvent, (c: ClientSentEvent) => {
-      cb(new ClientSentEvent(c.messageId, c.category, c.data));
-    });
-  }
-
-  sendEvent(serverEvent: ServerSentEvent, room: string) {
-    this.io.to(room).emit(NetEventType.ESEvent, serverEvent);
+    // Wait one second for the client to possibly get ready
+    setTimeout(() => {
+      // If the client has been flagged as ready, then send the init state immediately
+      // Otherwise, wait 2 seconds (arbitrarily), and then send it
+      if (clientIsReady) {
+        console.log('Sending init state: Client is ready');
+        this.net.sendInitState(this.getInitState());
+      } else {
+        console.log('Sending init state: Delayed');
+        setTimeout(() => {
+          if (clientIsReady) {
+            console.log('Client signaled ready in past 2 seconds');
+          } else {
+            console.log('Client not signaled ready. Sending anyways');
+          }
+          this.net.sendInitState(this.getInitState());
+        }, 2000);
+      }
+    }, 1000);
   }
 
   /*** Helper functions ***/
-
-  leaveRoom: (roomName: string) => Promise<void> = util.promisify<any>(this.socket.leave.bind(this.socket));
-
-  joinRoom: (roomName: string | string[]) => Promise<void> = util.promisify<any>(this.socket.join.bind(this.socket));
 
   static formatRoomName(roomId: number): string {
     return `gr-${roomId}`;
   }
 
   async getCurrentUser(): Promise<User | undefined> {
-    return User.getById(this.sessionUser.id);
+    return User.getById(this.sess.sessionUser.id);
   }
 
   getInitState(): InitState {
     return {
       userProfile: {
-        username: this.sessionUser.username,
+        username: this.sess.sessionUser.username,
       },
-      roomId: this.currentGameRoomId,
+      roomId: this.esServer.currentGameRoomId || -1,
     };
   }
 
@@ -194,18 +158,10 @@ export class GameRoomSocketHandler extends SocketHandler {
     if (!user.defaultRoom) {
       return;
     }
+    // TODO: Does user still have permissions to join the room? Some sort of auth
     // Join the room
-    await this.joinRoom(GameRoomSocketHandler.formatRoomName(user.defaultRoom.id));
+    this.net.joinRoom(GameRoomSocketHandler.formatRoomName(user.defaultRoom.id));
     // Update current room
-    this.currentGameRoomId = user.defaultRoom.id;
-  }
-}
-
-/**
- * {@link GameRoomSocketHandler} factory class
- */
-export class GameRoomSocketHandlerFactory implements SocketHandlerFactory {
-  create(io: SocketIO.Server, socket: SocketIO.Socket): SocketHandler {
-    return new GameRoomSocketHandler(io, socket);
+    this.esServer.currentGameRoomId = user.defaultRoom.id;
   }
 }

@@ -1,4 +1,4 @@
-import { ClientSentEvent, ServerSentEvent } from 'rpgcore-common/es';
+import { ClientSentEvent, EventAggCategories, EventAggResponse, MultiEventAggResponse, ServerSentAgg, ServerSentEvent } from 'rpgcore-common/es';
 import { NetEventType } from 'rpgcore-common/enums';
 import { InitState } from 'rpgcore-common/types';
 
@@ -53,10 +53,29 @@ export class GameNetClient {
     this.client.sendSimpleMessage(NetEventType.ESEvent, clientEvent);
   }
 
+  async sendEventAggRequest(category: EventAggCategories): Promise<EventAggResponse> {
+    const r = await this.client.sendMessage<EventAggResponse>(NetEventType.EventAggRequest, category);
+    // We must explicitly create the instance, because socket.io only creates an object of the same 'shape' as DataPack
+    // TODO: Better way than this
+    r.data = r.data === null ? null : new ServerSentAgg(r.data.watermark, r.data.category, r.data.version, r.data.data);
+    return r;
+  }
+
+  async sendWorldStateRequest(): Promise<MultiEventAggResponse> {
+    const r = await this.client.sendMessage<MultiEventAggResponse>(NetEventType.WorldState);
+    r.data = r.data === null ? null : r.data.map(v => new ServerSentAgg(v.watermark, v.category, v.version, v.data));
+    return r;
+  }
+
   listenEvent(cb: (serverEvent: ServerSentEvent) => void) {
     this.client.listen(NetEventType.ESEvent, (s: ServerSentEvent) => {
-      // We must explicitly create the instance, because socketio only creates an object of the same 'shape' as ServerSentEvent
-      cb(new ServerSentEvent(s.sequenceNumber, s.messageId, s.category, s.data));
+      // We must explicitly create the instance, because socket.io only creates an object of the same 'shape' as ServerSentEvent
+      // TODO: Better way than this
+      cb(new ServerSentEvent(s.sequenceNumber, s.prevSequenceNumber, s.clientMessageId, s.category, s.version, s.data));
     });
+  }
+
+  sendClientReady() {
+    this.client.sendSimpleMessage(NetEventType.ClientReady);
   }
 }

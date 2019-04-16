@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, EntityManager, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, EntityManager, Generated, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
 import GameRoom from './GameRoom';
 
 @Entity()
@@ -22,35 +22,42 @@ export default class Event {
   @Column({ length: 40, nullable: false })
   category: string;
 
-  @Column({ nullable: false })
-  sequenceNumber!: number;
+  @Generated() // To trick typeorm to include column in RETURNING list
+  @Column({ length: 30, nullable: false })
+  sequenceNumber!: string;
 
   @Column({ nullable: false })
   source: number;
 
+  @Column({ nullable: false })
+  dataVersion: number;
+
   @Column({ type: 'bytea', nullable: false })
   data: Buffer;
 
-  constructor(room: GameRoom | number, category: string, source: number | -1, data: Buffer) {
+  getDataUi8(): Uint8Array {
+    return this.data;
+  }
+
+  constructor(room: GameRoom | number, category: string, source: number | -1, dataVersion: number, data: Uint8Array) {
     if (room instanceof GameRoom) {
-      this.roomId = this.room.id;
+      this.roomId = room.id;
     } else {
       this.roomId = room;
     }
     this.category = category;
     this.source = source;
-    this.data = data;
+    this.dataVersion = dataVersion;
+    if (data === undefined) {
+      this.data = Buffer.allocUnsafe(0);
+    } else {
+      this.data = Buffer.from(data.buffer, data.byteOffset, data.length);
+    }
   }
 
-  static async create(entityManager: EntityManager, room: GameRoom | number, category: string, source: number | -1, data: Buffer): Promise<Event> {
-    const newEvent = new Event(room, category, source, data);
-    const newObj = await entityManager.save(newEvent);
-    // This re-select is because sequenceNumber is generated via a trigger, and not auto-reloaded by the orm
-    // TODO: Do not use a re-select
-    const reloaded = await entityManager.getRepository(Event).findOne(newObj.id);
-    if (reloaded === undefined) {
-      throw Error('Reloaded entity does not exist -- this should not happen');
-    }
-    return reloaded;
+  static async create(entityManager: EntityManager, room: GameRoom | number, category: string,
+                      source: number | -1, dataVersion: number, data: Uint8Array): Promise<Event> {
+    const newEvent = new Event(room, category, source, dataVersion, data);
+    return entityManager.save(newEvent);
   }
 }

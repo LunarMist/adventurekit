@@ -63,6 +63,9 @@ export class IOLifeCycle implements LifeCycle {
 
     // https://developer.mozilla.org/en-US/docs/Web/Events/cut
     document.body.addEventListener('cut', e => {
+      if (e.clipboardData === null) {
+        return;
+      }
       const text = e.clipboardData.getData('text/plain');
       this.dispatcher.queueEvent(new IOEvent.ClipboardCutEvent(text));
       e.preventDefault();
@@ -70,6 +73,9 @@ export class IOLifeCycle implements LifeCycle {
 
     // https://developer.mozilla.org/en-US/docs/Web/Events/copy
     document.body.addEventListener('copy', e => {
+      if (e.clipboardData === null) {
+        return;
+      }
       const text = e.clipboardData.getData('text/plain');
       this.dispatcher.queueEvent(new IOEvent.ClipboardCopyEvent(text));
       e.preventDefault();
@@ -77,6 +83,9 @@ export class IOLifeCycle implements LifeCycle {
 
     // https://developer.mozilla.org/en-US/docs/Web/Events/paste
     document.body.addEventListener('paste', e => {
+      if (e.clipboardData === null) {
+        return;
+      }
       const text = e.clipboardData.getData('text/plain');
       this.dispatcher.queueEvent(new IOEvent.ClipboardPasteEvent(text));
       this.ioState.clipboardText = text;

@@ -2,15 +2,10 @@ import { ClientSentEvent, EventCategories } from 'rpgcore-common/es';
 
 type ClientSentEventHandler = (clientEvent: ClientSentEvent) => boolean;
 
-interface ClientSentEventProcessor {
-  addHandler(type: EventCategories, handler: ClientSentEventHandler): void;
-
-  removeHandler(type: EventCategories, handler: ClientSentEventHandler): void;
-
-  processEvent(clientEvent: ClientSentEvent): void;
-}
-
-export class ESServer implements ClientSentEventProcessor {
+/**
+ * Dispatches client-sent events
+ */
+export class ESServer {
   private handlers: { [key: string]: ClientSentEventHandler[] } = {};
 
   addHandler(type: EventCategories, handler: ClientSentEventHandler): void {
@@ -27,7 +22,7 @@ export class ESServer implements ClientSentEventProcessor {
   }
 
   processEvent(clientEvent: ClientSentEvent): void {
-    console.log(clientEvent);
+    console.log('ESServer.processEvent:', clientEvent);
 
     if (!(clientEvent.category in this.handlers)) {
       console.warn(`No handlers for event category ${clientEvent.category}`);

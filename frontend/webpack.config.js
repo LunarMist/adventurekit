@@ -1,6 +1,7 @@
 const path = require('path');
 
 const ManifestPlugin = require('webpack-manifest-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 const outputPath = path.resolve(__dirname, 'build');
 
@@ -55,5 +56,8 @@ module.exports = {
   },
   plugins: [
     new ManifestPlugin(),
+    new CopyPlugin([
+      {from: 'assets/glob', to: 'glob'},
+    ]),
   ]
 };

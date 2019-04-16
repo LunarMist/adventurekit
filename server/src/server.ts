@@ -3,9 +3,10 @@ import http from 'http';
 import { ConnectionOptions, createConnection } from 'typeorm';
 
 import { app, sessionMiddleware } from './app';
-import { SocketServer } from './sockets/sockets';
-import { GameRoomSocketHandlerFactory } from './sockets/game-room';
 import config from './config/config';
+import { SocketIONetServer, SocketIONetServerSocket } from './sockets/socketio-server';
+import { GameRoomSocketHandler } from './sockets/game-room';
+import { GameNetSocket } from './sockets/game-net-socket';
 
 // Only process unhandled promises in development mode
 if (config.mode === 'development') {
@@ -36,11 +37,23 @@ async function run() {
   await createConnection(connectionOptions);
 
   const server = new http.Server(app);
-  const socketHandlerFactory = new GameRoomSocketHandlerFactory();
+
+  class SIOGameRoomBridge extends SocketIONetServerSocket {
+    private handler: GameRoomSocketHandler;
+
+    constructor(socket: SocketIO.Socket) {
+      super(socket);
+      this.handler = new GameRoomSocketHandler(new GameNetSocket(this), this);
+    }
+
+    async onConnection(): Promise<void> {
+      return this.handler.onConnection();
+    }
+  }
 
   // socket server
-  new SocketServer(
-    socketHandlerFactory,
+  new SocketIONetServer(
+    SIOGameRoomBridge,
     server,
     sessionMiddleware,
     config.redis.host,
@@ -58,6 +71,6 @@ async function run() {
 run().catch(err => {
   // Ensure we crash/terminate the process
   process.nextTick(() => {
-    throw new Error(err);
+    throw err;
   });
 });

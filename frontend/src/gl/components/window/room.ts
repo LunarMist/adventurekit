@@ -42,6 +42,9 @@ export class RoomComponent extends WindowRenderComponent {
             if (status) {
               this.successString = 'Successfully joined the room';
               this.store.mem.roomId = roomIdNum;
+              this.es.requestWorldState()
+                .then(seqId => this.es.init(seqId))
+                .catch(console.error);
             } else {
               this.errorString = 'Please check roomId/password combination';
             }

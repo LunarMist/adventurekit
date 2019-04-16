@@ -1,9 +1,9 @@
 import { UserProfile } from 'rpgcore-common/types';
 
 /**
- * For in-memory game settings
+ * For in-memory shared storage
  */
-export default class InMemoryGameSettings {
+export default class InMemorySharedStore {
   public userProfile: UserProfile;
   public roomId: number;
 

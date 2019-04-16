@@ -40,5 +40,5 @@ script.
   window.onload = function () {
     const canvas = document.getElementById('tabletop');
     canvas.focus();
-    rpgcore.default(canvas);
+    rpgcore.loop = rpgcore.default(canvas);
   };
