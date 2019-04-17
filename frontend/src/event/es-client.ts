@@ -11,6 +11,8 @@ export const EventListenerNoop = (dataPack: DataPack) => {
   // Nothing
 };
 
+const debug = require('debug')('rpgcore:es');
+
 export abstract class ESClient {
   private messageIdPrefix: string;
   private lastSentClientSequenceId: number = 0;
@@ -65,7 +67,7 @@ export abstract class ESClient {
   }
 
   pushEvent(event: ServerSentEvent | ClientSentEvent): void {
-    console.log('Pushed event:', event);
+    debug('Pushed event:', event);
     this.eventQueue.push(event);
   }
 
@@ -97,7 +99,7 @@ export abstract class ESClient {
       if (event === undefined) {
         continue;
       }
-      console.log('Dispatching', event);
+      debug('Dispatching', event);
 
       if (event instanceof ClientSentEvent) {
         // Save what the 'prev' sequence id of the relevant server sequence id should be (when we eventually get it)
@@ -106,13 +108,13 @@ export abstract class ESClient {
         // TODO: Make this more intelligent; Perform event playback/rewinding, or check agg hashes instead of expected seq ids
         const { seqId } = this.breakdownMessageId(event.messageId);
         this.clientSidToPrevServerSidMap.set(seqId, this.lastSeenServerSequenceId);
-        console.log(`\tProcessing client-event. Mapping ${seqId} (local) to ${this.lastSeenServerSequenceId} (server, prev, expected)`);
+        debug(`\tProcessing client-event. Mapping ${seqId} (local) to ${this.lastSeenServerSequenceId} (server, prev, expected)`);
       } else {
-        console.log('\tProcessing server-event');
+        debug('\tProcessing server-event');
 
         // If we see something old, ignore it
         if (new NumericSid(this.lastSeenServerSequenceId).comesAfter(new NumericSid(event.sequenceNumber))) {
-          console.log(`\tIgnoring older message. Last server sid is ${this.lastSeenServerSequenceId} while event has ${event.sequenceNumber}`);
+          debug(`\tIgnoring older message. Last server sid is ${this.lastSeenServerSequenceId} while event has ${event.sequenceNumber}`);
           continue;
         }
 
@@ -128,7 +130,7 @@ export abstract class ESClient {
 
         // Do not dispatch client-sent messages
         if (prefix === this.messageIdPrefix) {
-          console.log('\tProcessing server-event that was sent by this client (self-sent)');
+          debug('\tProcessing server-event that was sent by this client (self-sent)');
           const expectedPrevSid = this.clientSidToPrevServerSidMap.get(seqId);
           if (expectedPrevSid === undefined) {
             console.warn(`\tCould not find server prev sequence id for client sequence id: ${seqId}`);
@@ -141,14 +143,14 @@ export abstract class ESClient {
           }
           this.clientSidToPrevServerSidMap.delete(seqId);
           this.lastSeenServerSequenceId = event.sequenceNumber;
-          console.log('\tLast server sid', this.lastSeenServerSequenceId);
+          debug('\tLast server sid', this.lastSeenServerSequenceId);
           continue;
         }
 
         this.lastSeenServerSequenceId = event.sequenceNumber;
       }
 
-      console.log('\tLast server sid', this.lastSeenServerSequenceId);
+      debug('\tLast server sid', this.lastSeenServerSequenceId);
 
       const chain = this.eventListeners[event.category] || [];
 

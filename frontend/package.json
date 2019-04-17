@@ -21,6 +21,7 @@
     "webpack-manifest-plugin": "^2.0.4"
   },
   "dependencies": {
+    "@types/debug": "^4.1.4",
     "@types/emscripten": "0.0.31",
     "@types/node": "^10.14.4",
     "@types/pubsub-js": "^1.5.18",
@@ -31,6 +32,7 @@
     "@types/urijs": "^1.15.38",
     "@types/webgl2": "0.0.4",
     "axios": "^0.18.0",
+    "debug": "^4.1.1",
     "localforage": "^1.7.3",
     "protobufjs": "^6.8.8",
     "pubsub-js": "^1.7.0",

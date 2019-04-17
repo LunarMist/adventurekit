@@ -8,6 +8,8 @@ import * as GLUtils from 'GL/utils';
 import RBush = rbush.RBush;
 import BBox = rbush.BBox;
 
+const debug = require('debug')('rpgcore:es');
+
 /**
  * A {@link TokenItem} is used by an rtree for bounding box spacial information.
  * The bounding box is rooted at the bottom left, and we assume a cartesian coordinate system.
@@ -127,9 +129,9 @@ export class TokenLayerComponent extends RenderComponent {
   init(): void {
     this.es.addEventListener(EventCategories.TokenChangeEvent, dataPack => {
       const event = TokenProto.TokenChangeEvent.decode(dataPack.dataUi8);
-      console.log('Token event listener (pre):');
-      console.log('\t', event);
-      console.log('\t', this.es.aggs.tokenSet);
+      debug('Token event listener (pre):');
+      debug('\t', event);
+      debug('\t', this.es.aggs.tokenSet);
 
       if (!event.id) {
         console.warn('Could not find token id in event data');
@@ -142,9 +144,9 @@ export class TokenLayerComponent extends RenderComponent {
       }
     }, dataPack => {
       const event = TokenProto.TokenChangeEvent.decode(dataPack.dataUi8);
-      console.log('Token event listener (post):');
-      console.log('\t', event);
-      console.log('\t', this.es.aggs.tokenSet);
+      debug('Token event listener (post):');
+      debug('\t', event);
+      debug('\t', this.es.aggs.tokenSet);
 
       if (!event.id) {
         console.warn('Could not find token id in event data');
@@ -168,8 +170,8 @@ export class TokenLayerComponent extends RenderComponent {
     });
 
     this.es.addResyncListener(EventAggCategories.TokenSet, () => {
-      console.log('Token agg listener:');
-      console.log('\t', this.es.aggs.tokenSet);
+      debug('Token agg listener:');
+      debug('\t', this.es.aggs.tokenSet);
       this.processAgg(this.es.aggs.tokenSet);
     });
 
@@ -416,7 +418,7 @@ export class TokenLayerComponent extends RenderComponent {
     // Refresh visibility list
     this.refreshVisibleItems();
 
-    // console.log(this.viewport, this.gridOffset, this.visibleItems);
+    // debug(this.viewport, this.gridOffset, this.visibleItems);
 
     // Load textures for visible items
     this.loadVisibleTextures();

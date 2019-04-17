@@ -21,6 +21,8 @@ export class MenuComponent extends RenderComponent {
   private readonly fontSelectorComponent: FontSelectorComponent;
   private readonly manageTokensComponent: ManageTokensComponent;
 
+  private printDebugLogs: boolean = false;
+
   constructor() {
     super();
     this.aboutComponent = new AboutComponent();
@@ -61,6 +63,11 @@ export class MenuComponent extends RenderComponent {
     this.chatComponent.loadWindowVisibility(true);
     this.fontSelectorComponent.loadWindowVisibility();
     this.manageTokensComponent.loadWindowVisibility();
+
+    if (localStorage.debug) {
+      this.printDebugLogs = true;
+    }
+
     super.init();
   }
 
@@ -105,6 +112,15 @@ export class MenuComponent extends RenderComponent {
         if (ImGui.MenuItem('Fonts')) {
           this.fontSelectorComponent.setWindowVisibility(true);
         }
+
+        if (ImGui.Checkbox('Enable debug logs', (v: boolean = this.printDebugLogs) => this.printDebugLogs = v)) {
+          if (this.printDebugLogs) {
+            localStorage.debug = 'rpgcore:*';
+          } else {
+            localStorage.debug = '';
+          }
+        }
+
         ImGui.EndMenu();
       }
 

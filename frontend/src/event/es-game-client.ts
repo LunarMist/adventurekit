@@ -9,6 +9,8 @@ type AggData = {
   tokenSet: TokenProto.TokenSet;
 };
 
+const debug = require('debug')('rpgcore:es');
+
 export class ESGameClient extends ESClient {
   public aggs: AggData;
 
@@ -68,7 +70,7 @@ export class ESGameClient extends ESClient {
 
   async requestWorldState(): Promise<string> {
     const ws = await this.netClient.sendWorldStateRequest();
-    console.log('Requested world state:', ws);
+    debug('Requested world state:', ws);
 
     if (!ws.status || ws.data === null) {
       throw new Error('Unable to process world state response');
