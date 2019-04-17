@@ -13,6 +13,7 @@ import jwt, { VerifyErrors } from 'jsonwebtoken';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
 import * as util from 'util';
 import { LoginUtils } from 'rpgcore-common/utils';
+import * as url from 'url';
 
 import config from './config/config';
 import User from './entities/User';
@@ -125,7 +126,15 @@ app.get('/', (req, res) => {
       bundlePath: bundleManifest['main.js'],
     });
   } else {
-    res.redirect('/login/');
+    const params: { [key: string]: string } = {};
+    if (req.query.room) {
+      params['room'] = req.query.room;
+    }
+
+    res.redirect(url.format({
+      pathname: '/login/',
+      query: params,
+    }));
   }
 });
 

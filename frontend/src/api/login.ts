@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import qs from 'qs';
+import URI from 'urijs';
 
 export type LoginResponse = { status: boolean; message: string };
 
@@ -40,4 +41,8 @@ export function register(username: string, email: string, password: string): Pro
       }
       return { message, status: false };
     });
+}
+
+export function getAppUrl(currentURL: string): string {
+  return URI(currentURL).path('/').href();
 }

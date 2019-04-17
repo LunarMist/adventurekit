@@ -40,7 +40,8 @@
         "mail": "SGMail",
         "jsonwebtoken": "jwt",
         "pubsubJs": "PubSub",
-        "light": "protobuf"
+        "light": "protobuf",
+        "urijs": "URI"
       }
     ],
     "type-literal-delimiter": true,

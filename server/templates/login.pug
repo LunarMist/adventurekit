@@ -52,6 +52,8 @@ script.
   const loginFM = document.getElementById('login_failure_message');
   const loginButton = document.getElementById('login_button');
 
+  const redirectUrl = rpgcore.LoginApi.getAppUrl(window.location.href);
+
   document.getElementById('login_password')
     .addEventListener('keydown', function (e) {
       if (e.keyCode === 13) {
@@ -69,7 +71,7 @@ script.
       .then(function (data) {
         if (data.status) {
           loginSM.innerText = data.message;
-          location.replace('/');
+          location.replace(redirectUrl);
         } else {
           loginFM.innerText = data.message;
         }
@@ -108,7 +110,7 @@ script.
       .then(function (data) {
         if (data.status) {
           registerSM.innerText = data.message;
-          location.replace('/');
+          location.replace(redirectUrl);
         } else {
           registerFM.innerText = data.message;
         }
